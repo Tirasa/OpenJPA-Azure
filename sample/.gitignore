@@ -4,4 +4,4 @@
 *.jar
 *.war
 *.ear
-/core/target/
+/target/
