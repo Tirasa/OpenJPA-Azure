@@ -162,6 +162,7 @@
     <dependency>
       <groupId>com.microsoft.sqlserver</groupId>
       <artifactId>sqljdbc4</artifactId>
+      <optional>true</optional>
       <scope>test</scope>
     </dependency>
   </dependencies>
