@@ -261,10 +261,11 @@
         <version>${h2.version}</version>
         <scope>test</scope>
       </dependency>
+      <!-- Install in local repository as shown in http://claude.betancourt.us/add-microsoft-sql-jdbc-driver-to-maven/ -->
       <dependency>
         <groupId>com.microsoft.sqlserver</groupId>
         <artifactId>sqljdbc4</artifactId>
-        <version>3.0</version>
+        <version>4.0</version>
         <scope>test</scope>
       </dependency>
     </dependencies>

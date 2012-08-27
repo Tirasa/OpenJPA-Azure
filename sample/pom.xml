@@ -162,7 +162,6 @@
     <dependency>
       <groupId>com.microsoft.sqlserver</groupId>
       <artifactId>sqljdbc4</artifactId>
-      <optional>true</optional>
       <scope>test</scope>
     </dependency>
   </dependencies>
@@ -181,7 +180,7 @@
           <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
             <artifactId>sqljdbc4</artifactId>
-            <version>3.0</version>
+            <version>4.0</version>
           </dependency>
           <dependency>
             <groupId>com.h2database</groupId>
