@@ -19,6 +19,11 @@
              version="2.0">
   <persistence-unit name="jpasqlazurePersistenceUnit">
     <properties>
+      <!-- 
+        A semicolon-separated list of directories or jar archives listed in classpath.
+        Each directory and jar archive will be scanned for annotated JPA entities. 
+      -->
+      <property name="openjpa.MetaDataFactory" value="jpa(Types=net.tirasa.jpasqlazure.beans.Person)"/>
     </properties>
   </persistence-unit>
 </persistence>

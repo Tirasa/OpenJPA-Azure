@@ -5,3 +5,4 @@
 *.war
 *.ear
 /core/target/
+/test-commons/target/

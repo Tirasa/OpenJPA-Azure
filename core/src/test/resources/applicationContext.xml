@@ -55,7 +55,7 @@
       </bean>
     </property>
     <property name="jpaPropertyMap">
-      <map>            
+      <map>
         <entry key="openjpa.NontransactionalWrite" value="false"/>
         <entry key="openjpa.AutoDetach" value="close, commit, nontx-read, rollback"/>
                 
@@ -86,6 +86,4 @@
   <tx:annotation-driven/>
 
   <jpa:repositories base-package="net.tirasa.jpasqlazure.repository"/>
-  
-  <bean id="wicketApplication" class="net.tirasa.jpasqlazure.web.JPASQLAzureApplication"/>
 </beans>

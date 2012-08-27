@@ -14,11 +14,10 @@
 package net.tirasa.jpasqlazure;
 
 import static org.junit.Assert.*;
-
 import java.io.UnsupportedEncodingException;
 import net.tirasa.jpasqlazure.beans.Gender;
-import net.tirasa.jpasqlazure.repository.PersonRepository;
 import net.tirasa.jpasqlazure.beans.Person;
+import net.tirasa.jpasqlazure.repository.PersonRepository;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
