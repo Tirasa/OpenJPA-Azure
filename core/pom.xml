@@ -17,12 +17,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
-    <groupId>org.openjpasqlazure</groupId>
+    <groupId>net.tirasa.openjpasqlazure</groupId>
     <artifactId>openjpasqlazure</artifactId>
     <version>0.1-SNAPSHOT</version>
   </parent>
 
-  <groupId>org.openjpasqlazure</groupId>
   <artifactId>openjpasqlazure-core</artifactId>
   <name>OpenJPA support for MS SQL Azure: core library</name>
 
