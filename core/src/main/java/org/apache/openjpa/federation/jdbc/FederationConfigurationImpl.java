@@ -19,7 +19,9 @@
 package org.apache.openjpa.federation.jdbc;
 
 import org.apache.openjpa.jdbc.conf.JDBCConfigurationImpl;
+import org.apache.openjpa.lib.conf.BooleanValue;
 import org.apache.openjpa.lib.conf.StringListValue;
+import org.apache.openjpa.lib.conf.StringValue;
 import org.apache.openjpa.lib.util.Localizer;
 
 public class FederationConfigurationImpl extends JDBCConfigurationImpl implements FederationConfiguration {
@@ -28,16 +30,37 @@ public class FederationConfigurationImpl extends JDBCConfigurationImpl implement
 
     public static final String PREFIX_FEDERATION = "openjpa.federation.";
 
+    protected BooleanValue federatedPlugin;
+
     protected StringListValue namesPlugin;
+
+    protected StringValue rangeMappingNamePlugin;
 
     public FederationConfigurationImpl() {
         super();
+
         getConfigurationLog().trace("Federation configuration initialization");
+
+        federatedPlugin = addBoolean(PREFIX_FEDERATION + "Federated");
+        federatedPlugin.setDefault("false");
+
         namesPlugin = addStringList(PREFIX_FEDERATION + "Names");
+
+        rangeMappingNamePlugin = addString(PREFIX_FEDERATION + "RangeMappingName");
     }
 
     @Override
     public String[] getFederationNames() {
         return namesPlugin.get();
+    }
+
+    @Override
+    public boolean isFederated() {
+        return federatedPlugin.get() != null && federatedPlugin.get();
+    }
+
+    @Override
+    public String getRangeMappingName() {
+        return rangeMappingNamePlugin.get();
     }
 }

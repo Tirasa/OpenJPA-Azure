@@ -30,51 +30,91 @@ public class SQLAzureUtils {
 
     public static String federation = "FED_1";
 
-    public static List<Long> getMemberDistribution(Connection conn)
+    public static List<Long> getMemberDistribution(
+            final Connection conn)
             throws SQLException {
 
         final List<Long> range_ids = new ArrayList<Long>();
 
-        Statement stm = conn.createStatement();
-        ResultSet federation_id = stm.executeQuery(
-                "SELECT * FROM sys.Federations where name = '" + federation + "'");
+        Statement stm = null;
+        ResultSet federation_id = null;
+        ResultSet member_distribution = null;
 
-        if (federation_id.next()) {
-            ResultSet member_distribution = stm.executeQuery(
-                    "SELECT CAST(range_high as bigint) AS high FROM sys.federation_member_distributions where federation_id="
-                    + federation_id.getInt(1) + " ORDER BY high");
+        try {
+            stm = conn.createStatement();
 
-            while (member_distribution.next()) {
-                range_ids.add(member_distribution.getLong(1));
+            federation_id = stm.executeQuery(
+                    "SELECT * "
+                    + "FROM sys.Federations "
+                    + "WHERE name = '" + federation + "'");
+
+            if (federation_id.next()) {
+                member_distribution = stm.executeQuery(
+                        "SELECT CAST(range_high as bigint) AS high "
+                        + "FROM sys.federation_member_distributions "
+                        + "WHERE federation_id=" + federation_id.getInt(1) + " ORDER BY high");
+
+                while (member_distribution.next()) {
+                    range_ids.add(member_distribution.getLong(1));
+                }
             }
 
-            member_distribution.close();
+        } finally {
+            if (stm != null) {
+                stm.close();
+            }
 
-            federation_id.close();
+            if (federation_id != null) {
+                federation_id.close();
+            }
+
+            if (member_distribution != null) {
+                member_distribution.close();
+            }
         }
-        stm.close();
 
         return range_ids;
     }
 
-    public static boolean tableExists(Connection conn, Table table, Long id)
+    /**
+     * Check if table exist.
+     *
+     * @param conn given connection.
+     * @param table table to be verified.
+     * @param id range id.
+     * @return TRUE if exists; FALSE otherwise.
+     * @throws SQLException
+     */
+    public static boolean tableExists(
+            Connection conn, Table table, Long id)
             throws SQLException {
         boolean res = false;
 
-        Statement stm = conn.createStatement();
+        Statement stm = null;
+        ResultSet rs = null;
 
-        stm.execute("USE FEDERATION " + federation + " (range_id=" + id + ") WITH FILTERING = OFF, RESET");
+        try {
+            stm = conn.createStatement();
 
-        ResultSet rs = stm.executeQuery(
-                "SELECT OBJECT_NAME (object_id) AS[ObjectName] "
-                + "FROM sys .dm_db_partition_stats "
-                + "WHERE OBJECT_NAME(object_id) ='" + table + "'");
+            stm.execute("USE FEDERATION " + federation + " (range_id=" + id + ") WITH FILTERING = OFF, RESET");
 
-        if (rs.next()) {
-            res = true;
+            rs = stm.executeQuery(
+                    "SELECT OBJECT_NAME (object_id) AS[ObjectName] "
+                    + "FROM sys.dm_db_partition_stats "
+                    + "WHERE OBJECT_NAME(object_id) ='" + table + "'");
+
+            if (rs.next()) {
+                res = true;
+            }
+        } finally {
+            if (rs != null) {
+                rs.close();
+            }
+
+            if (stm != null) {
+                stm.close();
+            }
         }
-
-        stm.close();
 
         return res;
     }

@@ -16,18 +16,20 @@
  */
 package org.apache.openjpa.jdbc.sql;
 
-import org.apache.openjpa.utils.SQLAzureUtils;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import javax.sql.DataSource;
-import org.apache.openjpa.conf.OpenJPAConfiguration;
+import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.federation.jdbc.FederationConfiguration;
 import org.apache.openjpa.jdbc.schema.Column;
 import org.apache.openjpa.jdbc.schema.PrimaryKey;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.jdbc.schema.Unique;
+import org.apache.openjpa.utils.SQLAzureUtils;
 
 /**
  * Dictionary for Microsoft SQL Server.
@@ -36,57 +38,105 @@ public class SQLAzureDictionary extends SQLServerDictionary {
 
     @Override
     public String[] getCreateTableSQL(Table table) {
-        // -------------------------
-        // just for check configuration parameters
-        // -------------------------
-        conf.getLog(OpenJPAConfiguration.LOG_RUNTIME).info(
-                "Retrieve federations for " + this.getClass().getSimpleName());
-        final String[] federations = ((FederationConfiguration) conf).getFederationNames();
-        for (String federation : federations) {
-            conf.getLog(OpenJPAConfiguration.LOG_RUNTIME).info("Federation " + federation);
-        }
-        // -------------------------
 
         final List<String> toBeCreated = new ArrayList<String>();
 
         DataSource ds = conf.getDataSource2(null);
+
         if (ds != null) {
+            Connection conn = null;
             try {
-                Connection conn = ds.getConnection();
+                conn = ds.getConnection();
 
-                if (SQLAzureUtils.federation == null) {
-                    toBeCreated.addAll(getStatement(table, null));
-                } else {
-                    if (!SQLAzureUtils.tableExists(conn, table, 0L)) {
-                        toBeCreated.addAll(getStatement(table, 0L));
-                    }
-
+                if (((FederationConfiguration) conf).isFederated()) {
                     for (Long id : SQLAzureUtils.getMemberDistribution(conn)) {
                         // perform use federation and create table
-                        if (id != null && id.longValue() != 0L && !SQLAzureUtils.tableExists(conn, table, id)) {
-                            toBeCreated.addAll(getStatement(table, id));
+                        if (!SQLAzureUtils.tableExists(conn, table, id)) {
+                            toBeCreated.addAll(getStatements(table, id));
                         }
                     }
+                } else {
+                    toBeCreated.addAll(getStatements(table));
                 }
+
             } catch (SQLException ex) {
                 conf.getLog("SQLAzure").error("Error creating schema", ex);
+            } finally {
+                if (conn != null) {
+                    try {
+                        conn.close();
+                    } catch (SQLException e) {
+                        log.error("Error closing connection", e);
+                    }
+                }
             }
         }
 
         return toBeCreated.toArray(new String[toBeCreated.size()]);
     }
 
-    private List<String> getStatement(Table table, Long id) {
+    /**
+     * Get SQL statement needed to create a federated table.
+     *
+     * @param table table to be created.
+     * @param id ragge id;
+     * @return
+     */
+    private List<String> getStatements(final Table table, final Long id) {
+
         final List<String> toBeCreated = new ArrayList<String>();
 
-        if (id != null) {
-            toBeCreated.add(
-                    "USE FEDERATION " + SQLAzureUtils.federation + " (range_id=" + id + ") WITH FILTERING = OFF, RESET");
+        toBeCreated.add("USE FEDERATION " + SQLAzureUtils.federation
+                + " (range_id=" + id + ") WITH FILTERING = OFF, RESET");
+
+        final List<String> stms = getStatements(table);
+
+        toBeCreated.add(stms.get(0)
+                + " FEDERATED ON (range_id = " + ((FederationConfiguration) conf).getRangeMappingName() + ")");
+
+        for (String stm : stms.subList(1, stms.size())) {
+            toBeCreated.add(stm);
         }
 
-        StringBuilder buf = new StringBuilder();
+        return toBeCreated;
+    }
 
-        String tableName = checkNameLength(
+    /**
+     * Get SQL statement needed to create a non federated table.
+     *
+     * @param table table to be created.
+     * @return
+     */
+    private List<String> getStatements(final Table table) {
+        final Map.Entry<String, String> statement = getCreateTableStm(table);
+
+        final List<String> toBeCreated = new ArrayList<String>();
+
+        toBeCreated.add(statement.getValue());
+
+        final PrimaryKey primaryKey = table.getPrimaryKey();
+
+        // TODO: cluster index creation have to be verified
+        if (primaryKey == null || primaryKey.getColumns() == null || primaryKey.getColumns().length == 0) {
+
+            toBeCreated.add("CREATE CLUSTERED INDEX " + statement.getKey() + "_cindex ON " + statement.getKey()
+                    + "(" + getNamingUtil().appendColumns(table.getColumns()) + ")");
+        }
+
+        return toBeCreated;
+    }
+
+    /**
+     * Create a standard SQL statement for table creation.
+     *
+     * @param table table to be created.
+     * @return the value pair "table name" / "SQL statement".
+     */
+    private Map.Entry<String, String> getCreateTableStm(final Table table) {
+
+        final StringBuilder buf = new StringBuilder();
+
+        final String tableName = checkNameLength(
                 getFullIdentifier(table, false),
                 maxTableNameLength,
                 "long-table-name",
@@ -102,23 +152,21 @@ public class SQLAzureDictionary extends SQLServerDictionary {
             buf.append(" (");
         }
 
-        // do this before getting the columns so we know how to handle
-        // the last comma
-        StringBuilder endBuf = new StringBuilder();
-        PrimaryKey pk = table.getPrimaryKey();
-        String pkStr;
-        if (pk != null) {
-            pkStr = getPrimaryKeyConstraintSQL(pk);
-            if (pkStr != null) {
+        final StringBuilder endBuf = new StringBuilder();
+        final PrimaryKey primaryKey = table.getPrimaryKey();
+
+        if (primaryKey != null) {
+            final String pkStr = getPrimaryKeyConstraintSQL(primaryKey);
+            if (StringUtils.isNotBlank(pkStr)) {
                 endBuf.append(pkStr);
             }
         }
 
-        Unique[] unqs = table.getUniques();
-        String unqStr;
+        final Unique[] unqs = table.getUniques();
+
         for (int i = 0; i < unqs.length; i++) {
-            unqStr = getUniqueConstraintSQL(unqs[i]);
-            if (unqStr != null) {
+            final String unqStr = getUniqueConstraintSQL(unqs[i]);
+            if (StringUtils.isNotBlank(unqStr)) {
                 if (endBuf.length() > 0) {
                     endBuf.append(", ");
                 }
@@ -126,7 +174,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
             }
         }
 
-        Column[] cols = table.getColumns();
+        final Column[] cols = table.getColumns();
         for (int i = 0; i < cols.length; i++) {
             buf.append(getDeclareColumnSQL(cols[i], false));
             if (i < cols.length - 1 || endBuf.length() > 0) {
@@ -141,18 +189,6 @@ public class SQLAzureDictionary extends SQLServerDictionary {
         buf.append(endBuf.toString());
         buf.append(")");
 
-        if (id != null) {
-            buf.append("FEDERATED ON (range_id = id)");
-        }
-
-        toBeCreated.add(buf.toString());
-
-        if (pk == null || pk.getColumns() == null || pk.getColumns().length == 0) {
-            toBeCreated.add(
-                    "CREATE CLUSTERED INDEX " + tableName + "_cindex ON " + tableName
-                    + "(" + getNamingUtil().appendColumns(cols) + ")");
-        }
-
-        return toBeCreated;
+        return new AbstractMap.SimpleEntry<String, String>(tableName, buf.toString());
     }
 }

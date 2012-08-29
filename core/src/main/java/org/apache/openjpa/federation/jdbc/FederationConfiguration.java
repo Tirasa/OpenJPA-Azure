@@ -20,7 +20,29 @@ package org.apache.openjpa.federation.jdbc;
 
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 
+/**
+ * Configuration class interface.
+ */
 public interface FederationConfiguration extends JDBCConfiguration {
 
-    public String[] getFederationNames();
+    /**
+     * Get federation names.
+     *
+     * @return array of federation names.
+     */
+    String[] getFederationNames();
+
+    /**
+     * Check if is a federated DB.
+     *
+     * @return TRUE if the SQLAzure DB is federated; FALSE otherwise.
+     */
+    boolean isFederated();
+
+    /**
+     * Get column to be papped on the range_id.
+     *
+     * @return column name.
+     */
+    public String getRangeMappingName();
 }
