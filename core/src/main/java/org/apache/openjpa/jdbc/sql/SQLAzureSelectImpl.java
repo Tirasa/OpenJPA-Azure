@@ -39,6 +39,8 @@ import java.util.TreeMap;
 
 import org.apache.commons.collections.iterators.EmptyIterator;
 import org.apache.commons.lang.StringUtils;
+import org.apache.openjpa.conf.OpenJPAConfiguration;
+import org.apache.openjpa.federation.jdbc.FederationConfiguration;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.kernel.EagerFetchModes;
 import org.apache.openjpa.jdbc.kernel.JDBCFetchConfiguration;
@@ -454,6 +456,18 @@ public class SQLAzureSelectImpl extends SelectImpl
      */
     protected Result execute(StoreContext ctx, JDBCStore store, JDBCFetchConfiguration fetch, int lockLevel)
             throws SQLException {
+
+        // -------------------------
+        // just for check configuration parameters
+        // -------------------------
+        _conf.getLog(OpenJPAConfiguration.LOG_RUNTIME).info(
+                "Retrieve federations for " + this.getClass().getSimpleName());
+        final String[] federations = ((FederationConfiguration) _conf).getFederationNames();
+        for (String federation : federations) {
+            _conf.getLog(OpenJPAConfiguration.LOG_RUNTIME).info("Federation " + federation);
+        }
+        // -------------------------
+
 
         ResultSet[] resultSets2 = new ResultSet[2];
 

@@ -16,18 +16,11 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.jdbc.kernel;
+package org.apache.openjpa.federation.jdbc;
 
-import java.sql.Connection;
-import org.apache.openjpa.jdbc.kernel.BatchingConstraintUpdateManager;
-import org.apache.openjpa.jdbc.kernel.JDBCStore;
-import org.apache.openjpa.jdbc.kernel.PreparedStatementManager;
+import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 
-public class SQLAzureUpdateManager extends BatchingConstraintUpdateManager {
+public interface FederationConfiguration extends JDBCConfiguration {
 
-    @Override
-    protected PreparedStatementManager newPreparedStatementManager(JDBCStore store, Connection conn) {
-        int batchLimit = dict.getBatchLimit();
-        return new SQLAzurePreparedStatementManager(store, conn, batchLimit);
-    }
+    public String[] getFederationNames();
 }

@@ -16,18 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.jdbc.kernel;
+package net.tirasa.jpasqlazure.repository;
 
-import java.sql.Connection;
-import org.apache.openjpa.jdbc.kernel.BatchingConstraintUpdateManager;
-import org.apache.openjpa.jdbc.kernel.JDBCStore;
-import org.apache.openjpa.jdbc.kernel.PreparedStatementManager;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import org.springframework.beans.factory.annotation.Autowired;
 
-public class SQLAzureUpdateManager extends BatchingConstraintUpdateManager {
+public class PersonRepositoryImpl implements PersonRepositoryCustom {
 
-    @Override
-    protected PreparedStatementManager newPreparedStatementManager(JDBCStore store, Connection conn) {
-        int batchLimit = dict.getBatchLimit();
-        return new SQLAzurePreparedStatementManager(store, conn, batchLimit);
-    }
+    @Autowired
+    private PersonRepository repository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 }

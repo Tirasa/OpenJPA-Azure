@@ -24,6 +24,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.openjpa.conf.OpenJPAConfiguration;
+import org.apache.openjpa.federation.jdbc.FederationConfiguration;
 import org.apache.openjpa.jdbc.sql.Row;
 import org.apache.openjpa.jdbc.sql.RowImpl;
 import org.apache.openjpa.utils.SQLAzureUtils;
@@ -37,6 +39,16 @@ public class SQLAzurePreparedStatementManager extends BatchingPreparedStatementM
     @Override
     protected int executeUpdate(PreparedStatement stmnt, String sql, RowImpl row)
             throws SQLException {
+        // -------------------------
+        // just for check configuration parameters
+        // -------------------------
+        _store.getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).info(
+                "Retrieve federations for " + this.getClass().getSimpleName());
+        final String[] federations = ((FederationConfiguration) _store.getConfiguration()).getFederationNames();
+        for (String federation : federations) {
+            _store.getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).info("Federation " + federation);
+        }
+        // -------------------------
 
         List<Long> range_ids = new ArrayList<Long>();
 

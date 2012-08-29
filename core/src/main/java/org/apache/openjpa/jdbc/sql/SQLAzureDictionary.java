@@ -22,6 +22,8 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.sql.DataSource;
+import org.apache.openjpa.conf.OpenJPAConfiguration;
+import org.apache.openjpa.federation.jdbc.FederationConfiguration;
 import org.apache.openjpa.jdbc.schema.Column;
 import org.apache.openjpa.jdbc.schema.PrimaryKey;
 import org.apache.openjpa.jdbc.schema.Table;
@@ -34,6 +36,16 @@ public class SQLAzureDictionary extends SQLServerDictionary {
 
     @Override
     public String[] getCreateTableSQL(Table table) {
+        // -------------------------
+        // just for check configuration parameters
+        // -------------------------
+        conf.getLog(OpenJPAConfiguration.LOG_RUNTIME).info(
+                "Retrieve federations for " + this.getClass().getSimpleName());
+        final String[] federations = ((FederationConfiguration) conf).getFederationNames();
+        for (String federation : federations) {
+            conf.getLog(OpenJPAConfiguration.LOG_RUNTIME).info("Federation " + federation);
+        }
+        // -------------------------
 
         final List<String> toBeCreated = new ArrayList<String>();
 

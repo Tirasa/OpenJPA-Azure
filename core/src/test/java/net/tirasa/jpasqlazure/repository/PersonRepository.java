@@ -16,5 +16,7 @@ package net.tirasa.jpasqlazure.repository;
 import net.tirasa.jpasqlazure.beans.Person;
 import org.springframework.data.repository.CrudRepository;
 
-public interface PersonRepository extends CrudRepository<Person, Long> {
+public interface PersonRepository extends CrudRepository<Person, Long>, PersonRepositoryCustom {
+
+    public Person findByUsername(final String username);
 }

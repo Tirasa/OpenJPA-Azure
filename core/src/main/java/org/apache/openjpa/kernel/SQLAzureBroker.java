@@ -20,12 +20,24 @@ package org.apache.openjpa.kernel;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import org.apache.openjpa.conf.OpenJPAConfiguration;
+import org.apache.openjpa.federation.jdbc.FederationConfiguration;
 import org.apache.openjpa.utils.SQLAzureUtils;
 
 public class SQLAzureBroker extends BrokerImpl {
 
     @Override
     public Object find(Object oid, boolean validate, FindCallbacks call) {
+        // -------------------------
+        // just for check configuration parameters
+        // -------------------------
+        getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).info(
+                "Retrieve federations for " + this.getClass().getSimpleName());
+        final String[] federations = ((FederationConfiguration) getConfiguration()).getFederationNames();
+        for (String federation : federations) {
+            getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).info("Federation " + federation);
+        }
+        // -------------------------
 
         if (oid != null) {
             Connection conn = (Connection) getConnection();
@@ -43,6 +55,7 @@ public class SQLAzureBroker extends BrokerImpl {
 
     @Override
     public Object attach(Object obj, boolean copyNew, OpCallbacks call) {
+
         Object oid = getObjectId(obj);
 
         if (obj != null) {

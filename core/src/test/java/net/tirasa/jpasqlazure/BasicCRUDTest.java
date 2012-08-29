@@ -18,10 +18,13 @@ import java.io.UnsupportedEncodingException;
 import net.tirasa.jpasqlazure.beans.Gender;
 import net.tirasa.jpasqlazure.beans.Person;
 import net.tirasa.jpasqlazure.repository.PersonRepository;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -30,26 +33,36 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
     "classpath:applicationContext.xml"
 })
 public class BasicCRUDTest {
+    
+    private static int USER_NUMBER = 3;
 
-    @Autowired
-    private PersonRepository repository;
+    protected static PersonRepository repository = null;
+
+    @BeforeClass
+    public static void init()
+            throws UnsupportedEncodingException {
+        ApplicationContext ctx = new ClassPathXmlApplicationContext("/applicationContext.xml");
+        repository = ctx.getBean(PersonRepository.class);
+
+        for (int i = 0; i < USER_NUMBER; i++) {
+            Person user = new Person();
+            user.setUsername("Bob_" + i);
+            user.setPassword("password");
+            user.setGender(Gender.values()[i % 2]);
+            user.setPicture("picture".getBytes());
+            user.setInfo("some info");
+
+            user = repository.save(user);
+            assertNotNull(user);
+            assertEquals("picture", new String(user.getPicture(), "UTF-8"));
+        }
+    }
 
     @Test
     public void run()
             throws UnsupportedEncodingException {
 
-        Person user = new Person();
-        user.setUsername("Bob");
-        user.setPassword("password");
-        user.setGender(Gender.M);
-        user.setPicture("picture".getBytes());
-        user.setInfo("some info");
-
-        user = repository.save(user);
-        assertNotNull(user);
-        assertEquals("picture", new String(user.getPicture(), "UTF-8"));
-
-        user = repository.findOne(user.getId());
+        Person user = repository.findByUsername("Bob_2");
         assertNotNull(user);
 
         user.setInfo("other info");
@@ -63,16 +76,24 @@ public class BasicCRUDTest {
         for (Person person : iter) {
             assertNotNull(person);
         }
-
-        repository.delete(user);
-
-        Person found = repository.findOne(user.getId());
-        assertNull(found);
     }
 
     @Test
     @Ignore
     public void count() {
         assertTrue(repository.count() > 0);
+    }
+
+    @AfterClass
+    public static void clean() {
+        for (int i = 0; i < USER_NUMBER; i++) {
+            Person user = repository.findByUsername("Bob_" + i);
+            assertNotNull(user);
+
+            repository.delete(user);
+
+            user = repository.findOne(user.getId());
+            assertNull(user);
+        }
     }
 }

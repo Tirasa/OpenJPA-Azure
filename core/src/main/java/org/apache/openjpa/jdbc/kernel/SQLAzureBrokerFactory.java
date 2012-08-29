@@ -18,16 +18,21 @@
  */
 package org.apache.openjpa.jdbc.kernel;
 
-import java.sql.Connection;
-import org.apache.openjpa.jdbc.kernel.BatchingConstraintUpdateManager;
-import org.apache.openjpa.jdbc.kernel.JDBCStore;
-import org.apache.openjpa.jdbc.kernel.PreparedStatementManager;
+import org.apache.openjpa.federation.jdbc.FederationConfiguration;
+import org.apache.openjpa.federation.jdbc.FederationConfigurationImpl;
+import org.apache.openjpa.lib.conf.ConfigurationProvider;
 
-public class SQLAzureUpdateManager extends BatchingConstraintUpdateManager {
+public class SQLAzureBrokerFactory extends JDBCBrokerFactory {
 
-    @Override
-    protected PreparedStatementManager newPreparedStatementManager(JDBCStore store, Connection conn) {
-        int batchLimit = dict.getBatchLimit();
-        return new SQLAzurePreparedStatementManager(store, conn, batchLimit);
+    private static final long serialVersionUID = 1641615009581406164L;
+
+    public SQLAzureBrokerFactory(FederationConfiguration conf) {
+        super(conf);
+    }
+
+    public static JDBCBrokerFactory newInstance(ConfigurationProvider cp) {
+        FederationConfiguration conf = new FederationConfigurationImpl();
+        cp.setInto(conf);
+        return new SQLAzureBrokerFactory(conf);
     }
 }
