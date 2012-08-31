@@ -73,6 +73,7 @@
         <entry key="openjpa.jdbc.SQLFactory" value="org.apache.openjpa.jdbc.sql.SQLAzureSQLFactory"/>
         <entry key="openjpa.federation.Federated" value="true" />
         <entry key="openjpa.federation.RangeMappingName" value="id" />
+        <entry key="openjpa.federation.RangeMappingType" value="bigint" />
         <entry key="openjpa.federation.Names" value="FED_1,FED_2" />
       </map>
     </property>

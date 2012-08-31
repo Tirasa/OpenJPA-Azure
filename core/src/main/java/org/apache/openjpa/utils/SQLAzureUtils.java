@@ -22,15 +22,15 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.openjpa.federation.jdbc.FederationConfiguration;
+import org.apache.openjpa.federation.jdbc.FederationConfiguration.RangeType;
 import org.apache.openjpa.jdbc.schema.Table;
 
 public class SQLAzureUtils {
 
     public static String federation = "FED_1";
 
-    public static void useFederation(final Connection conn, final String rangeId)
+    public static void useFederation(final Connection conn, final Object oid)
             throws SQLException {
 
         Statement stm = null;
@@ -39,7 +39,7 @@ public class SQLAzureUtils {
 
             stm = conn.createStatement();
 
-            stm.execute("USE FEDERATION " + SQLAzureUtils.federation + " (range_id = " + rangeId.toString() + ") "
+            stm.execute("USE FEDERATION " + SQLAzureUtils.federation + " (range_id = " + oid + ") "
                     + "WITH FILTERING=OFF, RESET");
 
         } finally {
@@ -53,11 +53,12 @@ public class SQLAzureUtils {
         }
     }
 
-    public static List<Long> getMemberDistribution(
-            final Connection conn)
+    public static MemberDistribution getMemberDistribution(final Connection conn, final FederationConfiguration conf)
             throws SQLException {
 
-        final List<Long> range_ids = new ArrayList<Long>();
+
+        final RangeType type = conf.getRangeMappingType();
+        final MemberDistribution memberDistribution = new MemberDistribution(type);
 
         Statement stm = null;
         ResultSet federation_id = null;
@@ -73,12 +74,12 @@ public class SQLAzureUtils {
 
             if (federation_id.next()) {
                 member_distribution = stm.executeQuery(
-                        "SELECT CAST(range_high as bigint) AS high "
+                        "SELECT CAST(range_high as " + type.getValue() + ") AS high "
                         + "FROM sys.federation_member_distributions "
                         + "WHERE federation_id=" + federation_id.getInt(1) + " ORDER BY high");
 
                 while (member_distribution.next()) {
-                    range_ids.add(member_distribution.getLong(1));
+                    memberDistribution.addValue(member_distribution.getObject(1));
                 }
             }
 
@@ -96,7 +97,7 @@ public class SQLAzureUtils {
             }
         }
 
-        return range_ids;
+        return memberDistribution;
     }
 
     /**
@@ -104,12 +105,11 @@ public class SQLAzureUtils {
      *
      * @param conn given connection.
      * @param table table to be verified.
-     * @param id range id.
+     * @param oid range id.
      * @return TRUE if exists; FALSE otherwise.
      * @throws SQLException
      */
-    public static boolean tableExists(
-            Connection conn, Table table, Long id)
+    public static boolean tableExists(final Connection conn, final Table table, final Object oid)
             throws SQLException {
         boolean res = false;
 
@@ -117,7 +117,7 @@ public class SQLAzureUtils {
         ResultSet rs = null;
 
         try {
-            SQLAzureUtils.useFederation(conn, id.toString());
+            SQLAzureUtils.useFederation(conn, oid);
 
             stm = conn.createStatement();
 

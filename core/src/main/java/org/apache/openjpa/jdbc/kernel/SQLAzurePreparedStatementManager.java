@@ -21,29 +21,30 @@ package org.apache.openjpa.jdbc.kernel;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.openjpa.federation.jdbc.FederationConfiguration;
+import org.apache.openjpa.jdbc.identifier.DBIdentifier;
+import org.apache.openjpa.jdbc.schema.Column;
 import org.apache.openjpa.jdbc.sql.Row;
 import org.apache.openjpa.jdbc.sql.RowImpl;
 import org.apache.openjpa.utils.SQLAzureUtils;
 
 public class SQLAzurePreparedStatementManager extends BatchingPreparedStatementManagerImpl {
 
-    public SQLAzurePreparedStatementManager(JDBCStore store, Connection conn, int batchLimit) {
+    public SQLAzurePreparedStatementManager(final JDBCStore store, final Connection conn, final int batchLimit) {
         super(store, conn, batchLimit);
     }
 
     @Override
-    protected int executeUpdate(PreparedStatement stmnt, String sql, RowImpl row)
+    protected int executeUpdate(final PreparedStatement stmnt, final String sql, final RowImpl row)
             throws SQLException {
 
-        List<Long> range_ids = new ArrayList<Long>();
-
-        int res = 0;
-
         if (row.getAction() == Row.ACTION_INSERT) {
-            range_ids.add((Long) row.getVals()[row.getColumns()[0].getIndex()]);
-            SQLAzureUtils.useFederation(_conn, range_ids.get(0).toString());
+            final String rangeMappingName = ((FederationConfiguration) _store.getConfiguration()).getRangeMappingName();
+
+            final Column col = row.getTable().getColumn(
+                    DBIdentifier.newIdentifier(rangeMappingName, DBIdentifier.DBIdentifierType.COLUMN, true), false);
+            
+            SQLAzureUtils.useFederation(_conn, row.getVals()[col.getIndex()]);
         }
 
         return stmnt.executeUpdate();

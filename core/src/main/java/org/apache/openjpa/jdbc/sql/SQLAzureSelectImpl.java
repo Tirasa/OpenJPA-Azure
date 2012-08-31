@@ -489,14 +489,14 @@ public class SQLAzureSelectImpl extends SelectImpl
 
         final Connection conn = store.getConnection();
 
-        for (Long id : SQLAzureUtils.getMemberDistribution(conn)) {
+        for (String id : SQLAzureUtils.getMemberDistribution(conn, (FederationConfiguration) _conf)) {
             PreparedStatement stmnt = null;
 
             try {
                 // ----------------------------------------
                 // Execute query for each federation member
                 // ----------------------------------------
-                SQLAzureUtils.useFederation(conn, id.toString());
+                SQLAzureUtils.useFederation(conn, id);
 
                 if (isLRS) {
                     stmnt = prepareStatement(conn, sql, fetch, rsType, -1, true);

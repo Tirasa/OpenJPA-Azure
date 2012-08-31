@@ -30,7 +30,7 @@ public class SQLAzureBroker extends BrokerImpl {
 
         if (oid != null) {
             try {
-                SQLAzureUtils.useFederation((Connection) getConnection(), oid.toString());
+                SQLAzureUtils.useFederation((Connection) getConnection(), oid);
             } catch (SQLException e) {
                 getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).error("Error using federation", e);
             }
@@ -46,7 +46,7 @@ public class SQLAzureBroker extends BrokerImpl {
 
         if (obj != null) {
             try {
-                SQLAzureUtils.useFederation((Connection) getConnection(), oid.toString());
+                SQLAzureUtils.useFederation((Connection) getConnection(), oid);
             } catch (SQLException e) {
                 getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).error("Error using federation", e);
             }

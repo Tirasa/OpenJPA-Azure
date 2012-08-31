@@ -19,15 +19,11 @@
 package org.apache.openjpa.jdbc.kernel;
 
 import java.sql.Connection;
-import org.apache.openjpa.jdbc.kernel.BatchingConstraintUpdateManager;
-import org.apache.openjpa.jdbc.kernel.JDBCStore;
-import org.apache.openjpa.jdbc.kernel.PreparedStatementManager;
 
 public class SQLAzureUpdateManager extends BatchingConstraintUpdateManager {
 
     @Override
-    protected PreparedStatementManager newPreparedStatementManager(JDBCStore store, Connection conn) {
-        int batchLimit = dict.getBatchLimit();
-        return new SQLAzurePreparedStatementManager(store, conn, batchLimit);
+    protected PreparedStatementManager newPreparedStatementManager(final JDBCStore store, final Connection conn) {
+        return new SQLAzurePreparedStatementManager(store, conn, dict.getBatchLimit());
     }
 }

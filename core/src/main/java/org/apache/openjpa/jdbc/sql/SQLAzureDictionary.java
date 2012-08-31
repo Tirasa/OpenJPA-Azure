@@ -52,7 +52,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
                 conn = ds.getConnection();
 
                 if (((FederationConfiguration) conf).isFederated()) {
-                    for (Long id : SQLAzureUtils.getMemberDistribution(conn)) {
+                    for (String id : SQLAzureUtils.getMemberDistribution(conn, (FederationConfiguration) conf)) {
                         // perform use federation and create table
                         if (!SQLAzureUtils.tableExists(conn, table, id)) {
                             toBeCreated.addAll(getStatements(table, id));
@@ -85,7 +85,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
      * @param id ragge id;
      * @return list of statements.
      */
-    private List<String> getStatements(final Table table, final Long id) {
+    private List<String> getStatements(final Table table, final Object id) {
 
         final List<String> toBeCreated = new ArrayList<String>();
 

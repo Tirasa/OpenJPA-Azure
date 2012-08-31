@@ -25,6 +25,24 @@ import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
  */
 public interface FederationConfiguration extends JDBCConfiguration {
 
+    public enum RangeType {
+
+        BIGINT("bigint"),
+        INT("int"),
+        UNIQUEIDENTIFIER("uniqueidentifier"),
+        VARBINARY("varbinary");
+
+        private String value;
+
+        private RangeType(final String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+    };
+
     /**
      * Get federation names.
      *
@@ -40,9 +58,16 @@ public interface FederationConfiguration extends JDBCConfiguration {
     boolean isFederated();
 
     /**
-     * Get column to be papped on the range_id.
+     * Get column to be mapped on the range_id.
      *
      * @return column name.
      */
     public String getRangeMappingName();
+
+    /**
+     * Get type of the range_id (bigint, int, uniqueidentifier, varbinary).
+     *
+     * @return range_id type.
+     */
+    public RangeType getRangeMappingType();
 }

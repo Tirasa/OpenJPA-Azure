@@ -36,6 +36,8 @@ public class FederationConfigurationImpl extends JDBCConfigurationImpl implement
 
     protected StringValue rangeMappingNamePlugin;
 
+    protected StringValue rangeMappingTypePlugin;
+
     public FederationConfigurationImpl() {
         super();
 
@@ -47,6 +49,8 @@ public class FederationConfigurationImpl extends JDBCConfigurationImpl implement
         namesPlugin = addStringList(PREFIX_FEDERATION + "Names");
 
         rangeMappingNamePlugin = addString(PREFIX_FEDERATION + "RangeMappingName");
+
+        rangeMappingTypePlugin = addString(PREFIX_FEDERATION + "RangeMappingType");
     }
 
     @Override
@@ -62,5 +66,14 @@ public class FederationConfigurationImpl extends JDBCConfigurationImpl implement
     @Override
     public String getRangeMappingName() {
         return rangeMappingNamePlugin.get();
+    }
+
+    @Override
+    public RangeType getRangeMappingType() {
+        try {
+            return RangeType.valueOf(rangeMappingTypePlugin.get().toUpperCase());
+        } catch (Exception e) {
+            return RangeType.BIGINT;
+        }
     }
 }
