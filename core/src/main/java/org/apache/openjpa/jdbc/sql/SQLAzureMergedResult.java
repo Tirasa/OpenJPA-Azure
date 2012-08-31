@@ -34,6 +34,7 @@ import java.util.Comparator;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.openjpa.jdbc.kernel.JDBCFetchConfiguration;
 import org.apache.openjpa.jdbc.kernel.JDBCStore;
 import org.apache.openjpa.jdbc.meta.ClassMapping;
@@ -72,7 +73,7 @@ public class SQLAzureMergedResult extends AbstractResult {
      * Constructor; supply delegates and comparator for ordering results.
      */
     public SQLAzureMergedResult(Result[] res, MergedResult.ResultComparator comp) {
-        _res = res;
+        _res = (Result[]) ArrayUtils.clone(res);
         _comp = comp;
         _order = (comp == null) ? null : new Object[res.length];
         _status = (comp == null) ? null : new byte[res.length];

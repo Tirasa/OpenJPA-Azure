@@ -36,8 +36,11 @@ import org.apache.openjpa.utils.SQLAzureUtils;
  */
 public class SQLAzureDictionary extends SQLServerDictionary {
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
-    public String[] getCreateTableSQL(Table table) {
+    public String[] getCreateTableSQL(final Table table) {
 
         final List<String> toBeCreated = new ArrayList<String>();
 
@@ -80,7 +83,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
      *
      * @param table table to be created.
      * @param id ragge id;
-     * @return
+     * @return list of statements.
      */
     private List<String> getStatements(final Table table, final Long id) {
 
@@ -105,7 +108,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
      * Get SQL statement needed to create a non federated table.
      *
      * @param table table to be created.
-     * @return
+     * @return list of statements.
      */
     private List<String> getStatements(final Table table) {
         final Map.Entry<String, String> statement = getCreateTableStm(table);

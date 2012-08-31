@@ -30,6 +30,29 @@ public class SQLAzureUtils {
 
     public static String federation = "FED_1";
 
+    public static void useFederation(final Connection conn, final String rangeId)
+            throws SQLException {
+
+        Statement stm = null;
+
+        try {
+
+            stm = conn.createStatement();
+
+            stm.execute("USE FEDERATION " + SQLAzureUtils.federation + " (range_id = " + rangeId.toString() + ") "
+                    + "WITH FILTERING=OFF, RESET");
+
+        } finally {
+            if (stm != null) {
+                try {
+                    stm.close();
+                } catch (SQLException ignore) {
+                    // ignore exception
+                }
+            }
+        }
+    }
+
     public static List<Long> getMemberDistribution(
             final Connection conn)
             throws SQLException {
@@ -94,9 +117,9 @@ public class SQLAzureUtils {
         ResultSet rs = null;
 
         try {
-            stm = conn.createStatement();
+            SQLAzureUtils.useFederation(conn, id.toString());
 
-            stm.execute("USE FEDERATION " + federation + " (range_id=" + id + ") WITH FILTERING = OFF, RESET");
+            stm = conn.createStatement();
 
             rs = stm.executeQuery(
                     "SELECT OBJECT_NAME (object_id) AS[ObjectName] "

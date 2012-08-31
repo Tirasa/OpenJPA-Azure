@@ -485,21 +485,18 @@ public class SQLAzureSelectImpl extends SelectImpl
         int rsType = (isLRS && supportsRandomAccess(forUpdate)) ? -1 : ResultSet.TYPE_FORWARD_ONLY;
 
         List<ResultSet> resultSets = new ArrayList<ResultSet>();
-        List<Connection> connections = new ArrayList<Connection>();
         List<Statement> statements = new ArrayList<Statement>();
 
-        for (Long id : SQLAzureUtils.getMemberDistribution(store.getConnection())) {
-            Connection conn = store.getNewConnection();
+        final Connection conn = store.getConnection();
+
+        for (Long id : SQLAzureUtils.getMemberDistribution(conn)) {
             PreparedStatement stmnt = null;
-            ResultSet rs = null;
 
             try {
                 // ----------------------------------------
                 // Execute query for each federation member
                 // ----------------------------------------
-                conn.createStatement().execute(
-                        "USE FEDERATION " + SQLAzureUtils.federation + " (range_id = " + id + ") "
-                        + "WITH FILTERING=OFF, RESET");
+                SQLAzureUtils.useFederation(conn, id.toString());
 
                 if (isLRS) {
                     stmnt = prepareStatement(conn, sql, fetch, rsType, -1, true);
@@ -510,32 +507,34 @@ public class SQLAzureSelectImpl extends SelectImpl
                 getDictionary().setTimeouts(stmnt, fetch, forUpdate);
 
                 resultSets.add(execute(conn, stmnt, sql, isLRS, store));
-                connections.add(conn);
                 statements.add(stmnt);
 
                 // ----------------------------------------
 
             } catch (SQLException se) {
+
                 // clean up statement
                 if (stmnt != null) {
                     try {
                         stmnt.close();
-                    } catch (SQLException se2) {
+                    } catch (SQLException ignore) {
+                        // ignore exception
                     }
-                }
-
-                try {
-                    conn.close();
-                } catch (SQLException se2) {
                 }
 
                 throw se;
             }
         }
 
-        Result result = getEagerResult(connections, statements, resultSets, store, fetch, forUpdate, sql);
+        if (statements.isEmpty() && conn != null) {
+            try {
+                conn.close();
+            } catch (SQLException ignore) {
+                // ignore exception
+            }
+        }
 
-        return result;
+        return getEagerResult(conn, statements, resultSets, store, fetch, forUpdate, sql);
     }
 
     private ResultSet execute(
@@ -654,7 +653,7 @@ public class SQLAzureSelectImpl extends SelectImpl
      * This method is to provide override for non-JDBC or JDBC-like implementation of executing eager selects.
      */
     public Result getEagerResult(
-            final List<Connection> connections,
+            final Connection connection,
             final List<Statement> statements,
             final List<ResultSet> rs,
             final JDBCStore store,
@@ -663,7 +662,7 @@ public class SQLAzureSelectImpl extends SelectImpl
             final SQLBuffer sql)
             throws SQLException {
 
-        SQLAzureSelectResult res = new SQLAzureSelectResult(connections, statements, rs, _dict);
+        SQLAzureSelectResult res = new SQLAzureSelectResult(connection, statements, rs, _dict);
         res.setSelect(this);
         res.setStore(store);
         res.setLocking(forUpdate);
@@ -2603,11 +2602,11 @@ public class SQLAzureSelectImpl extends SelectImpl
         }
 
         public SQLAzureSelectResult(
-                final List<Connection> connections,
+                final Connection connection,
                 final List<Statement> statements,
                 final List<ResultSet> rs,
                 final DBDictionary dict) {
-            super(connections, statements, rs, dict);
+            super(connection, statements, rs, dict);
         }
 
         /**

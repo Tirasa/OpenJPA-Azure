@@ -21,32 +21,18 @@ package org.apache.openjpa.kernel;
 import java.sql.Connection;
 import java.sql.SQLException;
 import org.apache.openjpa.conf.OpenJPAConfiguration;
-import org.apache.openjpa.federation.jdbc.FederationConfiguration;
 import org.apache.openjpa.utils.SQLAzureUtils;
 
 public class SQLAzureBroker extends BrokerImpl {
 
     @Override
     public Object find(Object oid, boolean validate, FindCallbacks call) {
-        // -------------------------
-        // just for check configuration parameters
-        // -------------------------
-        getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).info(
-                "Retrieve federations for " + this.getClass().getSimpleName());
-        final String[] federations = ((FederationConfiguration) getConfiguration()).getFederationNames();
-        for (String federation : federations) {
-            getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).info("Federation " + federation);
-        }
-        // -------------------------
 
         if (oid != null) {
-            Connection conn = (Connection) getConnection();
             try {
-                conn.createStatement().execute(
-                        "USE FEDERATION " + SQLAzureUtils.federation + " (range_id = " + oid.toString() + ") "
-                        + "WITH FILTERING=OFF, RESET");
+                SQLAzureUtils.useFederation((Connection) getConnection(), oid.toString());
             } catch (SQLException e) {
-                getConfiguration().getLog("SQLAzure").error("Error getting federation ref", e);
+                getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).error("Error using federation", e);
             }
         }
 
@@ -56,16 +42,13 @@ public class SQLAzureBroker extends BrokerImpl {
     @Override
     public Object attach(Object obj, boolean copyNew, OpCallbacks call) {
 
-        Object oid = getObjectId(obj);
+        final Object oid = getObjectId(obj);
 
         if (obj != null) {
-            Connection conn = (Connection) getConnection();
             try {
-                conn.createStatement().execute(
-                        "USE FEDERATION " + SQLAzureUtils.federation + " (range_id = " + oid + ") "
-                        + "WITH FILTERING=OFF, RESET");
+                SQLAzureUtils.useFederation((Connection) getConnection(), oid.toString());
             } catch (SQLException e) {
-                getConfiguration().getLog("SQLAzure").error("Error getting federation ref", e);
+                getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).error("Error using federation", e);
             }
         }
 

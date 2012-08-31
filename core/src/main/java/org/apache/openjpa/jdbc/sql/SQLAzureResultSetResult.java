@@ -49,7 +49,7 @@ import org.apache.openjpa.meta.JavaTypes;
 public class SQLAzureResultSetResult
         extends AbstractResult {
 
-    private final List<Connection> connections = new ArrayList<Connection>();
+    private final Connection connection;
 
     private final List<Statement> statements = new ArrayList<Statement>();
 
@@ -81,9 +81,7 @@ public class SQLAzureResultSetResult
             }
         }
 
-        if (conn != null) {
-            connections.add(conn);
-        }
+        this.connection = conn;
 
         if (stmnt != null) {
             statements.add(stmnt);
@@ -99,7 +97,7 @@ public class SQLAzureResultSetResult
     }
 
     public SQLAzureResultSetResult(
-            final List<Connection> connections,
+            final Connection connection,
             final List<Statement> statements,
             final List<ResultSet> rs,
             final DBDictionary dict) {
@@ -109,9 +107,7 @@ public class SQLAzureResultSetResult
             _rs = results.get(0);
         }
 
-        if (connections != null) {
-            this.connections.addAll(connections);
-        }
+        this.connection = connection;
 
         if (statements != null) {
             this.statements.addAll(statements);
@@ -132,9 +128,7 @@ public class SQLAzureResultSetResult
      * Constructor.
      */
     public SQLAzureResultSetResult(Connection conn, ResultSet rs, DBDictionary dict) {
-        if (conn != null) {
-            connections.add(conn);
-        }
+        connection = conn;
 
         if (rs != null) {
             results.add(rs);
@@ -153,9 +147,12 @@ public class SQLAzureResultSetResult
             throws SQLException {
 
         if (rs != null) {
-            connections.add(rs.getStatement().getConnection());
-            statements.add(rs.getStatement());
+            final Statement stm = rs.getStatement();
+            connection = stm.getConnection();
+            statements.add(stm);
             results.add(rs);
+        } else {
+            connection = null;
         }
 
         results.add(rs);
@@ -233,12 +230,10 @@ public class SQLAzureResultSetResult
             }
         }
 
-        if (_closeConn) {
-            for (Connection conn : connections) {
-                try {
-                    conn.close();
-                } catch (SQLException se) {
-                }
+        if (_closeConn && connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException se) {
             }
         }
     }
