@@ -14,40 +14,24 @@
 package net.tirasa.jpasqlazure.beans;
 
 import java.io.Serializable;
-import javax.persistence.Column;
+import java.util.Set;
 import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.Lob;
-import javax.persistence.Table;
+import javax.persistence.ManyToMany;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
 @Entity
-public class Person implements Serializable {
+public class Person1 implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(nullable = false)
-    private String username;
-
-    @Column(nullable = false)
-    private String password;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "gender")
-    private Gender gender;
-
-    @Lob
-    private String info;
-
-    @Lob
-    private byte[] picture;
+//    @ManyToMany
+//    private Set<Person> person;
 
     public Long getId() {
         return id;
@@ -57,45 +41,13 @@ public class Person implements Serializable {
         this.id = id;
     }
 
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(final String password) {
-        this.password = password;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(final String username) {
-        this.username = username;
-    }
-
-    public Gender getGender() {
-        return gender;
-    }
-
-    public void setGender(Gender gender) {
-        this.gender = gender;
-    }
-
-    public byte[] getPicture() {
-        return picture;
-    }
-
-    public void setPicture(byte[] picture) {
-        this.picture = picture;
-    }
-
-    public String getInfo() {
-        return info;
-    }
-
-    public void setInfo(String info) {
-        this.info = info;
-    }
+//    public Set<Person> getPerson() {
+//        return person;
+//    }
+//
+//    public void setPerson(Set<Person> person) {
+//        this.person = person;
+//    }
 
     @Override
     public String toString() {

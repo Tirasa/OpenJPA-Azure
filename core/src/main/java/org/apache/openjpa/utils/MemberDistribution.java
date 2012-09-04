@@ -21,7 +21,7 @@ package org.apache.openjpa.utils;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import org.apache.openjpa.federation.jdbc.FederationConfiguration.RangeType;
+import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration.RangeType;
 
 public class MemberDistribution implements Iterable<String> {
 

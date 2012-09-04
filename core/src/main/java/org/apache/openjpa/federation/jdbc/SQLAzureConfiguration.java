@@ -18,12 +18,14 @@
  */
 package org.apache.openjpa.federation.jdbc;
 
+import java.util.Collection;
+import java.util.List;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 
 /**
  * Configuration class interface.
  */
-public interface FederationConfiguration extends JDBCConfiguration {
+public interface SQLAzureConfiguration extends JDBCConfiguration {
 
     public enum RangeType {
 
@@ -32,42 +34,66 @@ public interface FederationConfiguration extends JDBCConfiguration {
         UNIQUEIDENTIFIER("uniqueidentifier"),
         VARBINARY("varbinary");
 
+        /**
+         * Type value string.
+         */
         private String value;
 
+        /**
+         * Constructor.
+         *
+         * @param value type value string.
+         */
         private RangeType(final String value) {
             this.value = value;
         }
 
+        /**
+         * Return type value string.
+         *
+         * @return type value string.
+         */
         public String getValue() {
             return value;
         }
     };
 
     /**
-     * Get federation names.
+     * Get all the federation names.
      *
-     * @return array of federation names.
+     * @return list of federations.
      */
-    String[] getFederationNames();
+    Collection<Federation> getFederations();
 
     /**
-     * Check if is a federated DB.
+     * Get all the federations for provided table.
      *
-     * @return TRUE if the SQLAzure DB is federated; FALSE otherwise.
+     * @param tableName table name.
+     * @return list of federation for provided table.
      */
-    boolean isFederated();
+    List<Federation> getFederations(final String tableName);
 
     /**
      * Get column to be mapped on the range_id.
      *
+     * @param federationName federation name.
      * @return column name.
      */
-    public String getRangeMappingName();
+    String getRangeMappingName(final String federationName);
 
     /**
      * Get type of the range_id (bigint, int, uniqueidentifier, varbinary).
      *
+     * @param federationName federation name.
      * @return range_id type.
      */
-    public RangeType getRangeMappingType();
+    RangeType getRangeMappingType(final String federationName);
+
+    /**
+     * Get federated tables onto the given federation.
+     *
+     * @param federationName federation name.
+     * @return list of tables.
+     */
+    List<String> getFederatedTables(final String federationName);
 }

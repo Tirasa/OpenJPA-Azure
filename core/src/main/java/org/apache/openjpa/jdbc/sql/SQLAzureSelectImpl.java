@@ -39,8 +39,8 @@ import java.util.TreeMap;
 
 import org.apache.commons.collections.iterators.EmptyIterator;
 import org.apache.commons.lang.StringUtils;
-import org.apache.openjpa.conf.OpenJPAConfiguration;
-import org.apache.openjpa.federation.jdbc.FederationConfiguration;
+import org.apache.openjpa.federation.jdbc.Federation;
+import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.kernel.EagerFetchModes;
 import org.apache.openjpa.jdbc.kernel.JDBCFetchConfiguration;
@@ -396,7 +396,6 @@ public class SQLAzureSelectImpl extends SelectImpl
 
     public int getCount(JDBCStore store)
             throws SQLException {
-        System.out.println("AAAAAAAA Count");
         Connection conn = null;
         PreparedStatement stmnt = null;
         ResultSet rs = null;
@@ -457,18 +456,6 @@ public class SQLAzureSelectImpl extends SelectImpl
     protected Result execute(StoreContext ctx, JDBCStore store, JDBCFetchConfiguration fetch, int lockLevel)
             throws SQLException {
 
-        // -------------------------
-        // just for check configuration parameters
-        // -------------------------
-        _conf.getLog(OpenJPAConfiguration.LOG_RUNTIME).info(
-                "Retrieve federations for " + this.getClass().getSimpleName());
-        final String[] federations = ((FederationConfiguration) _conf).getFederationNames();
-        for (String federation : federations) {
-            _conf.getLog(OpenJPAConfiguration.LOG_RUNTIME).info("Federation " + federation);
-        }
-        // -------------------------
-
-
         ResultSet[] resultSets2 = new ResultSet[2];
 
         boolean forUpdate = false;
@@ -489,40 +476,43 @@ public class SQLAzureSelectImpl extends SelectImpl
 
         final Connection conn = store.getConnection();
 
-        for (String id : SQLAzureUtils.getMemberDistribution(conn, (FederationConfiguration) _conf)) {
-            PreparedStatement stmnt = null;
+        for (Federation federation : ((SQLAzureConfiguration) _conf).getFederations()) {
 
-            try {
-                // ----------------------------------------
-                // Execute query for each federation member
-                // ----------------------------------------
-                SQLAzureUtils.useFederation(conn, id);
+            for (String id : SQLAzureUtils.getMemberDistribution(conn, federation)) {
+                PreparedStatement stmnt = null;
 
-                if (isLRS) {
-                    stmnt = prepareStatement(conn, sql, fetch, rsType, -1, true);
-                } else {
-                    stmnt = prepareStatement(conn, sql, null, rsType, -1, false);
-                }
+                try {
+                    // ----------------------------------------
+                    // Execute query for each federation member
+                    // ----------------------------------------
+                    SQLAzureUtils.useFederation(conn, federation.getName(), id);
 
-                getDictionary().setTimeouts(stmnt, fetch, forUpdate);
-
-                resultSets.add(execute(conn, stmnt, sql, isLRS, store));
-                statements.add(stmnt);
-
-                // ----------------------------------------
-
-            } catch (SQLException se) {
-
-                // clean up statement
-                if (stmnt != null) {
-                    try {
-                        stmnt.close();
-                    } catch (SQLException ignore) {
-                        // ignore exception
+                    if (isLRS) {
+                        stmnt = prepareStatement(conn, sql, fetch, rsType, -1, true);
+                    } else {
+                        stmnt = prepareStatement(conn, sql, null, rsType, -1, false);
                     }
-                }
 
-                throw se;
+                    getDictionary().setTimeouts(stmnt, fetch, forUpdate);
+
+                    resultSets.add(execute(conn, stmnt, sql, isLRS, store));
+                    statements.add(stmnt);
+
+                    // ----------------------------------------
+
+                } catch (SQLException se) {
+
+                    // clean up statement
+                    if (stmnt != null) {
+                        try {
+                            stmnt.close();
+                        } catch (SQLException ignore) {
+                            // ignore exception
+                        }
+                    }
+
+                    throw se;
+                }
             }
         }
 
@@ -2304,10 +2294,6 @@ public class SQLAzureSelectImpl extends SelectImpl
 
         // not found; create alias
         i = aliasSize(false, null);
-//        System.out.println("GetTableIndex\t"+
-//                ((_parent != null) ? "Sub" :"") +
-//                " created alias: "+
-//                i.intValue()+ " "+ key);
         recordTableAlias(table, key, i);
         return i.intValue();
     }
@@ -2371,10 +2357,6 @@ public class SQLAzureSelectImpl extends SelectImpl
 
     private int createAlias(Table table, Object key) {
         Integer i = ctx().nextAlias();
-//        System.out.println("\t"+
-//                ((_parent != null) ? "Sub" :"") +
-//                "Query created alias: "+ 
-//                i.intValue()+ " "+ key);
         recordTableAlias(table, key, i);
         return i.intValue();
     }

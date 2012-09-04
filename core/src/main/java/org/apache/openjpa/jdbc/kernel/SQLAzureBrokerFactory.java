@@ -18,21 +18,63 @@
  */
 package org.apache.openjpa.jdbc.kernel;
 
-import org.apache.openjpa.federation.jdbc.FederationConfiguration;
-import org.apache.openjpa.federation.jdbc.FederationConfigurationImpl;
+import java.util.Arrays;
+import java.util.Collection;
+import org.apache.commons.lang.StringUtils;
+import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
+import org.apache.openjpa.federation.jdbc.SQLAzureConfigurationImpl;
+import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
+import org.apache.openjpa.jdbc.meta.MappingRepository;
+import org.apache.openjpa.jdbc.meta.MappingTool;
+import org.apache.openjpa.jdbc.meta.SQLAzureMappingTool;
 import org.apache.openjpa.lib.conf.ConfigurationProvider;
+import org.apache.openjpa.lib.conf.Configurations;
+import org.apache.openjpa.lib.util.Localizer;
+import org.apache.openjpa.util.UserException;
 
 public class SQLAzureBrokerFactory extends JDBCBrokerFactory {
 
     private static final long serialVersionUID = 1641615009581406164L;
 
-    public SQLAzureBrokerFactory(FederationConfiguration conf) {
+    private static final Localizer _loc = Localizer.forPackage(SQLAzureBrokerFactory.class);
+
+    public SQLAzureBrokerFactory(SQLAzureConfiguration conf) {
         super(conf);
     }
 
     public static JDBCBrokerFactory newInstance(ConfigurationProvider cp) {
-        FederationConfiguration conf = new FederationConfigurationImpl();
+        SQLAzureConfiguration conf = new SQLAzureConfigurationImpl();
         cp.setInto(conf);
         return new SQLAzureBrokerFactory(conf);
+    }
+
+    @Override
+    protected void synchronizeMappings(ClassLoader loader, JDBCConfiguration conf) {
+        String action = conf.getSynchronizeMappings();
+        if (StringUtils.isEmpty(action)) {
+            return;
+        }
+
+        MappingRepository repo = conf.getMappingRepositoryInstance();
+        Collection<Class<?>> classes = repo.loadPersistentTypes(false, loader);
+        if (classes.isEmpty()) {
+            return;
+        }
+
+        String props = Configurations.getProperties(action);
+        action = Configurations.getClassName(action);
+        SQLAzureMappingTool tool = new SQLAzureMappingTool(conf, action, false);
+        Configurations.configureInstance(tool, conf, props, "SynchronizeMappings");
+
+        // initialize the schema
+        for (Class<?> cls : classes) {
+            try {
+                tool.run(cls);
+            } catch (IllegalArgumentException iae) {
+                throw new UserException(_loc.get("bad-synch-mappings", action, Arrays.asList(MappingTool.ACTIONS)));
+            }
+        }
+
+        tool.record();
     }
 }

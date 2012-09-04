@@ -24,12 +24,11 @@ import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.apache.commons.lang.StringUtils;
-import org.apache.openjpa.federation.jdbc.FederationConfiguration;
+import org.apache.openjpa.federation.jdbc.Federation;
 import org.apache.openjpa.jdbc.schema.Column;
 import org.apache.openjpa.jdbc.schema.PrimaryKey;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.jdbc.schema.Unique;
-import org.apache.openjpa.utils.SQLAzureUtils;
 
 /**
  * Dictionary for Microsoft SQL Server.
@@ -41,6 +40,10 @@ public class SQLAzureDictionary extends SQLServerDictionary {
      */
     @Override
     public String[] getCreateTableSQL(final Table table) {
+        return getCreateTableSQL(table, (Federation) null);
+    }
+
+    public String[] getCreateTableSQL(final Table table, final Federation federation) {
 
         final List<String> toBeCreated = new ArrayList<String>();
 
@@ -51,15 +54,11 @@ public class SQLAzureDictionary extends SQLServerDictionary {
             try {
                 conn = ds.getConnection();
 
-                if (((FederationConfiguration) conf).isFederated()) {
-                    for (String id : SQLAzureUtils.getMemberDistribution(conn, (FederationConfiguration) conf)) {
-                        // perform use federation and create table
-                        if (!SQLAzureUtils.tableExists(conn, table, id)) {
-                            toBeCreated.addAll(getStatements(table, id));
-                        }
-                    }
-                } else {
+                if (federation == null) {
                     toBeCreated.addAll(getStatements(table));
+                } else {
+                    // perform use federation and create table
+                    toBeCreated.addAll(getStatements(table, federation));
                 }
 
             } catch (SQLException ex) {
@@ -85,17 +84,14 @@ public class SQLAzureDictionary extends SQLServerDictionary {
      * @param id ragge id;
      * @return list of statements.
      */
-    private List<String> getStatements(final Table table, final Object id) {
+    private List<String> getStatements(final Table table, final Federation federation) {
 
         final List<String> toBeCreated = new ArrayList<String>();
-
-        toBeCreated.add("USE FEDERATION " + SQLAzureUtils.federation
-                + " (range_id=" + id + ") WITH FILTERING = OFF, RESET");
 
         final List<String> stms = getStatements(table);
 
         toBeCreated.add(stms.get(0)
-                + " FEDERATED ON (range_id = " + ((FederationConfiguration) conf).getRangeMappingName() + ")");
+                + " FEDERATED ON (range_id = " + federation.getRangeMappingName() + ")");
 
         for (String stm : stms.subList(1, stms.size())) {
             toBeCreated.add(stm);

@@ -21,7 +21,9 @@ package org.apache.openjpa.jdbc.kernel;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import org.apache.openjpa.federation.jdbc.FederationConfiguration;
+import java.util.List;
+import org.apache.openjpa.federation.jdbc.Federation;
+import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
 import org.apache.openjpa.jdbc.identifier.DBIdentifier;
 import org.apache.openjpa.jdbc.schema.Column;
 import org.apache.openjpa.jdbc.sql.Row;
@@ -38,15 +40,33 @@ public class SQLAzurePreparedStatementManager extends BatchingPreparedStatementM
     protected int executeUpdate(final PreparedStatement stmnt, final String sql, final RowImpl row)
             throws SQLException {
 
-        if (row.getAction() == Row.ACTION_INSERT) {
-            final String rangeMappingName = ((FederationConfiguration) _store.getConfiguration()).getRangeMappingName();
+        int updates = 0;
 
-            final Column col = row.getTable().getColumn(
-                    DBIdentifier.newIdentifier(rangeMappingName, DBIdentifier.DBIdentifierType.COLUMN, true), false);
-            
-            SQLAzureUtils.useFederation(_conn, row.getVals()[col.getIndex()]);
+        if (row.getAction() == Row.ACTION_INSERT) {
+            final List<Federation> federations =
+                    ((SQLAzureConfiguration) _store.getConfiguration()).getFederations(
+                    row.getTable().getIdentifier().getName());
+
+            if (federations == null || federations.isEmpty()) {
+                updates += stmnt.executeUpdate();
+            } else {
+
+                for (Federation federation : federations) {
+                    final String rangeMappingName = federation.getRangeMappingName();
+
+                    final Column col = row.getTable().getColumn(
+                            DBIdentifier.newIdentifier(rangeMappingName, DBIdentifier.DBIdentifierType.COLUMN, true),
+                            false);
+
+                    SQLAzureUtils.useFederation(_conn, federation.getName(), row.getVals()[col.getIndex()]);
+
+                    updates += stmnt.executeUpdate();
+                }
+            }
+        } else {
+            updates += stmnt.executeUpdate();
         }
 
-        return stmnt.executeUpdate();
+        return updates;
     }
 }

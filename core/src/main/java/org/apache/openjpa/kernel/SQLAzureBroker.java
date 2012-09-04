@@ -26,32 +26,32 @@ import org.apache.openjpa.utils.SQLAzureUtils;
 public class SQLAzureBroker extends BrokerImpl {
 
     @Override
-    public Object find(Object oid, boolean validate, FindCallbacks call) {
+    public Object find(final Object oid, final boolean validate, final FindCallbacks call) {
 
         if (oid != null) {
             try {
-                SQLAzureUtils.useFederation((Connection) getConnection(), oid);
+                SQLAzureUtils.useFederation((Connection) getConnection(), "FED_1", oid);
             } catch (SQLException e) {
                 getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).error("Error using federation", e);
             }
         }
-
+        
         return super.find(oid, validate, call);
     }
 
     @Override
-    public Object attach(Object obj, boolean copyNew, OpCallbacks call) {
+    public Object attach(final Object obj, final boolean copyNew, final OpCallbacks call) {
 
         final Object oid = getObjectId(obj);
 
         if (obj != null) {
             try {
-                SQLAzureUtils.useFederation((Connection) getConnection(), oid);
+                SQLAzureUtils.useFederation((Connection) getConnection(), "FED_1", oid);
             } catch (SQLException e) {
                 getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).error("Error using federation", e);
             }
         }
-
+        
         return super.attach(obj, copyNew, call);
     }
 }

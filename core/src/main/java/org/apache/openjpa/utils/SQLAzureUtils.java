@@ -22,25 +22,20 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import org.apache.openjpa.federation.jdbc.FederationConfiguration;
-import org.apache.openjpa.federation.jdbc.FederationConfiguration.RangeType;
+import org.apache.openjpa.federation.jdbc.Federation;
+import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration.RangeType;
 import org.apache.openjpa.jdbc.schema.Table;
 
 public class SQLAzureUtils {
 
-    public static String federation = "FED_1";
-
-    public static void useFederation(final Connection conn, final Object oid)
+    public static void useFederation(final Connection conn, final String federation, final Object oid)
             throws SQLException {
 
         Statement stm = null;
 
         try {
-
             stm = conn.createStatement();
-
-            stm.execute("USE FEDERATION " + SQLAzureUtils.federation + " (range_id = " + oid + ") "
-                    + "WITH FILTERING=OFF, RESET");
+            stm.execute("USE FEDERATION " + federation + " (range_id = " + oid + ") WITH FILTERING=OFF, RESET");
 
         } finally {
             if (stm != null) {
@@ -53,11 +48,11 @@ public class SQLAzureUtils {
         }
     }
 
-    public static MemberDistribution getMemberDistribution(final Connection conn, final FederationConfiguration conf)
+    public static MemberDistribution getMemberDistribution(final Connection conn, final Federation federation)
             throws SQLException {
 
 
-        final RangeType type = conf.getRangeMappingType();
+        final RangeType type = federation.getRangeMappingType();
         final MemberDistribution memberDistribution = new MemberDistribution(type);
 
         Statement stm = null;
@@ -70,7 +65,7 @@ public class SQLAzureUtils {
             federation_id = stm.executeQuery(
                     "SELECT * "
                     + "FROM sys.Federations "
-                    + "WHERE name = '" + federation + "'");
+                    + "WHERE name = '" + federation.getName() + "'");
 
             if (federation_id.next()) {
                 member_distribution = stm.executeQuery(
@@ -109,7 +104,8 @@ public class SQLAzureUtils {
      * @return TRUE if exists; FALSE otherwise.
      * @throws SQLException
      */
-    public static boolean tableExists(final Connection conn, final Table table, final Object oid)
+    public static boolean tableExists(
+            final Connection conn, final String federation, final Table table)
             throws SQLException {
         boolean res = false;
 
@@ -117,7 +113,6 @@ public class SQLAzureUtils {
         ResultSet rs = null;
 
         try {
-            SQLAzureUtils.useFederation(conn, oid);
 
             stm = conn.createStatement();
 
