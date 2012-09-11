@@ -39,15 +39,13 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
 import org.apache.openjpa.jdbc.identifier.DBIdentifier;
 import org.apache.openjpa.jdbc.kernel.JDBCStore;
 import org.apache.openjpa.jdbc.meta.JavaSQLTypes;
 import org.apache.openjpa.jdbc.schema.Column;
 import org.apache.openjpa.meta.JavaTypes;
 
-public class SQLAzureResultSetResult
-        extends AbstractResult {
+public class SQLAzureResultSetResult extends SelectImpl.SelectResult {
 
     private final Connection connection;
 
@@ -59,48 +57,19 @@ public class SQLAzureResultSetResult
 
     private ResultSet _rs;
 
-    private final DBDictionary _dict;
-
-    private boolean _closeConn = true;
-
     private int _row = -1;
 
     private int _size = -1;
 
-    // optional; used to deserialize blobs containing refs to persistent objs
-    private JDBCStore _store = null;
-
-    /**
-     * Constructor.
-     */
-    public SQLAzureResultSetResult(Connection conn, Statement stmnt, ResultSet rs, DBDictionary dict) {
-        if (stmnt == null) {
-            try {
-                stmnt = rs.getStatement();
-            } catch (Throwable t) {
-            }
-        }
-
-        this.connection = conn;
-
-        if (stmnt != null) {
-            statements.add(stmnt);
-        }
-
-        if (rs != null) {
-            results.add(rs);
-        }
-
-        _rs = rs;
-
-        _dict = dict;
-    }
-
     public SQLAzureResultSetResult(
             final Connection connection,
-            final List<Statement> statements,
+            final List<Statement> stmnts,
             final List<ResultSet> rs,
             final DBDictionary dict) {
+
+        super(connection,
+                stmnts != null && !stmnts.isEmpty() ? stmnts.get(0) : null,
+                rs != null && !rs.isEmpty() ? rs.get(0) : null, dict);
 
         if (rs != null && !rs.isEmpty()) {
             results.addAll(rs);
@@ -109,160 +78,93 @@ public class SQLAzureResultSetResult
 
         this.connection = connection;
 
-        if (statements != null) {
-            this.statements.addAll(statements);
+        if (stmnts != null) {
+            this.statements.addAll(stmnts);
         }
-
-        _dict = dict;
     }
 
     /**
-     * Constructor.
+     * {@inheritDoc }
      */
-    public SQLAzureResultSetResult(Connection conn, Statement stmnt, ResultSet rs, JDBCStore store) {
-        this(conn, stmnt, rs, store.getDBDictionary());
-        setStore(store);
-    }
-
-    /**
-     * Constructor.
-     */
-    public SQLAzureResultSetResult(Connection conn, ResultSet rs, DBDictionary dict) {
-        connection = conn;
-
-        if (rs != null) {
-            results.add(rs);
-        }
-
-        _rs = rs;
-
-        _dict = dict;
-    }
-
-    /**
-     * JDBC 2 constructor. Relies on being able to retrieve the statement from the result set, and the connection from
-     * the statement.
-     */
-    public SQLAzureResultSetResult(ResultSet rs, DBDictionary dict)
-            throws SQLException {
-
-        if (rs != null) {
-            final Statement stm = rs.getStatement();
-            connection = stm.getConnection();
-            statements.add(stm);
-            results.add(rs);
-        } else {
-            connection = null;
-        }
-
-        results.add(rs);
-        _rs = rs;
-
-        _dict = dict;
-    }
-
-    /**
-     * JDBC 2 constructor. Relies on being able to retrieve the statement from the result set, and the connection from
-     * the statement.
-     */
-    public SQLAzureResultSetResult(ResultSet rs, JDBCStore store)
-            throws SQLException {
-        this(rs, store.getDBDictionary());
-        setStore(store);
-    }
-
-    /**
-     * Return the backing result set.
-     */
+    @Override
     public ResultSet getResultSet() {
         return _rs;
     }
 
     /**
-     * Return the dictionary in use.
+     * {@inheritDoc }
      */
-    public DBDictionary getDBDictionary() {
-        return _dict;
-    }
-
-    /**
-     * Optional store manager used to deserialize blobs containing references to persistent objects.
-     */
-    public JDBCStore getStore() {
-        return _store;
-    }
-
-    /**
-     * Optional store manager used to deserialize blobs containing references to persistent objects.
-     */
-    public void setStore(JDBCStore store) {
-        _store = store;
-    }
-
-    /**
-     * Whether to close the backing connection when this result is closed. Defaults to true.
-     */
-    public boolean getCloseConnection() {
-        return _closeConn;
-    }
-
-    /**
-     * Whether to close the backing connection when this result is closed. Defaults to true.
-     */
-    public void setCloseConnection(boolean closeConn) {
-        _closeConn = closeConn;
-    }
-
+    @Override
     public void close() {
-        super.close();
-
-        for (ResultSet resultSet : results) {
+        for (ResultSet rs : results) {
             try {
-                resultSet.close();
-            } catch (SQLException se) {
+                if (rs != null) {
+                    rs.close();
+                }
+            } catch (SQLException ignore) {
+                // ignore exception
             }
         }
 
         for (Statement stmnt : statements) {
             try {
-                stmnt.close();
-            } catch (SQLException se) {
+                if (stmnt != null) {
+                    stmnt.close();
+                }
+            } catch (SQLException ignore) {
+                // ignore exception
             }
         }
 
-        if (_closeConn && connection != null) {
-            try {
-                connection.close();
-            } catch (SQLException se) {
-            }
+        if (results != null && !results.isEmpty()) {
+            // at least one ResultSet has been valued otherwise nothing to be closed
+            super.close();
         }
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     public boolean supportsRandomAccess()
             throws SQLException {
         return _rs.getType() != ResultSet.TYPE_FORWARD_ONLY;
     }
 
-    // TODO: to be changed
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected boolean absoluteInternal(int row)
             throws SQLException {
 
-        if (row == ++_row) {
-            return _rs.next();
+        if (row == _row + 1) {
+            return nextInternal();
         }
 
-        // random access
-        _rs.absolute(row + 1);
+        int tmp = row;
 
-        if (_rs.getRow() == 0) {
-            _row = -1;
-            return false;
+        for (ResultSet rs : results) {
+            if (rs.absolute(tmp + 1)) {
+                _row = row;
+                _rs = rs;
+                return true;
+            } else {
+                rs.last();
+                tmp -= rs.getRow();
+            }
         }
 
-        _row = row;
-        return true;
+        _row = -1;
+        _rs = results.get(results.size() - 1);
+
+        return false;
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected boolean nextInternal()
             throws SQLException {
 
@@ -279,6 +181,10 @@ public class SQLAzureResultSetResult
         return res;
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     public int size()
             throws SQLException {
 
@@ -301,123 +207,210 @@ public class SQLAzureResultSetResult
         return _size;
     }
 
-    protected boolean containsInternal(Object obj, Joins joins)
-            throws SQLException {
-        return ((Number) translate(obj, joins)).intValue() > 0;
-    }
-
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Array getArrayInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getArray(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getArray(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected InputStream getAsciiStreamInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getAsciiStream(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getAsciiStream(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected BigDecimal getBigDecimalInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getBigDecimal(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getBigDecimal(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Number getNumberInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getNumber(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getNumber(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected BigInteger getBigIntegerInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getBigInteger(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getBigInteger(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected InputStream getBinaryStreamInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getBinaryStream(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getBinaryStream(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Blob getBlobInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getBlob(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getBlob(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected boolean getBooleanInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getBoolean(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getBoolean(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected byte getByteInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getByte(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getByte(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected byte[] getBytesInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getBytes(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getBytes(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Calendar getCalendarInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getCalendar(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getCalendar(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected char getCharInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getChar(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getChar(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Reader getCharacterStreamInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getCharacterStream(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getCharacterStream(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Clob getClobInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getClob(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getClob(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Date getDateInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getDate(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getDate(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected java.sql.Date getDateInternal(Object obj, Calendar cal,
             Joins joins)
             throws SQLException {
-        return _dict.getDate(_rs, ((Number) obj).intValue(), cal);
+        return getDBDictionary().getDate(_rs, ((Number) obj).intValue(), cal);
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected double getDoubleInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getDouble(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getDouble(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected float getFloatInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getFloat(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getFloat(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected int getIntInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getInt(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getInt(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Locale getLocaleInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getLocale(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getLocale(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected long getLongInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getLong(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getLong(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Object getStreamInternal(JDBCStore store, Object obj,
             int metaTypeCode, Object arg, Joins joins)
             throws SQLException {
         return getLOBStreamInternal(store, obj, joins);
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Object getObjectInternal(Object obj, int metaTypeCode,
             Object arg, Joins joins)
             throws SQLException {
@@ -467,7 +460,7 @@ public class SQLAzureResultSetResult
             case JavaTypes.STRING:
                 return getStringInternal(obj, joins, isClob);
             case JavaTypes.OBJECT:
-                return _dict.getBlobObject(_rs, ((Number) obj).intValue(), _store);
+                return getDBDictionary().getBlobObject(_rs, ((Number) obj).intValue(), getStore());
             case JavaTypes.DATE:
                 return getDateInternal(obj, joins);
             case JavaTypes.CALENDAR:
@@ -509,79 +502,103 @@ public class SQLAzureResultSetResult
                     Column col = (Column) obj;
                     if (col.getType() == Types.BLOB
                             || col.getType() == Types.VARBINARY) {
-                        return _dict.getBlobObject(_rs, col.getIndex(), _store);
+                        return getDBDictionary().getBlobObject(_rs, col.getIndex(), getStore());
                     }
                 }
-                return _dict.getObject(_rs, ((Number) obj).intValue(), null);
+                return getDBDictionary().getObject(_rs, ((Number) obj).intValue(), null);
         }
         return (_rs.wasNull()) ? null : val;
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Object getSQLObjectInternal(Object obj, Map map, Joins joins)
             throws SQLException {
-        return _dict.getObject(_rs, ((Number) obj).intValue(), map);
+        return getDBDictionary().getObject(_rs, ((Number) obj).intValue(), map);
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Ref getRefInternal(Object obj, Map map, Joins joins)
             throws SQLException {
-        return _dict.getRef(_rs, ((Number) obj).intValue(), map);
+        return getDBDictionary().getRef(_rs, ((Number) obj).intValue(), map);
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected short getShortInternal(Object obj, Joins joins)
             throws SQLException {
-        return _dict.getShort(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getShort(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected String getStringInternal(Object obj, Joins joins, boolean isClobString)
             throws SQLException {
         if (isClobString) {
-            return _dict.getClobString(_rs, ((Number) obj).intValue());
+            return getDBDictionary().getClobString(_rs, ((Number) obj).intValue());
         }
-        return _dict.getString(_rs, ((Number) obj).intValue());
+        return getDBDictionary().getString(_rs, ((Number) obj).intValue());
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Time getTimeInternal(Object obj, Calendar cal, Joins joins)
             throws SQLException {
-        return _dict.getTime(_rs, ((Number) obj).intValue(), cal);
+        return getDBDictionary().getTime(_rs, ((Number) obj).intValue(), cal);
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected Timestamp getTimestampInternal(Object obj, Calendar cal,
             Joins joins)
             throws SQLException {
-        return _dict.getTimestamp(_rs, ((Number) obj).intValue(), cal);
+        return getDBDictionary().getTimestamp(_rs, ((Number) obj).intValue(), cal);
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     public boolean wasNull()
             throws SQLException {
         return _rs.wasNull();
     }
 
-    protected Object translate(Object obj, Joins joins)
-            throws SQLException {
-        if (obj instanceof Number) {
-            return obj;
-        }
-        return findObject(obj, joins);
-    }
-
     /**
-     * Return the 1-based result set index for the given column or id, or a non-positive number if the column is not
-     * contained in this result.
+     * {@inheritDoc }
      */
+    @Override
     protected int findObject(Object obj, Joins joins)
             throws SQLException {
         try {
             String s1 = obj.toString();
             DBIdentifier sName = DBIdentifier.newColumn(obj.toString());
-            return getResultSet().findColumn(_dict.convertSchemaCase(sName));
+            return _rs.findColumn(getDBDictionary().convertSchemaCase(sName));
         } catch (SQLException se) {
             return 0;
         }
     }
 
+    /**
+     * {@inheritDoc }
+     */
+    @Override
     protected InputStream getLOBStreamInternal(JDBCStore store, Object obj,
             Joins joins)
             throws SQLException {
-        return _dict.getLOBStream(store, _rs, ((Number) obj).intValue());
+        return getDBDictionary().getLOBStream(store, _rs, ((Number) obj).intValue());
     }
 }

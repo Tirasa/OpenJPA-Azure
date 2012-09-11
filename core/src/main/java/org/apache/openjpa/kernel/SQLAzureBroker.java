@@ -20,38 +20,105 @@ package org.apache.openjpa.kernel;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 import org.apache.openjpa.conf.OpenJPAConfiguration;
+import org.apache.openjpa.federation.jdbc.Federation;
+import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
+import org.apache.openjpa.jdbc.meta.ClassMapping;
+import org.apache.openjpa.lib.log.Log;
 import org.apache.openjpa.utils.SQLAzureUtils;
 
 public class SQLAzureBroker extends BrokerImpl {
 
+    private transient Log _log = null;
+
+    @Override
+    public void initialize(
+            final AbstractBrokerFactory factory,
+            final DelegatingStoreManager sm,
+            final boolean managed,
+            final int connMode,
+            final boolean fromDeserialization,
+            final boolean fromWriteBehindCallback) {
+        super.initialize(factory, sm, managed, connMode, fromDeserialization, fromWriteBehindCallback);
+        _log = getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME);
+    }
+
     @Override
     public Object find(final Object oid, final boolean validate, final FindCallbacks call) {
 
-        if (oid != null) {
-            try {
-                SQLAzureUtils.useFederation((Connection) getConnection(), "FED_1", oid);
-            } catch (SQLException e) {
-                getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).error("Error using federation", e);
+        Object res = null;
+
+        try {
+            res = super.find(oid, validate, call);
+        } catch (RuntimeException ignore) {
+            // ignore exception: table could not exist into the root federation
+            if (_log.isTraceEnabled()) {
+                _log.trace("Object " + oid + " does not exist into the root federation");
             }
         }
-        
-        return super.find(oid, validate, call);
+
+        if (res == null) {
+            final Collection<Federation> federations = ((SQLAzureConfiguration) getConfiguration()).getFederations();
+
+            if (federations != null) {
+                for (Iterator<Federation> iter = federations.iterator(); iter.hasNext() && res == null;) {
+                    final Federation federation = iter.next();
+
+                    try {
+                        SQLAzureUtils.useFederation((Connection) getConnection(), federation.getName(), oid);
+                        res = super.find(oid, validate, call);
+                    } catch (SQLException ignore) {
+                        if (_log.isTraceEnabled()) {
+                            _log.trace("Error searching on '" + federation.getName() + "': " + ignore.getMessage());
+                        }
+                    } catch (RuntimeException ignore) {
+                        // ignore exception: table could not exist into the root federation
+                        if (_log.isTraceEnabled()) {
+                            _log.trace("Object " + oid + " does not exist into '" + federation.getName() + "'");
+                        }
+                    }
+                }
+            }
+        }
+        return res;
     }
 
     @Override
     public Object attach(final Object obj, final boolean copyNew, final OpCallbacks call) {
 
+        if (obj == null) {
+            return null;
+        }
+
         final Object oid = getObjectId(obj);
 
-        if (obj != null) {
-            try {
-                SQLAzureUtils.useFederation((Connection) getConnection(), "FED_1", oid);
-            } catch (SQLException e) {
-                getConfiguration().getLog(OpenJPAConfiguration.LOG_RUNTIME).error("Error using federation", e);
+        final ClassMapping classMapping = ((SQLAzureConfiguration) getConfiguration()).getMappingRepositoryInstance().
+                getMapping(obj.getClass(), SQLAzureConfiguration.class.getClassLoader(), true);
+
+        final List<Federation> federations = ((SQLAzureConfiguration) getConfiguration()).getFederations(
+                classMapping.getTable().getFullIdentifier().getName());
+
+        if (federations == null && federations.isEmpty()) {
+            return super.attach(obj, copyNew, call);
+        } else {
+            Object res = null;
+
+            for (Iterator<Federation> iter = federations.iterator(); iter.hasNext() && res == null;) {
+                final Federation federation = iter.next();
+                try {
+                    SQLAzureUtils.useFederation((Connection) getConnection(), federation.getName(), oid);
+                    res = super.attach(obj, copyNew, call);
+                } catch (SQLException e) {
+                    if (_log.isTraceEnabled()) {
+                        _log.trace("Error attaching object on '" + federation.getName() + "': " + e.getMessage());
+                    }
+                }
             }
+
+            return res;
         }
-        
-        return super.attach(obj, copyNew, call);
     }
 }
