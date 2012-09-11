@@ -29,6 +29,7 @@ import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.sql.SQLAzureDictionary;
 import org.apache.openjpa.lib.log.Log;
+import org.apache.openjpa.lib.util.Localizer;
 import org.apache.openjpa.utils.SQLAzureUtils;
 
 public class SQLAzureSchemaTool extends SchemaTool {
@@ -42,6 +43,8 @@ public class SQLAzureSchemaTool extends SchemaTool {
     private final SQLAzureDictionary _dict;
 
     private String _sqlTerminator = ";";
+
+    private static final Localizer _loc = Localizer.forPackage(SQLAzureSchemaTool.class);
 
     public SQLAzureSchemaTool(final JDBCConfiguration conf, final String action) {
         super(conf, action);
@@ -73,7 +76,7 @@ public class SQLAzureSchemaTool extends SchemaTool {
                 for (Federation federation : federations) {
                     for (String id : SQLAzureUtils.getMemberDistribution(conn, federation)) {
                         SQLAzureUtils.useFederation(conn, federation.getName(), id);
-                        if (!SQLAzureUtils.tableExists(conn, federation.getName(), table)) {
+                        if (!SQLAzureUtils.tableExists(conn, table)) {
                             res &= executeSQL(_dict.getCreateTableSQL(table, federation), conn);
                         }
                     }

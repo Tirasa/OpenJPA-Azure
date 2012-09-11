@@ -17,23 +17,137 @@
 package org.apache.openjpa.jdbc.sql;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Types;
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.federation.jdbc.Federation;
+import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
+import org.apache.openjpa.jdbc.identifier.DBIdentifier;
 import org.apache.openjpa.jdbc.schema.Column;
 import org.apache.openjpa.jdbc.schema.PrimaryKey;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.jdbc.schema.Unique;
+import org.apache.openjpa.utils.SQLAzureUtils;
 
 /**
  * Dictionary for Microsoft SQL Server.
  */
 public class SQLAzureDictionary extends SQLServerDictionary {
+
+    @Override
+    public Column[] getColumns(
+            final DatabaseMetaData meta,
+            final DBIdentifier catalog,
+            final DBIdentifier schemaName,
+            final DBIdentifier tableName,
+            final DBIdentifier columnName,
+            final Connection conn)
+            throws SQLException {
+
+        SQLAzureUtils.useRootFederation(conn);
+        Column[] columns = getColumns(conn, schemaName, tableName, columnName);
+
+        if (columns != null && columns.length > 0) {
+            return columns;
+        }
+
+        final Collection<Federation> federations = ((SQLAzureConfiguration) conf).getFederations();
+
+        if (federations != null) {
+            for (Federation federation : federations) {
+                for (String memberId : SQLAzureUtils.getMemberDistribution(conn, federation)) {
+                    SQLAzureUtils.useFederation(conn, federation.getName(), memberId);
+
+                    columns = getColumns(conn, schemaName, tableName, columnName);
+
+                    if (columns != null && columns.length > 0) {
+                        return columns;
+                    }
+                }
+            }
+        }
+
+        return new Column[0];
+    }
+
+    private Column[] getColumns(
+            final Connection conn,
+            final DBIdentifier schemaName,
+            final DBIdentifier tableName,
+            final DBIdentifier columnName)
+            throws SQLException {
+
+        if (DBIdentifier.isNull(tableName) && !supportsNullTableForGetColumns) {
+            return null;
+        }
+
+        String sqlSchemaName = null;
+        if (!DBIdentifier.isNull(schemaName)) {
+            sqlSchemaName = schemaName.getName();
+        }
+        if (!supportsSchemaForGetColumns) {
+            sqlSchemaName = null;
+        } else {
+            sqlSchemaName = getSchemaNameForMetadata(schemaName);
+        }
+
+        Map.Entry<Statement, ResultSet> cols = null;
+
+        try {
+            cols = SQLAzureUtils.getColumns(
+                    conn, sqlSchemaName, getTableNameForMetadata(tableName), getColumnNameForMetadata(columnName));
+
+            final List<Column> columnList = new ArrayList<Column>();
+
+            while (cols != null && cols.getValue() != null && cols.getValue().next()) {
+                final Column column = newColumn(cols.getValue());
+                columnList.add(column);
+
+                // for opta driver, which reports nvarchar as unknown type
+                String typeName = column.getTypeIdentifier().getName();
+
+                if (typeName == null) {
+                    continue;
+                }
+
+                typeName = typeName.toUpperCase();
+
+                if ("NVARCHAR".equals(typeName)) {
+                    column.setType(Types.VARCHAR);
+                } else if ("UNIQUEIDENTIFIER".equals(typeName)) {
+                    if (uniqueIdentifierAsVarbinary) {
+                        column.setType(Types.VARBINARY);
+                    } else {
+                        column.setType(Types.VARCHAR);
+                    }
+                } else if ("NCHAR".equals(typeName)) {
+                    column.setType(Types.CHAR);
+                } else if ("NTEXT".equals(typeName)) {
+                    column.setType(Types.CLOB);
+                }
+            }
+
+            return (Column[]) columnList.toArray(new Column[columnList.size()]);
+        } finally {
+            if (cols != null && cols.getValue() != null) {
+                try {
+                    cols.getValue().close();
+                    cols.getKey().close();
+                } catch (Exception ignore) {
+                    // ignore exception
+                }
+            }
+        }
+    }
 
     /**
      * {@inheritDoc}

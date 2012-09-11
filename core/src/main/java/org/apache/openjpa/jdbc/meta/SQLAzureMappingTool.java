@@ -124,14 +124,19 @@ public class SQLAzureMappingTool extends MappingTool {
     }
 
     /**
-     * Records the changes that have been made to both the mappings and the associated schema, and clears the tool for
-     * further use. This also involves clearing the internal mapping repository.
+     * {@inheritDoc }
      */
+    @Override
     public void record() {
         record(null);
     }
 
-    public void record(MappingTool.Flags flags) {
+    /**
+     * {@inheritDoc }
+     */
+    @Override
+    public void record(final Flags flags) {
+
         MappingRepository repos = getRepository();
         MetaDataFactory io = repos.getMetaDataFactory();
         ClassMapping[] mappings;

@@ -61,7 +61,7 @@ public class SQLAzureBrokerFactory extends JDBCBrokerFactory {
             return;
         }
 
-        String props = Configurations.getProperties(action);
+        final String props = Configurations.getProperties(action);
         action = Configurations.getClassName(action);
         SQLAzureMappingTool tool = new SQLAzureMappingTool(conf, action, false);
         Configurations.configureInstance(tool, conf, props, "SynchronizeMappings");

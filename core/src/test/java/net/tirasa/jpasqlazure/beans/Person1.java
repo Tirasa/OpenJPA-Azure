@@ -30,8 +30,8 @@ public class Person1 implements Serializable {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-//    @ManyToMany
-//    private Set<Person> person;
+    @ManyToMany
+    private Set<Person> person;
 
     public Long getId() {
         return id;
@@ -41,13 +41,13 @@ public class Person1 implements Serializable {
         this.id = id;
     }
 
-//    public Set<Person> getPerson() {
-//        return person;
-//    }
-//
-//    public void setPerson(Set<Person> person) {
-//        this.person = person;
-//    }
+    public Set<Person> getPerson() {
+        return person;
+    }
+
+    public void setPerson(Set<Person> person) {
+        this.person = person;
+    }
 
     @Override
     public String toString() {
