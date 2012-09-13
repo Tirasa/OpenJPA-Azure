@@ -16,10 +16,16 @@ package net.tirasa.jpasqlazure;
 import java.io.UnsupportedEncodingException;
 import net.tirasa.jpasqlazure.beans.Gender;
 import net.tirasa.jpasqlazure.beans.Person;
+import net.tirasa.jpasqlazure.beans.PersonBIN;
+import net.tirasa.jpasqlazure.beans.PersonBIN_PK;
 import net.tirasa.jpasqlazure.beans.PersonINT;
 import net.tirasa.jpasqlazure.beans.PersonINT_PK;
+import net.tirasa.jpasqlazure.beans.PersonUID;
+import net.tirasa.jpasqlazure.beans.PersonUID_PK;
+import net.tirasa.jpasqlazure.repository.PersonBinRepository;
 import net.tirasa.jpasqlazure.repository.PersonIntRepository;
 import net.tirasa.jpasqlazure.repository.PersonRepository;
+import net.tirasa.jpasqlazure.repository.PersonUidRepository;
 import org.junit.AfterClass;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
@@ -37,18 +43,44 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 })
 public class BasicCRUDTest {
 
-    private static int USER_NUMBER = 1;
+    private static int USER_NUMBER = 3;
 
-    protected static PersonRepository repository = null;
+    private static PersonRepository repository = null;
 
-    protected static PersonIntRepository repositoryINT = null;
+    private static PersonIntRepository repositoryINT = null;
+
+    private static PersonUidRepository repositoryUID = null;
+
+    private static PersonBinRepository repositoryBIN = null;
+
+    private static String[] schemaPurgeQueries = {
+        "USE FEDERATION ROOT WITH RESET",
+        "drop table OPENJPA_SEQUENCE_TABLE",
+        "drop table BusinessRole_Person",
+        "drop table BusinessRole",
+        "USE FEDERATION FED_1 (range_id=0) WITH FILTERING=OFF, RESET",
+        "drop table Person",
+        "USE FEDERATION FED_1 (range_id=5) WITH FILTERING=OFF, RESET",
+        "drop table Person",
+        "USE FEDERATION FED_2 (range_id = '00000000-0000-0000-0000-000000000000') WITH RESET, FILTERING = OFF",
+        "drop table PersonUID",
+        "USE FEDERATION FED_3 (range_id = 0) WITH RESET, FILTERING = OFF",
+        "drop table PersonINT",
+        "USE FEDERATION FED_3 (range_id = 5) WITH RESET, FILTERING = OFF",
+        "drop table PersonINT",
+        "USE FEDERATION FED_4 (range_id = 0) WITH RESET, FILTERING = OFF",
+        "drop table PersonBIN"
+    };
 
     @BeforeClass
     public static void init()
             throws UnsupportedEncodingException {
-        ApplicationContext ctx = new ClassPathXmlApplicationContext("/applicationContext.xml");
+        final ApplicationContext ctx = new ClassPathXmlApplicationContext("/applicationContext.xml");
+
         repository = ctx.getBean(PersonRepository.class);
         repositoryINT = ctx.getBean(PersonIntRepository.class);
+        repositoryUID = ctx.getBean(PersonUidRepository.class);
+        repositoryBIN = ctx.getBean(PersonBinRepository.class);
 
         for (int i = 0; i < USER_NUMBER; i++) {
             Person user = new Person();
@@ -65,7 +97,6 @@ public class BasicCRUDTest {
     }
 
     @Test
-    @Ignore
     public void bigintTest()
             throws UnsupportedEncodingException {
 
@@ -88,11 +119,53 @@ public class BasicCRUDTest {
     @Test
     public void uniqueidentifierTest()
             throws UnsupportedEncodingException {
+        PersonUID_PK pk = new PersonUID_PK();
+        pk.setCode("00000000-0000-0000-0000-000000000002");
+
+        PersonUID user = new PersonUID();
+        user.setPk(pk);
+        user.setUsername("BobInt");
+        user.setPassword("password");
+        user.setGender(Gender.M);
+        user.setPicture("picture".getBytes());
+        user.setInfo("some info");
+
+        user = repositoryUID.save(user);
+        assertNotNull(user);
+
+        user = repositoryUID.findOne(user.getPk());
+        assertNotNull(user);
+
+        repositoryUID.delete(user);
+
+        user = repositoryUID.findOne(user.getPk());
+        assertNull(user);
     }
 
     @Test
     public void varbinaryTest()
             throws UnsupportedEncodingException {
+        PersonBIN_PK pk = new PersonBIN_PK();
+        pk.setCode("_!!MRTFBA77L26G141F!!_".getBytes());
+
+        PersonBIN user = new PersonBIN();
+        user.setPk(pk);
+        user.setUsername("BobInt");
+        user.setPassword("password");
+        user.setGender(Gender.M);
+        user.setPicture("picture".getBytes());
+        user.setInfo("some info");
+
+        user = repositoryBIN.save(user);
+        assertNotNull(user);
+
+        user = repositoryBIN.findOne(user.getPk());
+        assertNotNull(user);
+
+        repositoryBIN.delete(user);
+
+        user = repositoryBIN.findOne(user.getPk());
+        assertNull(user);
     }
 
     @Test
@@ -140,5 +213,7 @@ public class BasicCRUDTest {
             user = repository.findOne(user.getId());
             assertNull(user);
         }
+
+        Initialize.executeQueries(schemaPurgeQueries);
     }
 }

@@ -25,37 +25,58 @@ import javax.sql.DataSource;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
-public class PurgeAll {
+public class Initialize {
 
-    private static String[] queries = {
-        "drop table OPENJPA_SEQUENCE_TABLE",
-        "drop table BusinessRole_Person",
-        "drop table BusinessRole",
-        "USE FEDERATION FED_1 (range_id=0) WITH FILTERING=OFF, RESET",
-        "drop table Person",
-        "USE FEDERATION FED_1 (range_id=5) WITH FILTERING=OFF, RESET",
-        "drop table Person",
-        "USE FEDERATION FED_2 (range_id = '00000000-0000-0000-0000-000000000000') WITH RESET, FILTERING = OFF",
-        "drop table PersonUID",
-        "USE FEDERATION FED_3 (range_id = 0) WITH RESET, FILTERING = OFF",
-        "drop table PersonINT",
-        "USE FEDERATION FED_3 (range_id = 5) WITH RESET, FILTERING = OFF",
-        "drop table PersonINT",
-        "USE FEDERATION FED_4 (range_id = 0) WITH RESET, FILTERING = OFF",
-        "drop table PersonBIN"
+    private static DataSource ds = null;
+
+    private static String[] fedInitQueries = {
+        "USE FEDERATION ROOT WITH RESET",
+        "CREATE FEDERATION FED_1 (range_id BIGINT RANGE)",
+        "ALTER FEDERATION FED_1 SPLIT AT (range_id=5)",
+        "CREATE FEDERATION FED_2 (range_id UNIQUEIDENTIFIER RANGE)",
+        "ALTER FEDERATION FED_2 SPLIT AT (range_id='00000000-0000-0000-0000-000000000005')",
+        "CREATE FEDERATION FED_3 (range_id int RANGE)",
+        "ALTER FEDERATION FED_3 SPLIT AT (range_id=5)",
+        "CREATE FEDERATION FED_4 (range_id VARBINARY(100) RANGE)",
+        "CREATE FEDERATION FED_5 (range_id BIGINT RANGE)"
+    };
+
+    private static String[] fedPurgeQueries = {
+        "USE FEDERATION ROOT WITH RESET",
+        "DROP FEDERATION FED_1",
+        "DROP FEDERATION FED_2",
+        "DROP FEDERATION FED_3",
+        "DROP FEDERATION FED_4",
+        "DROP FEDERATION FED_5"
     };
 
     public static void main(String args[]) {
-        ApplicationContext ctx = new ClassPathXmlApplicationContext("/applicationContext.xml");
-        final DataSource dataSource = (DataSource) ctx.getBean("dataSource");
+        if (args.length != 1) {
+            System.err.println("Usage java Initialization <purge|init>");
+            return;
+        }
 
+        final ApplicationContext ctx = new ClassPathXmlApplicationContext("/applicationContext.xml");
+
+        ds = (DataSource) ctx.getBean("dataSource");
+
+        if ("purge".equalsIgnoreCase(args[0])) {
+            executeQueries(fedPurgeQueries);
+        }
+
+        if ("init".equalsIgnoreCase(args[0])) {
+            executeQueries(fedInitQueries);
+        }
+    }
+
+    public static void executeQueries(final String[] queries) {
         Connection conn = null;
         Statement stm = null;
 
         try {
             System.out.println("Connect ...");
 
-            conn = dataSource.getConnection();
+            conn = ds.getConnection();
 
             for (String query : queries) {
                 System.out.println(query);

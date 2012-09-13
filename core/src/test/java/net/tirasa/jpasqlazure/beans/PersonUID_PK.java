@@ -27,14 +27,21 @@ import org.apache.commons.lang.ArrayUtils;
 public class PersonUID_PK implements Serializable {
 
     @Column(nullable = false, columnDefinition = "uniqueidentifier")
-    private byte[] code;
+    private String code;
 
-    public byte[] getCode() {
-        return ArrayUtils.clone(code);
+//    public byte[] getCode() {
+//        return ArrayUtils.clone(code);
+//    }
+//
+//    public void setCode(byte[] code) {
+//        this.code = ArrayUtils.clone(code);
+//    }
+    public String getCode() {
+        return code;
     }
 
-    public void setCode(byte[] code) {
-        this.code = ArrayUtils.clone(code);
+    public void setCode(String code) {
+        this.code = code;
     }
 
     @Override
@@ -45,6 +52,8 @@ public class PersonUID_PK implements Serializable {
 
     @Override
     public int hashCode() {
-        return super.hashCode();
+        int hash = 9;
+        hash = (31 * hash) + (null == code ? 0 : code.hashCode());
+        return hash;
     }
 }

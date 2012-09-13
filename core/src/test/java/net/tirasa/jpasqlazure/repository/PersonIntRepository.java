@@ -18,6 +18,4 @@ import net.tirasa.jpasqlazure.beans.PersonINT_PK;
 import org.springframework.data.repository.CrudRepository;
 
 public interface PersonIntRepository extends CrudRepository<PersonINT, PersonINT_PK> {
-
-    PersonINT findByUsername(final String username);
 }

@@ -44,6 +44,11 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-beans</artifactId>
     </dependency>
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-crypto</artifactId>
+    </dependency>
+    
     
     <!-- Test -->
     <dependency>
@@ -61,6 +66,7 @@
       <artifactId>spring-data-jpa</artifactId>
       <scope>test</scope>
     </dependency>
+    
     <dependency>
       <groupId>com.microsoft.sqlserver</groupId>
       <artifactId>sqljdbc4</artifactId>
@@ -110,24 +116,6 @@
               </execution>
             </executions>
           </plugin>
-          
-<!--          <plugin>
-            <groupId>org.codehaus.mojo</groupId>
-            <artifactId>exec-maven-plugin</artifactId>
-            <version>1.2.1</version>
-            <inherited>false</inherited>
-            <executions>
-              <execution>
-                <goals>
-                  <goal>java</goal>
-                </goals>
-              </execution>
-            </executions>
-            <configuration>
-              <classpathScope>test</classpathScope>
-              <mainClass>net.tirasa.jpasqlazure.PurgeAll</mainClass>
-            </configuration>
-          </plugin>-->
           
         </plugins>
         

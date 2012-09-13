@@ -28,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.federation.jdbc.Federation;
 import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration.RangeType;
 import org.apache.openjpa.jdbc.schema.Table;
+import org.springframework.security.crypto.codec.Hex;
 
 public class SQLAzureUtils {
 
@@ -38,8 +39,8 @@ public class SQLAzureUtils {
 
         try {
 
-            final String rangeId =
-                    RangeType.UNIQUEIDENTIFIER == federation.getRangeMappingType() ? "'" + oid + "'" : oid.toString();
+            final String rangeId = RangeType.UNIQUEIDENTIFIER == federation.getRangeMappingType()
+                    ? "'" + getObjectIdAsString(oid) + "'" : getObjectIdAsString(oid);
 
             stm = conn.createStatement();
             stm.execute("USE FEDERATION " + federation + " (range_id = " + rangeId + ") WITH FILTERING=OFF, RESET");
@@ -201,5 +202,17 @@ public class SQLAzureUtils {
         }
 
         return new AbstractMap.SimpleEntry<Statement, ResultSet>(stm, stm.executeQuery(queryBuilder.toString()));
+    }
+
+    private static String getObjectIdAsString(final Object oid) {
+        final String res;
+
+        if (oid instanceof byte[]) {
+            res = "0x" + new String(Hex.encode((byte[]) oid));
+        } else {
+            res = oid.toString();
+        }
+
+        return res;
     }
 }

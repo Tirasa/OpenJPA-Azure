@@ -45,6 +45,8 @@ public class PersonBIN_PK implements Serializable {
 
     @Override
     public int hashCode() {
-        return super.hashCode();
+        int hash = 9;
+        hash = (31 * hash) + (null == code ? 0 : code.hashCode());
+        return hash;
     }
 }

@@ -13,11 +13,9 @@
  */
 package net.tirasa.jpasqlazure.repository;
 
-import net.tirasa.jpasqlazure.beans.PersonINT;
-import net.tirasa.jpasqlazure.beans.PersonINT_PK;
+import net.tirasa.jpasqlazure.beans.PersonUID;
+import net.tirasa.jpasqlazure.beans.PersonUID_PK;
 import org.springframework.data.repository.CrudRepository;
 
-public interface PersonIntRepository extends CrudRepository<PersonINT, PersonINT_PK> {
-
-    PersonINT findByUsername(final String username);
+public interface PersonUidRepository extends CrudRepository<PersonUID, PersonUID_PK> {
 }
