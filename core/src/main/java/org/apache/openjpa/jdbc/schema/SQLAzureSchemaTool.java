@@ -75,7 +75,7 @@ public class SQLAzureSchemaTool extends SchemaTool {
             try {
                 for (Federation federation : federations) {
                     for (String id : SQLAzureUtils.getMemberDistribution(conn, federation)) {
-                        SQLAzureUtils.useFederation(conn, federation.getName(), id);
+                        SQLAzureUtils.useFederation(conn, federation, id);
                         if (!SQLAzureUtils.tableExists(conn, table)) {
                             res &= executeSQL(_dict.getCreateTableSQL(table, federation), conn);
                         }

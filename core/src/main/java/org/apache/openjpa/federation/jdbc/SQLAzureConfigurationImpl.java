@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.jdbc.conf.JDBCConfigurationImpl;
 import org.apache.openjpa.lib.conf.StringListValue;
 import org.apache.openjpa.lib.util.Localizer;
@@ -55,9 +56,9 @@ public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements 
     }
 
     @Override
-    public String getRangeMappingName(final String federationName) {
+    public String getRangeMappingName(final String federationName, final String tableName) {
         final Federation fed = federations.get(federationName);
-        return fed == null ? null : fed.getRangeMappingName();
+        return fed == null ? null : fed.getRangeMappingName(tableName);
     }
 
     @Override
@@ -70,9 +71,9 @@ public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements 
     }
 
     @Override
-    public List<String> getFederatedTables(final String federationName) {
+    public Set<String> getFederatedTables(final String federationName) {
         final Federation fed = federations.get(federationName);
-        return fed == null ? Collections.EMPTY_LIST : fed.getTables();
+        return fed == null ? Collections.EMPTY_SET : fed.getTables();
     }
 
     @Override
@@ -97,7 +98,6 @@ public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements 
                 final Federation federation = new Federation();
 
                 federation.setName(federationName);
-                federation.setRangeMappingName(newProps.get(PREFIX_FEDERATION + federationName + ".RangeMappingName"));
 
                 try {
 
@@ -113,23 +113,27 @@ public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements 
                 final String[] tables = fedTableNames == null ? new String[0] : fedTableNames.split(",");
 
                 for (String federatedTable : tables) {
-                    federation.addTable(federatedTable);
 
-                    List<Federation> federations = federatedTables.get(federatedTable);
+                    final String rangeMappingName = newProps.get(
+                            PREFIX_FEDERATION + federationName + "." + federatedTable + ".RangeMappingName");
 
-                    if (federations == null) {
-                        federations = new ArrayList<Federation>();
-                        federatedTables.put(federatedTable, federations);
+                    if (StringUtils.isBlank(rangeMappingName)) {
+                        getConfigurationLog().warn(_loc.get("invalid-property", PREFIX_FEDERATION + federationName));
+                    } else {
+                        federation.addTable(federatedTable, rangeMappingName);
+
+                        List<Federation> federations = federatedTables.get(federatedTable);
+
+                        if (federations == null) {
+                            federations = new ArrayList<Federation>();
+                            federatedTables.put(federatedTable, federations);
+                        }
+
+                        federations.add(federation);
                     }
-
-                    federations.add(federation);
                 }
 
-                if (federation.getRangeMappingName() == null) {
-                    getConfigurationLog().warn(_loc.get("invalid-property", PREFIX_FEDERATION + federationName));
-                } else {
-                    federations.put(federationName, federation);
-                }
+                federations.put(federationName, federation);
             }
         }
     }

@@ -15,23 +15,19 @@ package net.tirasa.jpasqlazure.beans;
 
 import java.io.Serializable;
 import javax.persistence.Column;
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
 import javax.persistence.Lob;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
 @Entity
-public class Person implements Serializable {
+public class PersonBIN implements Serializable {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    @Column(columnDefinition = "bigint")
-    private Long id;
+    @EmbeddedId
+    private PersonBIN_PK pk;
 
     @Column(nullable = false)
     private String username;
@@ -49,12 +45,12 @@ public class Person implements Serializable {
     @Lob
     private byte[] picture;
 
-    public Long getId() {
-        return id;
+    public PersonBIN_PK getPk() {
+        return pk;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setPk(PersonBIN_PK pk) {
+        this.pk = pk;
     }
 
     public String getPassword() {
@@ -100,5 +96,15 @@ public class Person implements Serializable {
     @Override
     public String toString() {
         return ReflectionToStringBuilder.toString(this, ToStringStyle.MULTI_LINE_STYLE);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o != null && o instanceof PersonBIN && this.getPk().equals(((PersonBIN) o).getPk());
+    }
+
+    @Override
+    public int hashCode() {
+        return this.getPk().hashCode();
     }
 }

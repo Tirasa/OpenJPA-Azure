@@ -16,19 +16,24 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.tirasa.jpasqlazure.repository;
+package org.apache.openjpa.utils;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import net.tirasa.jpasqlazure.beans.PersonINT;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+public class ObjectIdException extends Exception {
 
-public class PersonRepositoryImpl implements PersonRepositoryCustom {
+    /**
+     * Creates a new instance of
+     * <code>ObjectIdException</code> without detail message.
+     */
+    public ObjectIdException() {
+    }
 
-    @Autowired
-    private PersonRepository repository;
-
-    @PersistenceContext
-    private EntityManager entityManager;
+    /**
+     * Constructs an instance of
+     * <code>ObjectIdException</code> with the specified detail message.
+     *
+     * @param msg the detail message.
+     */
+    public ObjectIdException(String msg) {
+        super(msg);
+    }
 }

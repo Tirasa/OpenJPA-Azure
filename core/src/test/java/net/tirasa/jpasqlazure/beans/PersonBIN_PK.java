@@ -16,19 +16,35 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.tirasa.jpasqlazure.repository;
+package net.tirasa.jpasqlazure.beans;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-import net.tirasa.jpasqlazure.beans.PersonINT;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.transaction.annotation.Transactional;
+import java.io.Serializable;
+import javax.persistence.Column;
+import javax.persistence.Embeddable;
+import org.apache.commons.lang.ArrayUtils;
 
-public class PersonRepositoryImpl implements PersonRepositoryCustom {
+@Embeddable
+public class PersonBIN_PK implements Serializable {
 
-    @Autowired
-    private PersonRepository repository;
+    @Column(nullable = false, columnDefinition = "varbinary", length = 100)
+    private byte[] code;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    public byte[] getCode() {
+        return ArrayUtils.clone(code);
+    }
+
+    public void setCode(byte[] code) {
+        this.code = ArrayUtils.clone(code);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return o != null && o instanceof PersonBIN_PK
+                && ArrayUtils.isEquals(this.getCode(), ((PersonBIN_PK) o).getCode());
+    }
+
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 }

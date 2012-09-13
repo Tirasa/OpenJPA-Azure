@@ -20,6 +20,7 @@ package org.apache.openjpa.federation.jdbc;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 
 /**
@@ -77,9 +78,10 @@ public interface SQLAzureConfiguration extends JDBCConfiguration {
      * Get column to be mapped on the range_id.
      *
      * @param federationName federation name.
+     * @param tableName table name.
      * @return column name.
      */
-    String getRangeMappingName(final String federationName);
+    String getRangeMappingName(final String federationName, final String tableName);
 
     /**
      * Get type of the range_id (bigint, int, uniqueidentifier, varbinary).
@@ -93,7 +95,7 @@ public interface SQLAzureConfiguration extends JDBCConfiguration {
      * Get federated tables onto the given federation.
      *
      * @param federationName federation name.
-     * @return list of tables.
+     * @return set of tables.
      */
-    List<String> getFederatedTables(final String federationName);
+    Set<String> getFederatedTables(final String federationName);
 }

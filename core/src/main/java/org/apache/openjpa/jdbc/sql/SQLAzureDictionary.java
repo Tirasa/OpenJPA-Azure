@@ -22,7 +22,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -65,7 +64,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
         if (federations != null) {
             for (Federation federation : federations) {
                 for (String memberId : SQLAzureUtils.getMemberDistribution(conn, federation)) {
-                    SQLAzureUtils.useFederation(conn, federation.getName(), memberId);
+                    SQLAzureUtils.useFederation(conn, federation, memberId);
 
                     columns = getColumns(conn, schemaName, tableName, columnName);
 
@@ -169,7 +168,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
                 conn = ds.getConnection();
 
                 if (federation == null) {
-                    toBeCreated.addAll(getStatements(table));
+                    toBeCreated.add(getCreateTableStm(table));
                 } else {
                     // perform use federation and create table
                     toBeCreated.addAll(getStatements(table, federation));
@@ -195,46 +194,16 @@ public class SQLAzureDictionary extends SQLServerDictionary {
      * Get SQL statement needed to create a federated table.
      *
      * @param table table to be created.
-     * @param id ragge id;
+     * @param federation federation.
      * @return list of statements.
      */
     private List<String> getStatements(final Table table, final Federation federation) {
 
         final List<String> toBeCreated = new ArrayList<String>();
 
-        final List<String> stms = getStatements(table);
+        final String rangeMappingName = federation.getRangeMappingName(table.getFullIdentifier().getName());
 
-        toBeCreated.add(stms.get(0)
-                + " FEDERATED ON (range_id = " + federation.getRangeMappingName() + ")");
-
-        for (String stm : stms.subList(1, stms.size())) {
-            toBeCreated.add(stm);
-        }
-
-        return toBeCreated;
-    }
-
-    /**
-     * Get SQL statement needed to create a non federated table.
-     *
-     * @param table table to be created.
-     * @return list of statements.
-     */
-    private List<String> getStatements(final Table table) {
-        final Map.Entry<String, String> statement = getCreateTableStm(table);
-
-        final List<String> toBeCreated = new ArrayList<String>();
-
-        toBeCreated.add(statement.getValue());
-
-        final PrimaryKey primaryKey = table.getPrimaryKey();
-
-        // TODO: cluster index creation have to be verified
-        if (primaryKey == null || primaryKey.getColumns() == null || primaryKey.getColumns().length == 0) {
-
-            toBeCreated.add("CREATE CLUSTERED INDEX " + statement.getKey() + "_cindex ON " + statement.getKey()
-                    + "(" + getNamingUtil().appendColumns(table.getColumns()) + ")");
-        }
+        toBeCreated.add(getCreateTableStm(table) + " FEDERATED ON (range_id = " + rangeMappingName + ")");
 
         return toBeCreated;
     }
@@ -245,7 +214,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
      * @param table table to be created.
      * @return the value pair "table name" / "SQL statement".
      */
-    private Map.Entry<String, String> getCreateTableStm(final Table table) {
+    private String getCreateTableStm(final Table table) {
 
         final StringBuilder buf = new StringBuilder();
 
@@ -302,6 +271,6 @@ public class SQLAzureDictionary extends SQLServerDictionary {
         buf.append(endBuf.toString());
         buf.append(")");
 
-        return new AbstractMap.SimpleEntry<String, String>(tableName, buf.toString());
+        return buf.toString();
     }
 }

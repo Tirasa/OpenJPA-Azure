@@ -170,7 +170,7 @@ public class SQLAzureResultSetResult extends SelectImpl.SelectResult {
 
         _row++;
 
-        boolean res = _rs.next();
+        boolean res = _rs != null && _rs.next();
 
         if (!res && rsIndex < results.size()) {
             _rs = results.get(rsIndex);

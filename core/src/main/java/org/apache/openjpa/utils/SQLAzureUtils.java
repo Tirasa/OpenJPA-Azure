@@ -31,14 +31,18 @@ import org.apache.openjpa.jdbc.schema.Table;
 
 public class SQLAzureUtils {
 
-    public static void useFederation(final Connection conn, final String federation, final Object oid)
+    public static void useFederation(final Connection conn, final Federation federation, final Object oid)
             throws SQLException {
 
         Statement stm = null;
 
         try {
+
+            final String rangeId =
+                    RangeType.UNIQUEIDENTIFIER == federation.getRangeMappingType() ? "'" + oid + "'" : oid.toString();
+
             stm = conn.createStatement();
-            stm.execute("USE FEDERATION " + federation + " (range_id = " + oid + ") WITH FILTERING=OFF, RESET");
+            stm.execute("USE FEDERATION " + federation + " (range_id = " + rangeId + ") WITH FILTERING=OFF, RESET");
 
         } finally {
             if (stm != null) {

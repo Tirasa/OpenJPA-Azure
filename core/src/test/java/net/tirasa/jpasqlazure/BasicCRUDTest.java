@@ -13,12 +13,15 @@
  */
 package net.tirasa.jpasqlazure;
 
-import static org.junit.Assert.*;
 import java.io.UnsupportedEncodingException;
 import net.tirasa.jpasqlazure.beans.Gender;
 import net.tirasa.jpasqlazure.beans.Person;
+import net.tirasa.jpasqlazure.beans.PersonINT;
+import net.tirasa.jpasqlazure.beans.PersonINT_PK;
+import net.tirasa.jpasqlazure.repository.PersonIntRepository;
 import net.tirasa.jpasqlazure.repository.PersonRepository;
 import org.junit.AfterClass;
+import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -33,16 +36,19 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
     "classpath:applicationContext.xml"
 })
 public class BasicCRUDTest {
-    
-    private static int USER_NUMBER = 3;
+
+    private static int USER_NUMBER = 1;
 
     protected static PersonRepository repository = null;
+
+    protected static PersonIntRepository repositoryINT = null;
 
     @BeforeClass
     public static void init()
             throws UnsupportedEncodingException {
         ApplicationContext ctx = new ClassPathXmlApplicationContext("/applicationContext.xml");
         repository = ctx.getBean(PersonRepository.class);
+        repositoryINT = ctx.getBean(PersonIntRepository.class);
 
         for (int i = 0; i < USER_NUMBER; i++) {
             Person user = new Person();
@@ -59,7 +65,8 @@ public class BasicCRUDTest {
     }
 
     @Test
-    public void run()
+    @Ignore
+    public void bigintTest()
             throws UnsupportedEncodingException {
 
         Person user = repository.findByUsername("Bob_2");
@@ -76,6 +83,44 @@ public class BasicCRUDTest {
         for (Person person : iter) {
             assertNotNull(person);
         }
+    }
+
+    @Test
+    public void uniqueidentifierTest()
+            throws UnsupportedEncodingException {
+    }
+
+    @Test
+    public void varbinaryTest()
+            throws UnsupportedEncodingException {
+    }
+
+    @Test
+    public void intTest()
+            throws UnsupportedEncodingException {
+
+        PersonINT_PK pk = new PersonINT_PK();
+        pk.setCode(1);
+        pk.setId(1L);
+
+        PersonINT user = new PersonINT();
+        user.setPk(pk);
+        user.setUsername("BobInt");
+        user.setPassword("password");
+        user.setGender(Gender.M);
+        user.setPicture("picture".getBytes());
+        user.setInfo("some info");
+
+        user = repositoryINT.save(user);
+        assertNotNull(user);
+
+        user = repositoryINT.findOne(user.getPk());
+        assertNotNull(user);
+
+        repositoryINT.delete(user);
+
+        user = repositoryINT.findOne(user.getPk());
+        assertNull(user);
     }
 
     @Test

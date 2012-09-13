@@ -63,7 +63,7 @@ public class MemberDistribution implements Iterable<String> {
                 case UNIQUEIDENTIFIER:
                     return value == null ? "00000000-0000-0000-0000-000000000000" : value.toString();
                 case VARBINARY:
-                    return value == null ? "0h" : value.toString();
+                    return value == null ? "0" : value.toString();
                 default:
                     return null;
             }

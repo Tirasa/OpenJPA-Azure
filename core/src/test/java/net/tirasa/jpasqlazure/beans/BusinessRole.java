@@ -15,6 +15,7 @@ package net.tirasa.jpasqlazure.beans;
 
 import java.io.Serializable;
 import java.util.Set;
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -24,11 +25,14 @@ import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
 @Entity
-public class Person1 implements Serializable {
+public class BusinessRole implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
+
+    @Column(nullable = false)
+    private String name;
 
     @ManyToMany
     private Set<Person> person;
@@ -47,6 +51,14 @@ public class Person1 implements Serializable {
 
     public void setPerson(Set<Person> person) {
         this.person = person;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override

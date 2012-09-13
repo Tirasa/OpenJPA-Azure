@@ -52,13 +52,12 @@ public class SQLAzurePreparedStatementManager extends BatchingPreparedStatementM
             } else {
 
                 for (Federation federation : federations) {
-                    final String rangeMappingName = federation.getRangeMappingName();
+                    final String rangeMappingName =
+                            federation.getRangeMappingName(row.getTable().getFullIdentifier().getName());
 
-                    final Column col = row.getTable().getColumn(
-                            DBIdentifier.newIdentifier(rangeMappingName, DBIdentifier.DBIdentifierType.COLUMN, true),
-                            false);
+                    final Column col = row.getTable().getColumn(DBIdentifier.newColumn(rangeMappingName), false);
 
-                    SQLAzureUtils.useFederation(_conn, federation.getName(), row.getVals()[col.getIndex()]);
+                    SQLAzureUtils.useFederation(_conn, federation, row.getVals()[col.getIndex()]);
 
                     updates += stmnt.executeUpdate();
                 }

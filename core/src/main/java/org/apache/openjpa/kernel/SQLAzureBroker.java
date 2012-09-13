@@ -18,16 +18,20 @@
  */
 package org.apache.openjpa.kernel;
 
+import java.lang.reflect.Method;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.conf.OpenJPAConfiguration;
 import org.apache.openjpa.federation.jdbc.Federation;
 import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
 import org.apache.openjpa.jdbc.meta.ClassMapping;
 import org.apache.openjpa.lib.log.Log;
+import org.apache.openjpa.util.ObjectId;
+import org.apache.openjpa.utils.ObjectIdException;
 import org.apache.openjpa.utils.SQLAzureUtils;
 
 public class SQLAzureBroker extends BrokerImpl {
@@ -56,7 +60,7 @@ public class SQLAzureBroker extends BrokerImpl {
         } catch (RuntimeException ignore) {
             // ignore exception: table could not exist into the root federation
             if (_log.isTraceEnabled()) {
-                _log.trace("Object " + oid + " does not exist into the root federation");
+                _log.trace("Object " + oid + " does not exist into the root federation", ignore);
             }
         }
 
@@ -64,12 +68,21 @@ public class SQLAzureBroker extends BrokerImpl {
             final Collection<Federation> federations = ((SQLAzureConfiguration) getConfiguration()).getFederations();
 
             if (federations != null) {
+                final ClassMapping classMapping = ((SQLAzureConfiguration) getConfiguration()).
+                        getMappingRepositoryInstance().
+                        getMapping(oid, SQLAzureConfiguration.class.getClassLoader(), true);
+
+                final String tableName = classMapping.getTable().getFullIdentifier().getName();
+
                 for (Iterator<Federation> iter = federations.iterator(); iter.hasNext() && res == null;) {
                     final Federation federation = iter.next();
 
                     try {
-                        SQLAzureUtils.useFederation((Connection) getConnection(), federation.getName(), oid);
+                        final Object objectId = parseObjectId(oid, federation.getRangeMappingName(tableName));
+
+                        SQLAzureUtils.useFederation((Connection) getConnection(), federation, objectId);
                         res = super.find(oid, validate, call);
+
                     } catch (SQLException ignore) {
                         if (_log.isTraceEnabled()) {
                             _log.trace("Error searching on '" + federation.getName() + "': " + ignore.getMessage());
@@ -79,6 +92,8 @@ public class SQLAzureBroker extends BrokerImpl {
                         if (_log.isTraceEnabled()) {
                             _log.trace("Object " + oid + " does not exist into '" + federation.getName() + "'");
                         }
+                    } catch (Exception e) {
+                        _log.warn("Error parsing object id " + oid);
                     }
                 }
             }
@@ -93,32 +108,72 @@ public class SQLAzureBroker extends BrokerImpl {
             return null;
         }
 
-        final Object oid = getObjectId(obj);
-
         final ClassMapping classMapping = ((SQLAzureConfiguration) getConfiguration()).getMappingRepositoryInstance().
                 getMapping(obj.getClass(), SQLAzureConfiguration.class.getClassLoader(), true);
 
-        final List<Federation> federations = ((SQLAzureConfiguration) getConfiguration()).getFederations(
-                classMapping.getTable().getFullIdentifier().getName());
+        final String tableName = classMapping.getTable().getFullIdentifier().getName();
 
-        if (federations == null && federations.isEmpty()) {
+        final List<Federation> federations = ((SQLAzureConfiguration) getConfiguration()).getFederations(tableName);
+
+        if (federations == null || federations.isEmpty()) {
             return super.attach(obj, copyNew, call);
         } else {
+
             Object res = null;
 
-            for (Iterator<Federation> iter = federations.iterator(); iter.hasNext() && res == null;) {
+            for (final Iterator<Federation> iter = federations.iterator(); iter.hasNext() && res == null;) {
                 final Federation federation = iter.next();
+
                 try {
-                    SQLAzureUtils.useFederation((Connection) getConnection(), federation.getName(), oid);
+                    final Object objectId = parseObjectId(getObjectId(obj), federation.getRangeMappingName(tableName));
+
+                    SQLAzureUtils.useFederation((Connection) getConnection(), federation, objectId);
                     res = super.attach(obj, copyNew, call);
-                } catch (SQLException e) {
-                    if (_log.isTraceEnabled()) {
-                        _log.trace("Error attaching object on '" + federation.getName() + "': " + e.getMessage());
-                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    _log.warn("Error attaching object on '" + federation.getName() + "': " + e.getMessage());
                 }
             }
 
             return res;
         }
+    }
+
+    private Object parseObjectId(final Object objectId, final String rangeMappingName)
+            throws IllegalArgumentException, ObjectIdException {
+
+        if (null == objectId) {
+            throw new IllegalArgumentException("ObjectId " + objectId);
+        }
+
+        if (StringUtils.isBlank(rangeMappingName)) {
+            throw new IllegalArgumentException("RangeMappingName " + rangeMappingName);
+        }
+
+        final Object res;
+
+        if (objectId instanceof ObjectId) {
+            try {
+
+                final Object obj = ((ObjectId) objectId).getIdObject();
+
+                final Method keyGetter = obj.getClass().getMethod(
+                        "get" + org.springframework.util.StringUtils.capitalize(rangeMappingName), new Class[0]);
+
+                res = keyGetter.invoke(obj, new Object[0]);
+
+            } catch (Exception e) {
+                throw new ObjectIdException(e.getMessage());
+            }
+        } else {
+            res = objectId;
+        }
+
+        if (res == null) {
+            throw new ObjectIdException("ObjectId " + objectId + " not found");
+        }
+
+        return res;
     }
 }

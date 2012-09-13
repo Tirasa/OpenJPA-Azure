@@ -23,7 +23,8 @@
         A semicolon-separated list of directories or jar archives listed in classpath.
         Each directory and jar archive will be scanned for annotated JPA entities. 
       -->
-      <property name="openjpa.MetaDataFactory" value="jpa(Types=net.tirasa.jpasqlazure.beans.Person)"/>
+      <property name="openjpa.MetaDataFactory" 
+                value="jpa(Types=net.tirasa.jpasqlazure.beans.Person;net.tirasa.jpasqlazure.beans.PersonINT;net.tirasa.jpasqlazure.beans.PersonBIN;net.tirasa.jpasqlazure.beans.PersonUID;net.tirasa.jpasqlazure.beans.BusinessRole)"/>
     </properties>
   </persistence-unit>
 </persistence>

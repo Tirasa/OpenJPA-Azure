@@ -91,7 +91,7 @@ public class SQLAzureSelectImpl extends SelectImpl {
         if (federations != null) {
             for (Federation federation : federations) {
                 for (String id : SQLAzureUtils.getMemberDistribution(conn, federation)) {
-                    SQLAzureUtils.useFederation(conn, federation.getName(), id);
+                    SQLAzureUtils.useFederation(conn, federation, id);
                     execute(conn, sql, store, fetch, rsType, isLRS, forUpdate, resultSets, statements);
                 }
             }

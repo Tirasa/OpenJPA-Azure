@@ -18,26 +18,22 @@
  */
 package org.apache.openjpa.federation.jdbc;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration.RangeType;
 
 public class Federation {
-
-    private final static String DEFAULT_ID_NAME = "id";
 
     private String name;
 
     private RangeType rangeMappingType;
 
-    private String rangeMappingName;
-
-    private List<String> tables;
+    private Map<String, String> tables;
 
     public Federation() {
-        tables = new ArrayList<String>();
+        tables = new HashMap<String, String>();
         rangeMappingType = RangeType.BIGINT;
-        rangeMappingName = DEFAULT_ID_NAME;
     }
 
     public String getName() {
@@ -48,27 +44,28 @@ public class Federation {
         this.name = name;
     }
 
-    public String getRangeMappingName() {
-        return rangeMappingName;
-    }
-
-    public void setRangeMappingName(String rangeMappingName) {
-        this.rangeMappingName = rangeMappingName;
+    public String getRangeMappingName(final String tableName) {
+        return tables.get(tableName);
     }
 
     public RangeType getRangeMappingType() {
         return rangeMappingType;
     }
 
-    public void setRangeMappingType(RangeType rangeMappingType) {
+    public void setRangeMappingType(final RangeType rangeMappingType) {
         this.rangeMappingType = rangeMappingType;
     }
 
-    public List<String> getTables() {
-        return tables;
+    public Set<String> getTables() {
+        return tables.keySet();
     }
 
-    public void addTable(String table) {
-        this.tables.add(table);
+    public void addTable(final String table, final String rangeMappingName) {
+        this.tables.put(table, rangeMappingName);
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
