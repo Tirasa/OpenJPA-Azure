@@ -21,11 +21,13 @@ package net.tirasa.jpasqlazure.beans;
 import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
+import javax.persistence.Lob;
 import org.apache.commons.lang.ArrayUtils;
 
 @Embeddable
 public class PersonUID_PK implements Serializable {
 
+    @Lob
     @Column(nullable = false, columnDefinition = "uniqueidentifier")
     private String code;
 

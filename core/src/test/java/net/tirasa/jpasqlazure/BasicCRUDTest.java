@@ -136,6 +136,8 @@ public class BasicCRUDTest {
         user = repositoryUID.findOne(user.getPk());
         assertNotNull(user);
 
+        assertEquals("00000000-0000-0000-0000-000000000002", user.getPk().getCode());
+
         repositoryUID.delete(user);
 
         user = repositoryUID.findOne(user.getPk());

@@ -40,7 +40,7 @@ public class SQLAzureUtils {
         try {
 
             final String rangeId = RangeType.UNIQUEIDENTIFIER == federation.getRangeMappingType()
-                    ? "'" + getObjectIdAsString(oid) + "'" : getObjectIdAsString(oid);
+                    ? "'" + getUidAsString(oid) + "'" : getObjectIdAsString(oid);
 
             stm = conn.createStatement();
             stm.execute("USE FEDERATION " + federation + " (range_id = " + rangeId + ") WITH FILTERING=OFF, RESET");
@@ -209,6 +209,18 @@ public class SQLAzureUtils {
 
         if (oid instanceof byte[]) {
             res = "0x" + new String(Hex.encode((byte[]) oid));
+        } else {
+            res = oid.toString();
+        }
+
+        return res;
+    }
+
+    private static String getUidAsString(final Object oid) {
+        final String res;
+
+        if (oid instanceof byte[]) {
+            res = new String((byte[]) oid);
         } else {
             res = oid.toString();
         }
