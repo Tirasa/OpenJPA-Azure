@@ -65,14 +65,16 @@ public class SQLAzureBroker extends BrokerImpl {
         }
 
         if (res == null) {
-            final Collection<Federation> federations = ((SQLAzureConfiguration) getConfiguration()).getFederations();
+            final ClassMapping classMapping =
+                    ((SQLAzureConfiguration) getConfiguration()).getMappingRepositoryInstance().getMapping(
+                    oid, SQLAzureConfiguration.class.getClassLoader(), true);
+
+            final String tableName = classMapping.getTable().getFullIdentifier().getName();
+
+            final Collection<Federation> federations =
+                    ((SQLAzureConfiguration) getConfiguration()).getFederations(tableName);
 
             if (federations != null) {
-                final ClassMapping classMapping = ((SQLAzureConfiguration) getConfiguration()).
-                        getMappingRepositoryInstance().
-                        getMapping(oid, SQLAzureConfiguration.class.getClassLoader(), true);
-
-                final String tableName = classMapping.getTable().getFullIdentifier().getName();
 
                 for (Iterator<Federation> iter = federations.iterator(); iter.hasNext() && res == null;) {
                     final Federation federation = iter.next();
