@@ -4,5 +4,6 @@
 *.jar
 *.war
 *.ear
+target/
 /core/target/
 /test-commons/target/
