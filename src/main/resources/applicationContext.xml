@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:jpa="http://www.springframework.org/schema/data/jpa"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context
+       http://www.springframework.org/schema/context/spring-context.xsd
+       http://www.springframework.org/schema/tx
+       http://www.springframework.org/schema/tx/spring-tx.xsd
+       http://www.springframework.org/schema/data/jpa
+       http://www.springframework.org/schema/data/jpa/spring-jpa.xsd">
+
+  <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+    <property name="locations">
+      <list>
+        <value>classpath:persistence.properties</value>
+      </list>
+    </property>
+    <property name="ignoreResourceNotFound" value="true"/>
+    <property name="ignoreUnresolvablePlaceholders" value="true"/>
+  </bean>
+             
+  <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+    <property name="driverClassName" value="${jpa.driverClassName}"/>
+    <property name="url" value="${jpa.url}"/>
+    <property name="username" value="${jpa.username}"/>
+    <property name="password" value="${jpa.password}"/>
+  </bean>
+  
+  <bean id="entityManagerFactory"
+        class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+    <property name="persistenceUnitName" value="jpasqlazurePersistenceUnit"/>
+    <property name="dataSource" ref="dataSource"/>
+    <property name="jpaVendorAdapter">
+      <bean class="org.springframework.orm.jpa.vendor.OpenJpaVendorAdapter">
+        <property name="showSql" value="true"/>
+        <property name="generateDdl" value="true"/>
+        <property name="databasePlatform" value="${jpa.dictionary}"/>
+      </bean>
+    </property>
+    <property name="jpaPropertyMap">
+      <map>            
+        <entry key="openjpa.NontransactionalWrite" value="false"/>
+        <entry key="openjpa.AutoDetach" value="close, commit, nontx-read, rollback"/>
+                
+        <entry key="openjpa.ReadLockLevel" value="none"/>
+        <entry key="openjpa.WriteLockLevel" value="write"/>
+        <entry key="openjpa.LockTimeout" value="30000"/>
+                                
+        <entry key="openjpa.DataCache" value="true"/>
+        <entry key="openjpa.QueryCache" value="true"/>
+        <entry key="openjpa.RemoteCommitProvider" value="sjvm"/>
+        
+        <entry key="openjpa.jdbc.UpdateManager" value="org.apache.openjpa.jdbc.kernel.SQLAzureUpdateManager"/>
+        <entry key="openjpa.BrokerFactory" value="org.apache.openjpa.jdbc.kernel.SQLAzureBrokerFactory"/>
+        <entry key="openjpa.BrokerImpl" value="org.apache.openjpa.kernel.SQLAzureBroker"/>
+        <entry key="openjpa.jdbc.SQLFactory" value="org.apache.openjpa.jdbc.sql.SQLAzureSQLFactory"/>
+        
+        <entry key="openjpa.sqlazure.Federations" value="FED_1" />
+        
+        <entry key="openjpa.sqlazure.FED_1.RangeMappingType" value="BIGINT" />
+        <entry key="openjpa.sqlazure.FED_1.Tables" value="Person" />
+        <entry key="openjpa.sqlazure.FED_1.Person.RangeMappingName" value="id" />
+      </map>
+    </property>
+  </bean>
+    
+  <bean id="entityManager" class="org.springframework.orm.jpa.support.SharedEntityManagerBean">
+    <property name="entityManagerFactory" ref="entityManagerFactory"/>
+  </bean>
+
+  <bean id="transactionManager" class="org.springframework.orm.jpa.JpaTransactionManager">
+    <property name="entityManagerFactory" ref="entityManagerFactory"/>
+  </bean>
+    
+  <tx:annotation-driven/>
+
+  <jpa:repositories base-package="net.tirasa.jpasqlazure.repository"/>
+  
+  <bean id="wicketApplication" class="net.tirasa.jpasqlazure.web.JPASQLAzureApplication"/>
+</beans>
