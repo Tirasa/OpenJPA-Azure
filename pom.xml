@@ -407,6 +407,5 @@
     
   <modules>
     <module>core</module>
-    <module>sample</module>
   </modules>
 </project>
