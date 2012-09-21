@@ -82,7 +82,9 @@
     <spring.version>3.1.2.RELEASE</spring.version>
     <spring-data.version>1.1.1.RELEASE</spring-data.version>
 
-    <openjpa.version>2.3.0-SNAPSHOT</openjpa.version>
+    <!-- Applying anti-pattern here for workarounding maven release plugin
+         restrictions AND make effective use of 2.3.0-SNAPSHOT -->
+    <openjpa.version>2.3.0-20120921.064758-67</openjpa.version>
 
     <wicket.version>1.5.7</wicket.version>
 

@@ -117,7 +117,7 @@
                 <configuration>
                   <skip>false</skip>
                   <forkMode>pertest</forkMode>
-                  <argLine>-javaagent:${settings.localRepository}/org/apache/openjpa/openjpa/${openjpa.version}/openjpa-${openjpa.version}.jar</argLine>
+                  <argLine>-javaagent:${settings.localRepository}/org/apache/openjpa/openjpa/2.3.0-SNAPSHOT/openjpa-${openjpa.version}.jar</argLine>
                 </configuration>
               </execution>
             </executions>
