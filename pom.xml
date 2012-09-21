@@ -12,10 +12,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
-                             http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0                               http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
   <packaging>pom</packaging>
@@ -28,7 +25,7 @@
 
   <groupId>net.tirasa.openjpasqlazure</groupId>
   <artifactId>openjpasqlazure</artifactId>
-  <version>0.1-SNAPSHOT</version>
+  <version>0.1</version>
   <name>OpenJPA support for MS SQL Azure</name>
   <description>MS SQL Azure sharding support for OpenJPA</description>
 
@@ -98,7 +95,7 @@
     <cargo.log>${project.build.directory}/log/cargo.log</cargo.log>
     <cargo.output>${project.build.directory}/log/cargo-output.log</cargo.output>
     
-    <javaagent></javaagent>
+    <javaagent />
     
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
