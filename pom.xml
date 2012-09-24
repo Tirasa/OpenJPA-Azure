@@ -32,7 +32,7 @@
     
     <openjpa.version>2.3.0-SNAPSHOT</openjpa.version>
     
-    <openjpasqlazure.version>0.1</openjpasqlazure.version>
+    <openjpasqlazure.version>0.1.1</openjpasqlazure.version>
     
     <h2.version>1.3.168</h2.version>
     
@@ -48,7 +48,7 @@
   <dependencies>
     <dependency>
       <groupId>net.tirasa.openjpasqlazure</groupId>
-      <artifactId>openjpasqlazure-core</artifactId>
+      <artifactId>openjpasqlazure</artifactId>
       <version>${openjpasqlazure.version}</version>
     </dependency>
 
