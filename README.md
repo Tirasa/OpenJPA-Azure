@@ -14,7 +14,7 @@
 OpenJPASQLAzure
 ===============
 
-MS SQL Azure sharding support for OpenJPA
+Windows Azure SQL Database sharding support for OpenJPA
 
 ### Read more ###
 Want to know more about this project? [Read more](https://github.com/Tirasa/OpenJPASQLAzure/wiki/What-is-this-about%3F).
