@@ -23,10 +23,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.AbstractMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.federation.jdbc.Federation;
+import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
 import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration.RangeType;
+import org.apache.openjpa.jdbc.schema.ForeignKey;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.springframework.security.crypto.codec.Hex;
 
@@ -202,6 +206,30 @@ public class SQLAzureUtils {
         }
 
         return new AbstractMap.SimpleEntry<Statement, ResultSet>(stm, stm.executeQuery(queryBuilder.toString()));
+    }
+
+    public static Set<Federation> getTargetFederation(
+            final SQLAzureConfiguration conf, final Table table, Set<String> tablesToBeExcluded) {
+
+        if (tablesToBeExcluded == null) {
+            tablesToBeExcluded = new HashSet<String>();
+        }
+
+        tablesToBeExcluded.add(table.getFullIdentifier().getName());
+
+        final Set<Federation> federations =
+                new HashSet<Federation>(conf.getFederations(table.getFullIdentifier().getName()));
+
+        final ForeignKey[] fks = table.getForeignKeys();
+
+        for (ForeignKey fk : fks) {
+            final Table extTable = fk.getPrimaryKeyTable();
+            if (!tablesToBeExcluded.contains(extTable.getFullIdentifier().getName())) {
+                federations.addAll(getTargetFederation(conf, extTable, tablesToBeExcluded));
+            }
+        }
+
+        return federations;
     }
 
     private static String getObjectIdAsString(final Object oid) {

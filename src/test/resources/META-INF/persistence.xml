@@ -18,6 +18,9 @@
              http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
              version="2.0">
   <persistence-unit name="jpasqlazurePersistenceUnit">
+    <mapping-file>META-INF/orm.xml</mapping-file>
+    <validation-mode>NONE</validation-mode>
+
     <properties>
       <!-- 
         A semicolon-separated list of directories or jar archives listed in classpath.
@@ -25,6 +28,8 @@
       -->
       <property name="openjpa.MetaDataFactory" 
                 value="jpa(Types=net.tirasa.jpasqlazure.beans.Person;net.tirasa.jpasqlazure.beans.PersonINT;net.tirasa.jpasqlazure.beans.PersonBIN;net.tirasa.jpasqlazure.beans.PersonUID;net.tirasa.jpasqlazure.beans.BusinessRole)"/>
+    
+      <property name="openjpa.jdbc.MappingDefaults" value="ForeignKeyDeleteAction=restrict, JoinForeignKeyDeleteAction=restrict"/>
     </properties>
   </persistence-unit>
 </persistence>

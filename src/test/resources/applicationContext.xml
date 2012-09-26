@@ -75,8 +75,9 @@
         <entry key="openjpa.sqlazure.Federations" value="FED_1, FED_2, FED_3, FED_4, FED_5" />
         
         <entry key="openjpa.sqlazure.FED_1.RangeMappingType" value="BIGINT" />
-        <entry key="openjpa.sqlazure.FED_1.Tables" value="Person" />
+        <entry key="openjpa.sqlazure.FED_1.Tables" value="Person,BusinessRole" />
         <entry key="openjpa.sqlazure.FED_1.Person.RangeMappingName" value="id" />
+        <entry key="openjpa.sqlazure.FED_1.BusinessRole.RangeMappingName" value="id" />
         
         <entry key="openjpa.sqlazure.FED_2.RangeMappingType" value="UNIQUEIDENTIFIER" />
         <entry key="openjpa.sqlazure.FED_2.Tables" value="PersonUID" />

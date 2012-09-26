@@ -73,6 +73,10 @@ public class Initialize {
         Connection conn = null;
         Statement stm = null;
 
+        final ApplicationContext ctx = new ClassPathXmlApplicationContext("/applicationContext.xml");
+
+        ds = (DataSource) ctx.getBean("dataSource");
+
         try {
             System.out.println("Connect ...");
 

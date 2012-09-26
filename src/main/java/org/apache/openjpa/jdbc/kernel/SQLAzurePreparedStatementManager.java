@@ -47,7 +47,7 @@ public class SQLAzurePreparedStatementManager extends BatchingPreparedStatementM
                     ((SQLAzureConfiguration) _store.getConfiguration()).getFederations(
                     row.getTable().getIdentifier().getName());
 
-            if (federations == null || federations.isEmpty()) {
+            if (federations.isEmpty()) {
                 updates += stmnt.executeUpdate();
             } else {
 

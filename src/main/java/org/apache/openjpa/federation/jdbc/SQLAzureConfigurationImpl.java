@@ -78,7 +78,7 @@ public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements 
 
     @Override
     public List<Federation> getFederations(final String tableName) {
-        return federatedTables.get(tableName);
+        return federatedTables.get(tableName) == null ? Collections.EMPTY_LIST : federatedTables.get(tableName);
     }
 
     @Override
@@ -114,23 +114,24 @@ public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements 
 
                 for (String federatedTable : tables) {
 
-                    final String rangeMappingName = newProps.get(
+                    String rangeMappingName = newProps.get(
                             PREFIX_FEDERATION + federationName + "." + federatedTable + ".RangeMappingName");
 
                     if (StringUtils.isBlank(rangeMappingName)) {
-                        getConfigurationLog().warn(_loc.get("invalid-property", PREFIX_FEDERATION + federationName));
-                    } else {
-                        federation.addTable(federatedTable, rangeMappingName);
-
-                        List<Federation> federations = federatedTables.get(federatedTable);
-
-                        if (federations == null) {
-                            federations = new ArrayList<Federation>();
-                            federatedTables.put(federatedTable, federations);
-                        }
-
-                        federations.add(federation);
+                        getConfigurationLog().info(_loc.get("invalid-property", PREFIX_FEDERATION + federationName));
+                        rangeMappingName = null;
                     }
+
+                    federation.addTable(federatedTable, rangeMappingName);
+
+                    List<Federation> federations = federatedTables.get(federatedTable);
+
+                    if (federations == null) {
+                        federations = new ArrayList<Federation>();
+                        federatedTables.put(federatedTable, federations);
+                    }
+
+                    federations.add(federation);
                 }
 
                 federations.put(federationName, federation);

@@ -67,11 +67,10 @@ public class SQLAzureSchemaTool extends SchemaTool {
 
         boolean res = true;
 
-        if (federations == null || federations.isEmpty()) {
+        if (federations.isEmpty()) {
             res = super.createTable(table);
         } else {
             final Connection conn = _ds.getConnection();
-            boolean wasAuto = conn.getAutoCommit();
             try {
                 for (Federation federation : federations) {
                     for (String id : SQLAzureUtils.getMemberDistribution(conn, federation)) {
@@ -82,14 +81,26 @@ public class SQLAzureSchemaTool extends SchemaTool {
                     }
                 }
             } finally {
-                if (!wasAuto) {
-                    conn.setAutoCommit(false);
-                }
                 try {
                     conn.close();
                 } catch (SQLException se) {
                 }
             }
+        }
+
+        return res;
+    }
+
+    @Override
+    public boolean addForeignKey(ForeignKey fk)
+            throws SQLException {
+        final List<Federation> federations =
+                ((SQLAzureConfiguration) _conf).getFederations(fk.getPrimaryKeyTable().getFullIdentifier().getName());
+
+        boolean res = true;
+
+        if (federations.isEmpty()) {
+            res = super.addForeignKey(fk);
         }
 
         return res;
@@ -101,44 +112,54 @@ public class SQLAzureSchemaTool extends SchemaTool {
             return false;
         }
 
+        boolean wasAuto = conn.getAutoCommit();
+
         boolean err = false;
-        if (getWriter() == null) {
-            Statement statement = null;
 
-            if (!conn.getAutoCommit()) {
-                conn.setAutoCommit(true);
-            }
-            for (int i = 0; i < sql.length; i++) {
-                try {
+        try {
+            if (getWriter() == null) {
+                Statement statement = null;
+
+                if (!wasAuto) {
+                    conn.setAutoCommit(true);
+                }
+
+                for (int i = 0; i < sql.length; i++) {
                     try {
-                        conn.rollback();
-                    } catch (Exception e) {
-                    }
-
-                    statement = conn.createStatement();
-                    statement.executeUpdate(sql[i]);
-
-                    try {
-                        conn.commit();
-                    } catch (Exception e) {
-                    }
-                } catch (SQLException se) {
-                    err = true;
-                    handleException(se);
-                } finally {
-                    if (statement != null) {
                         try {
-                            statement.close();
-                        } catch (SQLException se) {
+                            conn.rollback();
+                        } catch (Exception e) {
+                        }
+
+                        statement = conn.createStatement();
+                        statement.executeUpdate(sql[i]);
+
+                        try {
+                            conn.commit();
+                        } catch (Exception e) {
+                        }
+                    } catch (SQLException se) {
+                        err = true;
+                        handleException(se);
+                    } finally {
+                        if (statement != null) {
+                            try {
+                                statement.close();
+                            } catch (SQLException se) {
+                            }
                         }
                     }
                 }
+            } else {
+                for (int i = 0; i < sql.length; i++) {
+                    ((PrintWriter) getWriter()).println(sql[i] + _sqlTerminator);
+                }
+                ((PrintWriter) getWriter()).flush();
             }
-        } else {
-            for (int i = 0; i < sql.length; i++) {
-                ((PrintWriter) getWriter()).println(sql[i] + _sqlTerminator);
+        } finally {
+            if (!wasAuto) {
+                conn.setAutoCommit(false);
             }
-            ((PrintWriter) getWriter()).flush();
         }
 
         return !err;

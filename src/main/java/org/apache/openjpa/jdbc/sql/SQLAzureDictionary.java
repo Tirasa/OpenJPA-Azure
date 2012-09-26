@@ -203,7 +203,9 @@ public class SQLAzureDictionary extends SQLServerDictionary {
 
         final String rangeMappingName = federation.getRangeMappingName(table.getFullIdentifier().getName());
 
-        toBeCreated.add(getCreateTableStm(table) + " FEDERATED ON (range_id = " + rangeMappingName + ")");
+        toBeCreated.add(
+                getCreateTableStm(table)
+                + (StringUtils.isBlank(rangeMappingName) ? "" : " FEDERATED ON (range_id = " + rangeMappingName + ")"));
 
         return toBeCreated;
     }

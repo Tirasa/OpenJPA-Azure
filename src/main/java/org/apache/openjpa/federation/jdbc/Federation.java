@@ -68,4 +68,15 @@ public class Federation {
     public String toString() {
         return name;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        return o != null && o instanceof Federation
+                && (name == null && ((Federation) o).getName() == null || ((Federation) o).getName().equals(name));
+    }
+
+    @Override
+    public int hashCode() {
+        return name == null ? super.hashCode() : name.hashCode();
+    }
 }

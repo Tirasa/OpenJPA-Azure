@@ -14,13 +14,12 @@
 package net.tirasa.jpasqlazure.beans;
 
 import java.io.Serializable;
-import java.util.Set;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.ManyToMany;
+import javax.persistence.OneToOne;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
@@ -34,8 +33,8 @@ public class BusinessRole implements Serializable {
     @Column(nullable = false)
     private String name;
 
-    @ManyToMany
-    private Set<Person> person;
+    @OneToOne
+    private Person person;
 
     public Long getId() {
         return id;
@@ -45,11 +44,11 @@ public class BusinessRole implements Serializable {
         this.id = id;
     }
 
-    public Set<Person> getPerson() {
+    public Person getPerson() {
         return person;
     }
 
-    public void setPerson(Set<Person> person) {
+    public void setPerson(Person person) {
         this.person = person;
     }
 

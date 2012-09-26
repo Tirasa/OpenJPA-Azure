@@ -26,8 +26,8 @@
   <groupId>net.tirasa.openjpasqlazure</groupId>
   <artifactId>openjpasqlazure</artifactId>
   <version>0.2-SNAPSHOT</version>
-  <name>OpenJPA support for MS SQL Azure</name>
-  <description>MS SQL Azure sharding support for OpenJPA</description>
+  <name>OpenJPA support for Windows Azure SQL Database</name>
+  <description>Windows Azure SQL Database sharding support for OpenJPA</description>
 
   <url>https://github.com/Tirasa/OpenJPASQLAzure</url>
   
@@ -138,6 +138,15 @@
       <version>${spring-data.version}</version>
       <scope>test</scope>
     </dependency>
+    
+    <!-- needed by standalone schema tools -->
+    <dependency>
+      <groupId>org.apache.openjpa</groupId>
+      <artifactId>openjpa-persistence</artifactId>
+      <version>${openjpa.version}</version>
+      <scope>test</scope>
+    </dependency>
+    
     <!-- Install in local repository as shown in http://claude.betancourt.us/add-microsoft-sql-jdbc-driver-to-maven/ -->
     <dependency>
       <groupId>com.microsoft.sqlserver</groupId>

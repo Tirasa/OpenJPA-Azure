@@ -74,32 +74,30 @@ public class SQLAzureBroker extends BrokerImpl {
             final Collection<Federation> federations =
                     ((SQLAzureConfiguration) getConfiguration()).getFederations(tableName);
 
-            if (federations != null) {
+            for (Iterator<Federation> iter = federations.iterator(); iter.hasNext() && res == null;) {
+                final Federation federation = iter.next();
 
-                for (Iterator<Federation> iter = federations.iterator(); iter.hasNext() && res == null;) {
-                    final Federation federation = iter.next();
+                try {
+                    final Object objectId = parseObjectId(oid, federation.getRangeMappingName(tableName));
 
-                    try {
-                        final Object objectId = parseObjectId(oid, federation.getRangeMappingName(tableName));
+                    SQLAzureUtils.useFederation((Connection) getConnection(), federation, objectId);
+                    res = super.find(oid, validate, call);
 
-                        SQLAzureUtils.useFederation((Connection) getConnection(), federation, objectId);
-                        res = super.find(oid, validate, call);
-
-                    } catch (SQLException ignore) {
-                        if (_log.isTraceEnabled()) {
-                            _log.trace("Error searching on '" + federation.getName() + "': " + ignore.getMessage());
-                        }
-                    } catch (RuntimeException ignore) {
-                        // ignore exception: table could not exist into the root federation
-                        if (_log.isTraceEnabled()) {
-                            _log.trace("Object " + oid + " does not exist into '" + federation.getName() + "'");
-                        }
-                    } catch (Exception e) {
-                        _log.warn("Error parsing object id " + oid);
+                } catch (SQLException ignore) {
+                    if (_log.isTraceEnabled()) {
+                        _log.trace("Error searching on '" + federation.getName() + "': " + ignore.getMessage());
                     }
+                } catch (RuntimeException ignore) {
+                    // ignore exception: table could not exist into the root federation
+                    if (_log.isTraceEnabled()) {
+                        _log.trace("Object " + oid + " does not exist into '" + federation.getName() + "'");
+                    }
+                } catch (Exception e) {
+                    _log.warn("Error parsing object id " + oid);
                 }
             }
         }
+
         return res;
     }
 
@@ -117,7 +115,7 @@ public class SQLAzureBroker extends BrokerImpl {
 
         final List<Federation> federations = ((SQLAzureConfiguration) getConfiguration()).getFederations(tableName);
 
-        if (federations == null || federations.isEmpty()) {
+        if (federations.isEmpty()) {
             return super.attach(obj, copyNew, call);
         } else {
 
