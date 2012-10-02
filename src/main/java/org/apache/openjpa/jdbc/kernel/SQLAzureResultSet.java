@@ -58,6 +58,9 @@ public class SQLAzureResultSet implements ResultSet {
      */
     public void add(ResultSet rs) {
         results.add(rs);
+        if (current == null) {
+            current = rs;
+        }
     }
 
     @Override
