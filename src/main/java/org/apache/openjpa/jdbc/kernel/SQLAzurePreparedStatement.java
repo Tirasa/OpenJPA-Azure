@@ -18,23 +18,43 @@
  */
 package org.apache.openjpa.jdbc.kernel;
 
-import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.apache.openjpa.jdbc.kernel.SQLAzureStoreManager.SQLAzureRefCountConnection;
-import org.apache.openjpa.jdbc.sql.RowImpl;
+import org.apache.openjpa.slice.jdbc.DistributedConnection;
+import org.apache.openjpa.slice.jdbc.DistributedPreparedStatement;
 
-public class SQLAzurePreparedStatementManager extends BatchingPreparedStatementManagerImpl {
+public class SQLAzurePreparedStatement extends DistributedPreparedStatement {
 
-    public SQLAzurePreparedStatementManager(final JDBCStore store, final Connection conn, final int batchLimit) {
-        super(store, conn, batchLimit);
+    public SQLAzurePreparedStatement(DistributedConnection c) {
+        super(c);
     }
 
     @Override
-    protected void flushInternal(RowImpl row)
+    public ResultSet executeQuery()
+            throws SQLException {
+        final SQLAzureResultSet mrs = new SQLAzureResultSet();
+
+        for (PreparedStatement stm : this) {
+            try {
+                mrs.add(stm.executeQuery());
+            } catch (Throwable t) {
+                // ignore
+            }
+        }
+
+        return mrs;
+    }
+
+    @Override
+    public int executeUpdate()
             throws SQLException {
 
-        ((SQLAzureDelegatingConnection) ((SQLAzureRefCountConnection) _conn).getConn()).selectWorkingConnections(row);
+        int ret = 0;
 
-        super.flushInternal(row);
+        for (PreparedStatement stm : this) {
+            ret += stm.executeUpdate();
+        }
+        return ret;
     }
 }

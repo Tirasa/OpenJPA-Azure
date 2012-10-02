@@ -53,29 +53,30 @@ public class SQLAzureDictionary extends SQLServerDictionary {
             throws SQLException {
 
         SQLAzureUtils.useRootFederation(conn);
-        Column[] columns = getColumns(conn, schemaName, tableName, columnName);
 
-        if (columns != null && columns.length > 0) {
-            return columns;
-        }
+        final Collection<Federation> federations = tableName == null
+                ? ((SQLAzureConfiguration) conf).getFederations()
+                : ((SQLAzureConfiguration) conf).getFederations(tableName.getName());
 
-        final Collection<Federation> federations = ((SQLAzureConfiguration) conf).getFederations();
+        Column[] columns = null;
 
-        if (federations != null) {
+        if (federations.isEmpty()) {
+            columns = getColumns(conn, schemaName, tableName, columnName);
+        } else {
             for (Federation federation : federations) {
-                for (String memberId : SQLAzureUtils.getMemberDistribution(conn, federation)) {
+                for (Object memberId : SQLAzureUtils.getMemberDistribution(conn, federation)) {
                     SQLAzureUtils.useFederation(conn, federation, memberId);
 
                     columns = getColumns(conn, schemaName, tableName, columnName);
 
-                    if (columns != null && columns.length > 0) {
-                        return columns;
+                    if (columns == null || columns.length == 0) {
+                        return new Column[0];
                     }
                 }
             }
         }
 
-        return new Column[0];
+        return columns;
     }
 
     private Column[] getColumns(
@@ -244,6 +245,8 @@ public class SQLAzureDictionary extends SQLServerDictionary {
             if (StringUtils.isNotBlank(pkStr)) {
                 endBuf.append(pkStr);
             }
+        } else {
+            endBuf.append(getDefaultPKConstraint(table));
         }
 
         final Unique[] unqs = table.getUniques();
@@ -274,5 +277,22 @@ public class SQLAzureDictionary extends SQLServerDictionary {
         buf.append(")");
 
         return buf.toString();
+    }
+
+    private String getDefaultPKConstraint(final Table table) {
+        StringBuilder builder = new StringBuilder();
+
+        for (Column column : table.getColumns()) {
+            if (builder.length() > 0) {
+                builder.append(",");
+            }
+
+            builder.append(column.getIdentifier().getName());
+        }
+
+        builder.insert(0, "PRIMARY KEY CLUSTERED (");
+        builder.append(")");
+
+        return builder.toString();
     }
 }

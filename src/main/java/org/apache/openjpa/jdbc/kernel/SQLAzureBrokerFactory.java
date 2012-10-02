@@ -27,6 +27,7 @@ import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.meta.MappingRepository;
 import org.apache.openjpa.jdbc.meta.MappingTool;
 import org.apache.openjpa.jdbc.meta.SQLAzureMappingTool;
+import org.apache.openjpa.kernel.StoreManager;
 import org.apache.openjpa.lib.conf.ConfigurationProvider;
 import org.apache.openjpa.lib.conf.Configurations;
 import org.apache.openjpa.lib.util.Localizer;
@@ -40,6 +41,11 @@ public class SQLAzureBrokerFactory extends JDBCBrokerFactory {
 
     public SQLAzureBrokerFactory(SQLAzureConfiguration conf) {
         super(conf);
+    }
+
+    @Override
+    protected StoreManager newStoreManager() {
+        return new SQLAzureStoreManager();
     }
 
     public static JDBCBrokerFactory newInstance(ConfigurationProvider cp) {

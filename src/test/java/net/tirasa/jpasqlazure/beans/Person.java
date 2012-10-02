@@ -14,14 +14,19 @@
 package net.tirasa.jpasqlazure.beans;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Lob;
+import javax.persistence.ManyToMany;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
@@ -48,6 +53,13 @@ public class Person implements Serializable {
 
     @Lob
     private byte[] picture;
+
+    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.REFRESH}, fetch = FetchType.EAGER)
+    private Set<BusinessRole> roles;
+
+    public Person() {
+        roles = new HashSet<BusinessRole>();
+    }
 
     public Long getId() {
         return id;
@@ -95,6 +107,14 @@ public class Person implements Serializable {
 
     public void setInfo(String info) {
         this.info = info;
+    }
+
+    public Set<BusinessRole> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<BusinessRole> roles) {
+        this.roles = roles;
     }
 
     @Override

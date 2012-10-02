@@ -23,7 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration.RangeType;
 
-public class MemberDistribution implements Iterable<String> {
+public class MemberDistribution implements Iterable<Object> {
 
     private final RangeType type;
 
@@ -38,11 +38,11 @@ public class MemberDistribution implements Iterable<String> {
     }
 
     @Override
-    public Iterator<String> iterator() {
+    public Iterator<Object> iterator() {
         return new MemberIterator();
     }
 
-    private class MemberIterator implements Iterator<String> {
+    private class MemberIterator implements Iterator<Object> {
 
         Iterator<Object> iter = values.iterator();
 
@@ -52,18 +52,17 @@ public class MemberDistribution implements Iterable<String> {
         }
 
         @Override
-        public String next() {
+        public Object next() {
             final Object value = iter.next();
 
             switch (type) {
                 case BIGINT:
-                    return value == null ? "0" : value.toString();
                 case INT:
-                    return value == null ? "0" : value.toString();
+                    return value == null ? 0 : value;
                 case UNIQUEIDENTIFIER:
-                    return value == null ? "00000000-0000-0000-0000-000000000000" : value.toString();
+                    return value == null ? "00000000-0000-0000-0000-000000000000" : value;
                 case VARBINARY:
-                    return value == null ? "0" : value.toString();
+                    return value == null ? 0x0 : value;
                 default:
                     return null;
             }

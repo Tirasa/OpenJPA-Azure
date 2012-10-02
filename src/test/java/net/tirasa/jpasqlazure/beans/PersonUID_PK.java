@@ -28,16 +28,9 @@ import org.apache.commons.lang.ArrayUtils;
 public class PersonUID_PK implements Serializable {
 
     @Lob
-    @Column(nullable = false, columnDefinition = "uniqueidentifier")
+    @Column(nullable = false, columnDefinition="uniqueidentifier")
     private String code;
 
-//    public byte[] getCode() {
-//        return ArrayUtils.clone(code);
-//    }
-//
-//    public void setCode(byte[] code) {
-//        this.code = ArrayUtils.clone(code);
-//    }
     public String getCode() {
         return code;
     }

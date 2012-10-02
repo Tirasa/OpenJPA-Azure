@@ -31,28 +31,8 @@
     
       <property name="openjpa.jdbc.MappingDefaults" value="ForeignKeyDeleteAction=restrict, JoinForeignKeyDeleteAction=restrict"/>
       
-      <property name="openjpa.jdbc.UpdateManager" value="org.apache.openjpa.jdbc.kernel.SQLAzureUpdateManager"/>
-      <property name="openjpa.BrokerFactory" value="org.apache.openjpa.jdbc.kernel.SQLAzureBrokerFactory"/>
-      <property name="openjpa.jdbc.SQLFactory" value="org.apache.openjpa.jdbc.sql.SQLAzureSQLFactory"/>
-        
-      <property name="openjpa.sqlazure.Federations" value="FED_1, FED_2, FED_3, FED_4, FED_5" />
-        
-      <property name="openjpa.sqlazure.FED_1.RangeMappingType" value="BIGINT" />
-      <property name="openjpa.sqlazure.FED_1.Tables" value="Person,BusinessRole" />
-      <property name="openjpa.sqlazure.FED_1.Person.RangeMappingName" value="id" />
-      <property name="openjpa.sqlazure.FED_1.BusinessRole.RangeMappingName" value="id" />
-        
-      <property name="openjpa.sqlazure.FED_2.RangeMappingType" value="UNIQUEIDENTIFIER" />
-      <property name="openjpa.sqlazure.FED_2.Tables" value="PersonUID" />
-      <property name="openjpa.sqlazure.FED_2.PersonUID.RangeMappingName" value="code" />
-        
-      <property name="openjpa.sqlazure.FED_3.RangeMappingType" value="INT" />
-      <property name="openjpa.sqlazure.FED_3.Tables" value="PersonINT" />
-      <property name="openjpa.sqlazure.FED_3.PersonINT.RangeMappingName" value="code" />
-        
-      <property name="openjpa.sqlazure.FED_4.RangeMappingType" value="VERBINARY" />
-      <property name="openjpa.sqlazure.FED_4.Tables" value="PersonBIN" />
-      <property name="openjpa.sqlazure.FED_4.PersonBIN.RangeMappingName" value="code" />
+      <property name="openjpa.Log" value="DefaultLevel=WARN, Runtime=TRACE, Tool=TRACE, SQL=TRACE"/>
+      
     </properties>
   </persistence-unit>
 </persistence>

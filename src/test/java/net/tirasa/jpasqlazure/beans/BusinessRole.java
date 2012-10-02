@@ -19,7 +19,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.OneToOne;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
@@ -33,8 +32,8 @@ public class BusinessRole implements Serializable {
     @Column(nullable = false)
     private String name;
 
-    @OneToOne
-    private Person person;
+    public BusinessRole() {
+    }
 
     public Long getId() {
         return id;
@@ -42,14 +41,6 @@ public class BusinessRole implements Serializable {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public Person getPerson() {
-        return person;
-    }
-
-    public void setPerson(Person person) {
-        this.person = person;
     }
 
     public String getName() {

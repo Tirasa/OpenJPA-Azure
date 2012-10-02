@@ -36,15 +36,16 @@ import org.springframework.security.crypto.codec.Hex;
 
 public class SQLAzureUtils {
 
-    public static void useFederation(final Connection conn, final Federation federation, final Object oid)
+    public static void useFederation(
+            final Connection conn, final Federation federation, final Object oid)
             throws SQLException {
 
         Statement stm = null;
 
-        try {
+        final String rangeId = RangeType.UNIQUEIDENTIFIER == federation.getRangeMappingType()
+                ? "'" + getUidAsString(oid) + "'" : getObjectIdAsString(oid);
 
-            final String rangeId = RangeType.UNIQUEIDENTIFIER == federation.getRangeMappingType()
-                    ? "'" + getUidAsString(oid) + "'" : getObjectIdAsString(oid);
+        try {
 
             stm = conn.createStatement();
             stm.execute("USE FEDERATION " + federation + " (range_id = " + rangeId + ") WITH FILTERING=OFF, RESET");

@@ -35,4 +35,12 @@ under the License.
     </attributes>
   </entity>
   
+  <embeddable class="net.tirasa.jpasqlazure.beans.PersonUID_PK">
+    <attributes>
+      <basic name="code">
+        <column nullable="false" column-definition="varchar"/>
+      </basic>
+    </attributes>
+  </embeddable>
+  
 </entity-mappings>

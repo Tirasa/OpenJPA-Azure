@@ -14,6 +14,10 @@
 package net.tirasa.jpasqlazure;
 
 import java.io.UnsupportedEncodingException;
+import java.util.Collections;
+import java.util.HashSet;
+import javax.persistence.EntityManager;
+import net.tirasa.jpasqlazure.beans.BusinessRole;
 import net.tirasa.jpasqlazure.beans.Gender;
 import net.tirasa.jpasqlazure.beans.Person;
 import net.tirasa.jpasqlazure.beans.PersonBIN;
@@ -26,12 +30,14 @@ import net.tirasa.jpasqlazure.repository.PersonBinRepository;
 import net.tirasa.jpasqlazure.repository.PersonIntRepository;
 import net.tirasa.jpasqlazure.repository.PersonRepository;
 import net.tirasa.jpasqlazure.repository.PersonUidRepository;
+import net.tirasa.jpasqlazure.repository.RoleRepository;
 import org.junit.AfterClass;
 import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
@@ -43,7 +49,12 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 })
 public class BasicCRUDTest {
 
+    // used to check for test running
+    private static String driverName;
+
     private static int USER_NUMBER = 3;
+
+    private static EntityManager entityManager;
 
     private static PersonRepository repository = null;
 
@@ -53,6 +64,8 @@ public class BasicCRUDTest {
 
     private static PersonBinRepository repositoryBIN = null;
 
+    private static RoleRepository roleRepository = null;
+
     private static String[] schemaPurgeQueries = {
         "USE FEDERATION ROOT WITH RESET",
         "drop table OPENJPA_SEQUENCE_TABLE",
@@ -61,6 +74,8 @@ public class BasicCRUDTest {
         "drop table BusinessRole",
         "drop table Person",
         "USE FEDERATION FED_1 (range_id=5) WITH FILTERING=OFF, RESET",
+        "drop table BusinessRole",
+        "drop table Person",
         "USE FEDERATION FED_2 (range_id = '00000000-0000-0000-0000-000000000000') WITH RESET, FILTERING = OFF",
         "drop table PersonUID",
         "USE FEDERATION FED_3 (range_id = 0) WITH RESET, FILTERING = OFF",
@@ -71,6 +86,11 @@ public class BasicCRUDTest {
         "drop table PersonBIN"
     };
 
+    @Value("${jpa.driverClassName}")
+    public void setJdbcDriverName(final String name) {
+        BasicCRUDTest.driverName = name;
+    }
+
     @BeforeClass
     public static void init()
             throws UnsupportedEncodingException {
@@ -80,6 +100,8 @@ public class BasicCRUDTest {
         repositoryINT = ctx.getBean(PersonIntRepository.class);
         repositoryUID = ctx.getBean(PersonUidRepository.class);
         repositoryBIN = ctx.getBean(PersonBinRepository.class);
+        roleRepository = ctx.getBean(RoleRepository.class);
+        entityManager = (EntityManager) ctx.getBean("entityManager");
 
         for (int i = 0; i < USER_NUMBER; i++) {
             Person user = new Person();
@@ -113,6 +135,12 @@ public class BasicCRUDTest {
         for (Person person : iter) {
             assertNotNull(person);
         }
+    }
+
+    @Test
+    @Ignore
+    public void count() {
+        assertTrue(repository.count() > 0);
     }
 
     @Test
@@ -198,9 +226,31 @@ public class BasicCRUDTest {
     }
 
     @Test
-    @Ignore
-    public void count() {
-        assertTrue(repository.count() > 0);
+    public void addNewRoleToPerson()
+            throws UnsupportedEncodingException {
+
+        Person user = repository.findByUsername("Bob_2");
+        assertNotNull(user);
+        assertTrue(user.getRoles().isEmpty());
+
+        BusinessRole br = new BusinessRole();
+        br.setName("roleA");
+
+        user.setRoles(new HashSet<BusinessRole>(Collections.singleton(br)));
+
+        user = repository.save(user);
+        assertEquals(1, user.getRoles().size());
+
+        br = roleRepository.findOne(user.getRoles().iterator().next().getId());
+        assertNotNull(br);
+
+        user.getRoles().clear();
+
+        user = repository.save(user);
+        assertTrue(user.getRoles().isEmpty());
+
+        br = roleRepository.findOne(br.getId());
+        assertNotNull(br);
     }
 
     @AfterClass
@@ -215,6 +265,8 @@ public class BasicCRUDTest {
             assertNull(user);
         }
 
-        Initialize.executeQueries(schemaPurgeQueries);
+        if (driverName.contains("SQLServerDriver")) {
+            Initialize.executeQueries(schemaPurgeQueries);
+        }
     }
 }

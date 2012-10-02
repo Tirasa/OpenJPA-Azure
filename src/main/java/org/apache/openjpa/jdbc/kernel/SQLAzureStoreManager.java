@@ -20,21 +20,36 @@ package org.apache.openjpa.jdbc.kernel;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import org.apache.openjpa.jdbc.kernel.SQLAzureStoreManager.SQLAzureRefCountConnection;
-import org.apache.openjpa.jdbc.sql.RowImpl;
+import java.util.ArrayList;
+import java.util.List;
+import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
 
-public class SQLAzurePreparedStatementManager extends BatchingPreparedStatementManagerImpl {
-
-    public SQLAzurePreparedStatementManager(final JDBCStore store, final Connection conn, final int batchLimit) {
-        super(store, conn, batchLimit);
-    }
+public class SQLAzureStoreManager extends JDBCStoreManager {
 
     @Override
-    protected void flushInternal(RowImpl row)
+    protected RefCountConnection connectInternal()
             throws SQLException {
 
-        ((SQLAzureDelegatingConnection) ((SQLAzureRefCountConnection) _conn).getConn()).selectWorkingConnections(row);
+        final List<Connection> connections = new ArrayList<Connection>();
+        connections.add(getDataSource().getConnection());
 
-        super.flushInternal(row);
+        final SQLAzureDelegatingConnection conn = new SQLAzureDelegatingConnection(
+                connections, getDataSource(), (SQLAzureConfiguration) getConfiguration());
+
+        return new SQLAzureRefCountConnection(conn);
+    }
+
+    public class SQLAzureRefCountConnection extends RefCountConnection {
+
+        private final Connection conn;
+
+        public SQLAzureRefCountConnection(final Connection conn) {
+            super(conn);
+            this.conn = conn;
+        }
+
+        public Connection getConn() {
+            return conn;
+        }
     }
 }
