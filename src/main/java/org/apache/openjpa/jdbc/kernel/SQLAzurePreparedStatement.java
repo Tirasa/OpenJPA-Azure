@@ -26,13 +26,14 @@ import org.apache.openjpa.slice.jdbc.DistributedPreparedStatement;
 
 public class SQLAzurePreparedStatement extends DistributedPreparedStatement {
 
-    public SQLAzurePreparedStatement(DistributedConnection c) {
-        super(c);
+    public SQLAzurePreparedStatement(final DistributedConnection conn) {
+        super(conn);
     }
 
     @Override
     public ResultSet executeQuery()
             throws SQLException {
+
         final SQLAzureResultSet mrs = new SQLAzureResultSet();
 
         for (PreparedStatement stm : this) {

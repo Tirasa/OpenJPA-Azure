@@ -60,6 +60,7 @@ public class SQLAzureResultSet implements ResultSet {
         results.add(rs);
         if (current == null) {
             current = rs;
+            cursor = 0;
         }
     }
 
@@ -329,6 +330,7 @@ public class SQLAzureResultSet implements ResultSet {
     @Override
     public ResultSetMetaData getMetaData()
             throws SQLException {
+
         return current.getMetaData();
     }
 
