@@ -77,15 +77,13 @@
   
   <properties>  
     <spring.version>3.1.2.RELEASE</spring.version>
-    <spring-data.version>1.1.1.RELEASE</spring-data.version>
+    <spring-data.version>1.1.2.RELEASE</spring-data.version>
 
     <!-- Remember -DignoreSnapshots=true for release plugin -->
     <openjpa.version>2.3.0-SNAPSHOT</openjpa.version>
     
     <h2.version>1.3.168</h2.version>
     
-    <cglib.version>2.2.2</cglib.version>
-
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -129,6 +127,21 @@
       <version>4.10</version>
       <scope>test</scope>
     </dependency>
+    
+    <dependency>
+      <groupId>org.apache.openjpa</groupId>
+      <artifactId>openjpa-persistence</artifactId>
+      <version>${openjpa.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.openjpa</groupId>
+      <artifactId>openjpa-persistence-jdbc</artifactId>
+      <version>${openjpa.version}</version>
+      <classifier>tests</classifier>
+      <scope>test</scope>
+    </dependency>
+    
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
@@ -145,19 +158,6 @@
       <groupId>org.springframework.data</groupId>
       <artifactId>spring-data-jpa</artifactId>
       <version>${spring-data.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>cglib</groupId>
-      <artifactId>cglib</artifactId>
-      <version>${cglib.version}</version>
-    </dependency>
-    
-    <!-- needed by standalone schema tools -->
-    <dependency>
-      <groupId>org.apache.openjpa</groupId>
-      <artifactId>openjpa-persistence</artifactId>
-      <version>${openjpa.version}</version>
       <scope>test</scope>
     </dependency>
     
@@ -198,6 +198,7 @@
         <configuration>
           <excludes>
             <exclude>nbactions.xml</exclude>
+            <exclude>nbactions-dev.xml</exclude>
             <exclude>nb-configuration.xml</exclude>
             <exclude>.externalToolBuilders/**</exclude>
             <exclude>maven-eclipse.xml</exclude>

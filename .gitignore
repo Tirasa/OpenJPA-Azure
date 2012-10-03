@@ -7,3 +7,7 @@
 target/
 /core/target/
 /test-commons/target/
+
+# Netbeans
+nbactions.xml
+nbactions-dev.xml
