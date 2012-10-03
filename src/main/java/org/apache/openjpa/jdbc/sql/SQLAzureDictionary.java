@@ -161,7 +161,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
 
         final List<String> toBeCreated = new ArrayList<String>();
 
-        DataSource ds = conf.getDataSource2(null);
+        final DataSource ds = conf.getDataSource2(null);
 
         if (ds != null) {
             Connection conn = null;
@@ -174,9 +174,8 @@ public class SQLAzureDictionary extends SQLServerDictionary {
                     // perform use federation and create table
                     toBeCreated.addAll(getStatements(table, federation));
                 }
-
-            } catch (SQLException ex) {
-                conf.getLog("SQLAzure").error("Error creating schema", ex);
+            } catch (SQLException e) {
+                conf.getLog("SQLAzure").error("Error creating schema", e);
             } finally {
                 if (conn != null) {
                     try {
@@ -199,14 +198,14 @@ public class SQLAzureDictionary extends SQLServerDictionary {
      * @return list of statements.
      */
     private List<String> getStatements(final Table table, final Federation federation) {
-
         final List<String> toBeCreated = new ArrayList<String>();
 
         final String rangeMappingName = federation.getRangeMappingName(table.getFullIdentifier().getName());
+        final String distributionName = federation.getDistributionName();
 
-        toBeCreated.add(
-                getCreateTableStm(table)
-                + (StringUtils.isBlank(rangeMappingName) ? "" : " FEDERATED ON (range_id = " + rangeMappingName + ")"));
+        toBeCreated.add(getCreateTableStm(table)
+                + (StringUtils.isBlank(rangeMappingName)
+                ? "" : " FEDERATED ON (" + distributionName + " = " + rangeMappingName + ")"));
 
         return toBeCreated;
     }
@@ -240,13 +239,13 @@ public class SQLAzureDictionary extends SQLServerDictionary {
         final StringBuilder endBuf = new StringBuilder();
         final PrimaryKey primaryKey = table.getPrimaryKey();
 
-        if (primaryKey != null) {
+        if (primaryKey == null) {
+            endBuf.append(getDefaultPKConstraint(table));
+        } else {
             final String pkStr = getPrimaryKeyConstraintSQL(primaryKey);
             if (StringUtils.isNotBlank(pkStr)) {
                 endBuf.append(pkStr);
             }
-        } else {
-            endBuf.append(getDefaultPKConstraint(table));
         }
 
         final Unique[] unqs = table.getUniques();
@@ -280,7 +279,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
     }
 
     private String getDefaultPKConstraint(final Table table) {
-        StringBuilder builder = new StringBuilder();
+        final StringBuilder builder = new StringBuilder();
 
         for (Column column : table.getColumns()) {
             if (builder.length() > 0) {
