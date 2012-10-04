@@ -21,13 +21,15 @@ package org.apache.openjpa.jdbc.kernel;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import org.apache.openjpa.slice.jdbc.DistributedConnection;
 import org.apache.openjpa.slice.jdbc.DistributedPreparedStatement;
 
 public class SQLAzurePreparedStatement extends DistributedPreparedStatement {
 
-    public SQLAzurePreparedStatement(final DistributedConnection conn) {
+    private final int workingIndex;
+
+    public SQLAzurePreparedStatement(final SQLAzureDelegatingConnection conn) {
         super(conn);
+        workingIndex = conn.getWorkingIndex();
     }
 
     @Override
@@ -56,6 +58,17 @@ public class SQLAzurePreparedStatement extends DistributedPreparedStatement {
         for (PreparedStatement stm : this) {
             ret += stm.executeUpdate();
         }
-        return ret;
+
+        // TODO: keep under control! This behavior have to be verified step-by-step.
+        if (ret < workingIndex) {
+            // update or delete of a specific object
+            return ret;
+        } else if (ret > workingIndex) {
+            // it sound like an error: probably more than one line per federation member has been updated.
+            return ret;
+        } else {
+            // probably an insert or an update of the same object among different federations/members.
+            return 1;
+        }
     }
 }

@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
+import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.conf.OpenJPAConfiguration;
 import org.apache.openjpa.federation.jdbc.Federation;
 import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
@@ -52,6 +53,8 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
 
     private final List<Connection> workingConnections = new ArrayList<Connection>();
 
+    private int workingIndex;
+
     // root connection
     private final Connection conn;
 
@@ -76,6 +79,7 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
 
     public void selectWorkingConnections() {
         workingConnections.clear();
+        workingIndex = 0;
 
         try {
 
@@ -107,10 +111,13 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
         if (workingConnections.isEmpty()) {
             workingConnections.add(this.conn);
         }
+
+        workingIndex = workingConnections.size();
     }
 
     public void selectWorkingConnections(final RowImpl row) {
         workingConnections.clear();
+        workingIndex = 0;
 
         final Table table = row.getTable();
 
@@ -123,16 +130,26 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
             for (Federation federation : federations) {
                 MemberDistribution memberDistribution;
 
-                if (row != null && row.getAction() == Row.ACTION_INSERT) {
-                    final String rangeMappingName = federation.getRangeMappingName(table.getFullIdentifier().getName());
-                    final Column col = table.getColumn(DBIdentifier.newColumn(rangeMappingName), false);
+                final String rangeMappingName = federation.getRangeMappingName(table.getFullIdentifier().getName());
 
-                    memberDistribution = new MemberDistribution(federation.getRangeMappingType());
+                if (StringUtils.isNotBlank(rangeMappingName)) {
 
-                    memberDistribution.addValue(
-                            SQLAzureUtils.getMemberDistribution(conn, federation, row.getVals()[col.getIndex()]));
+                    if (row != null && row.getAction() == Row.ACTION_INSERT) {
+
+                        final Column col = table.getColumn(DBIdentifier.newColumn(rangeMappingName), false);
+
+                        memberDistribution = new MemberDistribution(federation.getRangeMappingType());
+
+                        memberDistribution.addValue(
+                                SQLAzureUtils.getMemberDistribution(conn, federation, row.getVals()[col.getIndex()]));
+                    } else {
+                        memberDistribution = SQLAzureUtils.getMemberDistribution(this.conn, federation);
+                    }
+
+                    workingIndex++;
                 } else {
                     memberDistribution = SQLAzureUtils.getMemberDistribution(this.conn, federation);
+                    workingIndex += memberDistribution.size();
                 }
 
                 for (Object memberId : memberDistribution) {
@@ -243,5 +260,9 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
         }
 
 //        conn.rollback(svptn);
+    }
+
+    public int getWorkingIndex() {
+        return workingIndex;
     }
 }

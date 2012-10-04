@@ -21,6 +21,7 @@ package org.apache.openjpa.azure;
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 
 public class TestBasic extends AbstractAzureTestCase {
 
@@ -74,19 +75,96 @@ public class TestBasic extends AbstractAzureTestCase {
 
         entityManager.getTransaction().begin();
         final int before = count(PObject.class);
-        
+
         final List<PObject> all = entityManager.createQuery("SELECT p FROM PObject p").getResultList();
         assertFalse(all.isEmpty());
         entityManager.remove(all.get(0));
         entityManager.getTransaction().commit();
 
-        assertEquals(before - 1, count(PObject.class));
+        // deleted two objects: one per federation
+        assertEquals(before - 2, count(PObject.class));
+    }
+
+    public void testNativeSelect() {
+        createIndependentObjects(10);
+
+        final EntityManager entityManager = emf.createEntityManager();
+
+        final List all = entityManager.createNativeQuery("SELECT * FROM PObject").getResultList();
+        assertFalse(all.isEmpty());
+    }
+
+    public void testNativeInsertUpdateDelete() {
+
+        final EntityManager entityManager = emf.createEntityManager();
+
+        // --------------------
+        // insert
+        // --------------------
+        entityManager.getTransaction().begin();
+
+        Query query = entityManager.createNativeQuery("INSERT INTO PObject VALUES(10001, 10001)");
+        // inserted two objects: one per federation
+        assertEquals(1, query.executeUpdate());
+
+        entityManager.getTransaction().commit();
+        // --------------------
+
+        // --------------------
+        // update
+        // --------------------
+        entityManager.getTransaction().begin();
+
+        query = entityManager.createNativeQuery("UPDATE PObject SET value=10010 WHERE id=10001");
+        // updated two objects: one per federation
+        assertEquals(1, query.executeUpdate());
+
+        final List all = entityManager.createNativeQuery("SELECT value FROM PObject WHERE id=10001").getResultList();
+        assertFalse(all.isEmpty());
+
+        for (int value : (List<Integer>) all) {
+            assertEquals(10010, value);
+        }
+
+        entityManager.getTransaction().commit();
+        // --------------------
+
+        // --------------------
+        // delete
+        // --------------------
+        entityManager.getTransaction().begin();
+
+        query = entityManager.createNativeQuery("DELETE FROM PObject WHERE id=10001");
+        // deleted two objects: one per federation
+        assertEquals(1, query.executeUpdate());
+
+        entityManager.getTransaction().commit();
+        // --------------------
+    }
+
+    public void testCrossRollBack() {
+
+        final EntityManager entityManager = emf.createEntityManager();
+
+        entityManager.getTransaction().begin();
+
+        Query query = entityManager.createNativeQuery("INSERT INTO PObject VALUES(10002, 10002)");
+        // inserted two objects: one per federation
+        assertEquals(1, query.executeUpdate());
+
+        List all = entityManager.createNativeQuery("SELECT value FROM PObject WHERE id=10002").getResultList();
+        assertEquals(2, all.size());
+
+        entityManager.getTransaction().rollback();
+
+        all = entityManager.createNativeQuery("SELECT value FROM PObject WHERE id=10002").getResultList();
+        assertTrue(all.isEmpty());
     }
 
     /**
      * Delete in bulk by query.
      */
-    public void NOTtestBulkDelete() {
+    public void testBulkDelete() {
         final EntityManager entityManager = emf.createEntityManager();
 
         entityManager.getTransaction().begin();

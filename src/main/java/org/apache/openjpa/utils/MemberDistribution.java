@@ -37,6 +37,10 @@ public class MemberDistribution implements Iterable<Object> {
         values.add(value);
     }
 
+    public int size() {
+        return values.size();
+    }
+
     @Override
     public Iterator<Object> iterator() {
         return new MemberIterator();

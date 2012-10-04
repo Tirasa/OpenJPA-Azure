@@ -97,6 +97,9 @@
       <property name="openjpa.sqlazure.TEST_FED1.RangeMappingType" value="BIGINT"/>
       <property name="openjpa.sqlazure.TEST_FED1.Tables" value="PObject"/>
       <property name="openjpa.sqlazure.TEST_FED1.PObject.RangeMappingName" value="id"/>
+      <property name="openjpa.sqlazure.TEST_FED2.RangeMappingType" value="BIGINT"/>
+      <property name="openjpa.sqlazure.TEST_FED2.Tables" value="PObject"/>
+      <property name="openjpa.sqlazure.TEST_FED2.PObject.RangeMappingName" value="id"/>
         
       <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
       <property name="openjpa.DynamicEnhancementAgent" value="false"/>
