@@ -20,27 +20,47 @@
   
   <persistence-unit name="openjpaAzurePersistenceUnit">
     <mapping-file>META-INF/orm.xml</mapping-file>
-    <validation-mode>NONE</validation-mode>
+    
+    <class>org.apache.openjpa.azure.PObject</class>
+    <class>org.apache.openjpa.azure.Person</class>
+    <class>org.apache.openjpa.azure.Address</class>
+    <class>org.apache.openjpa.azure.Country</class>
+    <class>net.tirasa.jpasqlazure.beans.PersonBINT</class>
+    <class>net.tirasa.jpasqlazure.beans.PersonINT</class>
+    <class>net.tirasa.jpasqlazure.beans.PersonINT_PK</class>
+    <class>net.tirasa.jpasqlazure.beans.PersonBIN</class>
+    <class>net.tirasa.jpasqlazure.beans.PersonBIN_PK</class>
+    <class>net.tirasa.jpasqlazure.beans.PersonUID</class>
+    <class>net.tirasa.jpasqlazure.beans.PersonUID_PK</class>
+    <class>net.tirasa.jpasqlazure.beans.BusinessRole</class>
 
     <properties>
       <!-- 
         A semicolon-separated list of directories or jar archives listed in classpath.
         Each directory and jar archive will be scanned for annotated JPA entities. 
       -->
-      <property name="openjpa.MetaDataFactory" 
-                value="jpa(Types=net.tirasa.jpasqlazure.beans.PObject;net.tirasa.jpasqlazure.beans.Person;net.tirasa.jpasqlazure.beans.PersonINT;net.tirasa.jpasqlazure.beans.PersonINT_PK;net.tirasa.jpasqlazure.beans.PersonBIN;net.tirasa.jpasqlazure.beans.PersonBIN_PK;net.tirasa.jpasqlazure.beans.PersonUID;net.tirasa.jpasqlazure.beans.PersonUID_PK;net.tirasa.jpasqlazure.beans.BusinessRole)"/>
+      <property name="openjpa.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=FEDDB;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      
+      <property name="openjpa.ConnectionDriverName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+      <property name="openjpa.ConnectionUserName" value="${jpa.username}"/>
+      <property name="openjpa.ConnectionPassword" value="${jpa.password}"/>
+      
+<!--      <property name="openjpa.MetaDataFactory" 
+                value="jpa(Types=net.tirasa.jpasqlazure.beans.PObject;net.tirasa.jpasqlazure.beans.PersonBINT;net.tirasa.jpasqlazure.beans.PersonINT;net.tirasa.jpasqlazure.beans.PersonINT_PK;net.tirasa.jpasqlazure.beans.PersonBIN;net.tirasa.jpasqlazure.beans.PersonBIN_PK;net.tirasa.jpasqlazure.beans.PersonUID;net.tirasa.jpasqlazure.beans.PersonUID_PK;net.tirasa.jpasqlazure.beans.BusinessRole)"/>-->
     
       <property name="openjpa.jdbc.MappingDefaults" value="ForeignKeyDeleteAction=restrict, JoinForeignKeyDeleteAction=restrict"/>
       
       <property name="openjpa.jdbc.UpdateManager" value="org.apache.openjpa.azure.jdbc.kernel.AzureUpdateManager"/>
       <property name="openjpa.BrokerFactory" value="org.apache.openjpa.azure.jdbc.kernel.AzureBrokerFactory"/>
       <property name="openjpa.jdbc.SQLFactory" value="org.apache.openjpa.azure.jdbc.sql.AzureSQLFactory"/>
+      <property name="openjpa.jdbc.DBDictionary" value="org.apache.openjpa.jdbc.sql.AzureDictionary"/>
         
       <property name="openjpa.azure.Federations" value="FED_1, FED_2, FED_3, FED_4, FED_5" />
         
       <property name="openjpa.azure.FED_1.RangeMappingType" value="BIGINT" />
-      <property name="openjpa.azure.FED_1.Tables" value="Person,BusinessRole" />
-      <property name="openjpa.azure.FED_1.Person.RangeMappingName" value="id" />
+      <property name="openjpa.azure.FED_1.Tables" value="PersonBINT,BusinessRole" />
+      <property name="openjpa.azure.FED_1.PersonBINT.RangeMappingName" value="id" />
       <property name="openjpa.azure.FED_1.BusinessRole.RangeMappingName" value="id" />
 <!--      <property name="openjpa.azure.FED_1.PObject.RangeMappingName" value="id" />-->
         
@@ -70,7 +90,7 @@
     <class>org.apache.openjpa.azure.Person</class>
     <class>org.apache.openjpa.azure.Address</class>
     <class>org.apache.openjpa.azure.Country</class>
-    <class>net.tirasa.jpasqlazure.beans.Person</class>
+    <class>net.tirasa.jpasqlazure.beans.PersonBINT</class>
     <class>net.tirasa.jpasqlazure.beans.PersonINT</class>
     <class>net.tirasa.jpasqlazure.beans.PersonINT_PK</class>
     <class>net.tirasa.jpasqlazure.beans.PersonBIN</class>
@@ -87,6 +107,7 @@
         
       <property name="openjpa.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test2;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      
       <property name="openjpa.ConnectionDriverName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
       <property name="openjpa.ConnectionUserName" value="${jpa.username}"/>
       <property name="openjpa.ConnectionPassword" value="${jpa.password}"/>

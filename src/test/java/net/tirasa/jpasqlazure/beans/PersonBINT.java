@@ -31,7 +31,7 @@ import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
 @Entity
-public class Person implements Serializable {
+public class PersonBINT implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -57,7 +57,7 @@ public class Person implements Serializable {
     @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.REFRESH}, fetch = FetchType.EAGER)
     private Set<BusinessRole> roles;
 
-    public Person() {
+    public PersonBINT() {
         roles = new HashSet<BusinessRole>();
     }
 

@@ -24,7 +24,7 @@ under the License.
                                       http://java.sun.com/xml/ns/persistence/orm_2_0.xsd"
                   version="2.0">
   
-  <entity class="net.tirasa.jpasqlazure.beans.Person">
+  <entity class="net.tirasa.jpasqlazure.beans.PersonBINT">
     <attributes>
       <many-to-many name="roles">
         <join-table name="Membership">

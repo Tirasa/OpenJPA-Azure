@@ -13,10 +13,10 @@
  */
 package net.tirasa.jpasqlazure.repository;
 
-import net.tirasa.jpasqlazure.beans.Person;
+import net.tirasa.jpasqlazure.beans.PersonBINT;
 import org.springframework.data.repository.CrudRepository;
 
-public interface PersonRepository extends CrudRepository<Person, Long>, PersonRepositoryCustom {
+public interface PersonRepository extends CrudRepository<PersonBINT, Long>, PersonRepositoryCustom {
 
-    public Person findByUsername(final String username);
+    public PersonBINT findByUsername(final String username);
 }
