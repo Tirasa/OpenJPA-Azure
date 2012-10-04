@@ -75,7 +75,15 @@ public interface SQLAzureConfiguration extends JDBCConfiguration {
     List<Federation> getFederations(final String tableName);
 
     /**
-     * Get column to be mapped on the range_id.
+     * Get the distribution name for the given federation (defaults to 'range_id').
+     *
+     * @param federationName federation name
+     * @return the distribution name set when the given federation was created
+     */
+    String getDistributionName(final String federationName);
+
+    /**
+     * Get the column to be mapped on the distribution name.
      *
      * @param federationName federation name.
      * @param tableName table name.
@@ -84,10 +92,10 @@ public interface SQLAzureConfiguration extends JDBCConfiguration {
     String getRangeMappingName(final String federationName, final String tableName);
 
     /**
-     * Get type of the range_id (bigint, int, uniqueidentifier, varbinary).
+     * Get type of the distribution name (bigint, int, uniqueidentifier, varbinary).
      *
      * @param federationName federation name.
-     * @return range_id type.
+     * @return distribution name type.
      */
     RangeType getRangeMappingType(final String federationName);
 

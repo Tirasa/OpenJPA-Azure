@@ -34,26 +34,28 @@ import org.apache.openjpa.jdbc.schema.ForeignKey;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.springframework.security.crypto.codec.Hex;
 
-public class SQLAzureUtils {
+public final class SQLAzureUtils {
 
-    public static void useFederation(
-            final Connection conn, final Federation federation, final Object oid)
+    private SQLAzureUtils() {
+    }
+
+    public static void useFederation(final Connection conn, final Federation federation, final Object oid)
             throws SQLException {
 
-        Statement stm = null;
-
-        final String rangeId = RangeType.UNIQUEIDENTIFIER == federation.getRangeMappingType()
+        final String distribution = RangeType.UNIQUEIDENTIFIER == federation.getRangeMappingType()
                 ? getUidAsString(oid) : getObjectIdAsString(oid);
 
+        final String distributionName = federation.getDistributionName();
+
+        Statement stmt = null;
         try {
-
-            stm = conn.createStatement();
-            stm.execute("USE FEDERATION " + federation + " (range_id = " + rangeId + ") WITH FILTERING=OFF, RESET");
-
+            stmt = conn.createStatement();
+            stmt.execute("USE FEDERATION " + federation + " (" + distributionName + " = " + distribution + ") "
+                    + "WITH FILTERING=OFF, RESET");
         } finally {
-            if (stm != null) {
+            if (stmt != null) {
                 try {
-                    stm.close();
+                    stmt.close();
                 } catch (SQLException ignore) {
                     // ignore exception
                 }
@@ -65,11 +67,9 @@ public class SQLAzureUtils {
             throws SQLException {
 
         Statement stm = null;
-
         try {
             stm = conn.createStatement();
             stm.execute("USE FEDERATION ROOT WITH RESET");
-
         } finally {
             if (stm != null) {
                 try {
@@ -133,14 +133,12 @@ public class SQLAzureUtils {
     public static MemberDistribution getMemberDistribution(final Connection conn, final Federation federation)
             throws SQLException {
 
-
         final RangeType type = federation.getRangeMappingType();
         final MemberDistribution memberDistribution = new MemberDistribution(type);
 
         Statement stm = null;
         ResultSet federation_id = null;
         ResultSet member_distribution = null;
-
         try {
             stm = conn.createStatement();
 
@@ -164,11 +162,9 @@ public class SQLAzureUtils {
             if (stm != null) {
                 stm.close();
             }
-
             if (federation_id != null) {
                 federation_id.close();
             }
-
             if (member_distribution != null) {
                 member_distribution.close();
             }
@@ -188,13 +184,12 @@ public class SQLAzureUtils {
      */
     public static boolean tableExists(final Connection conn, final Table table)
             throws SQLException {
+
         boolean res = false;
 
         Statement stm = null;
         ResultSet rs = null;
-
         try {
-
             stm = conn.createStatement();
 
             rs = stm.executeQuery(
@@ -230,8 +225,6 @@ public class SQLAzureUtils {
             final Connection conn, final String schemaName, final String tableName, final String columnName)
             throws SQLException {
 
-        final Statement stm = conn.createStatement();
-
         final StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append("SELECT ");
         queryBuilder.append("SCHEMA_NAME(o.schema_id) AS [TABLE_SCHEM], ");
@@ -244,8 +237,8 @@ public class SQLAzureUtils {
         queryBuilder.append("c.is_nullable AS [NULLABLE], ");
         queryBuilder.append("OBJECT_DEFINITION (c.default_object_id) AS [COLUMN_DEF] ");
         queryBuilder.append("FROM sys.all_columns c, sys.all_objects o ");
-        queryBuilder.append("WHERE c.object_id=o.object_id AND OBJECT_NAME (c.object_id)='").
-                append(tableName).append("'");
+        queryBuilder.append("WHERE c.object_id=o.object_id ");
+        queryBuilder.append("AND OBJECT_NAME (c.object_id)='").append(tableName).append("'");
 
         if (StringUtils.isNotBlank(schemaName)) {
             queryBuilder.append(" AND c.name='").append(columnName).append("'");
@@ -255,6 +248,7 @@ public class SQLAzureUtils {
             queryBuilder.append(" AND SCHEMA_NAME(o.schema_id)='").append(schemaName).append("'");
         }
 
+        final Statement stm = conn.createStatement();
         return new AbstractMap.SimpleEntry<Statement, ResultSet>(stm, stm.executeQuery(queryBuilder.toString()));
     }
 
@@ -283,26 +277,10 @@ public class SQLAzureUtils {
     }
 
     public static String getObjectIdAsString(final Object oid) {
-        final String res;
-
-        if (oid instanceof byte[]) {
-            res = "0x" + new String(Hex.encode((byte[]) oid));
-        } else {
-            res = oid.toString();
-        }
-
-        return res;
+        return oid instanceof byte[] ? "0x" + new String(Hex.encode((byte[]) oid)) : oid.toString();
     }
 
     private static String getUidAsString(final Object oid) {
-        final String res;
-
-        if (oid instanceof byte[]) {
-            res = new String((byte[]) oid);
-        } else {
-            res = "'" + oid.toString() + "'";
-        }
-
-        return res;
+        return oid instanceof byte[] ? new String((byte[]) oid) : "'" + oid.toString() + "'";
     }
 }

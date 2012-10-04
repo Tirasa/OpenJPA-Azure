@@ -32,11 +32,11 @@ import org.apache.openjpa.lib.util.Localizer;
 
 public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements SQLAzureConfiguration {
 
-    private static Localizer _loc = Localizer.forPackage(SQLAzureConfiguration.class);
+    private static final long serialVersionUID = 8033042262237726572L;
 
     public static final String PREFIX_FEDERATION = "openjpa.sqlazure.";
 
-    private static final long serialVersionUID = 8033042262237726572L;
+    private static final Localizer _loc = Localizer.forPackage(SQLAzureConfiguration.class);
 
     private final StringListValue federationsPlugin;
 
@@ -53,6 +53,12 @@ public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements 
     @Override
     public Collection<Federation> getFederations() {
         return federations.values();
+    }
+
+    @Override
+    public String getDistributionName(final String federationName) {
+        final Federation fed = federations.get(federationName);
+        return fed == null ? null : fed.getDistributionName();
     }
 
     @Override
@@ -85,11 +91,11 @@ public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements 
     public void fromProperties(final Map original) {
         super.fromProperties(original);
 
-        Map<String, String> newProps = new HashMap<String, String>();
+        final Map<String, String> newProps = new HashMap<String, String>();
 
-        for (String key : (Set<String>) original.keySet()) {
-            if (key.startsWith(PREFIX_FEDERATION)) {
-                newProps.put(key, (String) original.get(key));
+        for (Map.Entry<String, String> entry : ((Map<String, String>) original).entrySet()) {
+            if (entry.getKey().startsWith(PREFIX_FEDERATION)) {
+                newProps.put(entry.getKey(), entry.getValue());
             }
         }
 
@@ -99,21 +105,20 @@ public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements 
 
                 federation.setName(federationName);
 
+                federation.setDistributionName(newProps.get(PREFIX_FEDERATION + federationName + ".DistributionName"));
+
                 try {
-
                     federation.setRangeMappingType(RangeType.valueOf(
-                            (String) newProps.get(PREFIX_FEDERATION + federationName + ".RangeMappingType")));
-
+                            newProps.get(PREFIX_FEDERATION + federationName + ".RangeMappingType")));
                 } catch (Exception e) {
                     federation.setRangeMappingType(RangeType.BIGINT);
                 }
 
-                final String fedTableNames = (String) newProps.get(PREFIX_FEDERATION + federationName + ".Tables");
+                final String fedTableNames = newProps.get(PREFIX_FEDERATION + federationName + ".Tables");
 
                 final String[] tables = fedTableNames == null ? new String[0] : fedTableNames.split(",");
 
                 for (String federatedTable : tables) {
-
                     String rangeMappingName = newProps.get(
                             PREFIX_FEDERATION + federationName + "." + federatedTable + ".RangeMappingName");
 
@@ -124,14 +129,12 @@ public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements 
 
                     federation.addTable(federatedTable, rangeMappingName);
 
-                    List<Federation> federations = federatedTables.get(federatedTable);
-
-                    if (federations == null) {
-                        federations = new ArrayList<Federation>();
-                        federatedTables.put(federatedTable, federations);
+                    List<Federation> owningFeds = federatedTables.get(federatedTable);
+                    if (owningFeds == null) {
+                        owningFeds = new ArrayList<Federation>();
+                        federatedTables.put(federatedTable, owningFeds);
                     }
-
-                    federations.add(federation);
+                    owningFeds.add(federation);
                 }
 
                 federations.put(federationName, federation);

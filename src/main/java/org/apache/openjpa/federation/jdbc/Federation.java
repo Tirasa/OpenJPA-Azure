@@ -21,15 +21,20 @@ package org.apache.openjpa.federation.jdbc;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration.RangeType;
 
 public class Federation {
 
+    private static final String DEFAULT_DISTRIBUTION_NAME = "range_id";
+
     private String name;
+
+    private String distributionName;
 
     private RangeType rangeMappingType;
 
-    private Map<String, String> tables;
+    private final Map<String, String> tables;
 
     public Federation() {
         tables = new HashMap<String, String>();
@@ -40,8 +45,16 @@ public class Federation {
         return name;
     }
 
-    public void setName(String name) {
+    public void setName(final String name) {
         this.name = name;
+    }
+
+    public String getDistributionName() {
+        return StringUtils.isBlank(distributionName) ? DEFAULT_DISTRIBUTION_NAME : distributionName;
+    }
+
+    public void setDistributionName(final String distributionName) {
+        this.distributionName = distributionName;
     }
 
     public String getRangeMappingName(final String tableName) {
@@ -70,9 +83,9 @@ public class Federation {
     }
 
     @Override
-    public boolean equals(Object o) {
-        return o != null && o instanceof Federation
-                && (name == null && ((Federation) o).getName() == null || ((Federation) o).getName().equals(name));
+    public boolean equals(final Object obj) {
+        return obj instanceof Federation
+                && (name == null && ((Federation) obj).getName() == null || ((Federation) obj).getName().equals(name));
     }
 
     @Override
