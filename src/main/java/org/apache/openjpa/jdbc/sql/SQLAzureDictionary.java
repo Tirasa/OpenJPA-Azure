@@ -25,7 +25,6 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import javax.sql.DataSource;
 import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.federation.jdbc.Federation;
@@ -38,7 +37,7 @@ import org.apache.openjpa.jdbc.schema.Unique;
 import org.apache.openjpa.utils.SQLAzureUtils;
 
 /**
- * Dictionary for Microsoft SQL Server.
+ * Dictionary for Windows Azure SQL Database.
  */
 public class SQLAzureDictionary extends SQLServerDictionary {
 
@@ -80,46 +79,63 @@ public class SQLAzureDictionary extends SQLServerDictionary {
         return columns;
     }
 
+    /**
+     * Create a new column from the information in the schema metadata.
+     * Compared to DBDictionary.newColumn(), this will refer to column names reported by sp_columns.
+     */
+    @Override
+    protected Column newColumn(final ResultSet colMeta)
+            throws SQLException {
+
+        final Column col = new Column();
+        col.setSchemaIdentifier(fromDBName(colMeta.getString("TABLE_OWNER"), DBIdentifier.DBIdentifierType.SCHEMA));
+        col.setTableIdentifier(fromDBName(colMeta.getString("TABLE_NAME"), DBIdentifier.DBIdentifierType.TABLE));
+        col.setIdentifier(fromDBName(colMeta.getString("COLUMN_NAME"), DBIdentifier.DBIdentifierType.COLUMN));
+        col.setType(colMeta.getInt("DATA_TYPE"));
+        col.setTypeIdentifier(fromDBName(colMeta.getString("TYPE_NAME"),
+                DBIdentifier.DBIdentifierType.COLUMN_DEFINITION));
+        col.setSize(colMeta.getInt("PRECISION"));
+        col.setDecimalDigits(colMeta.getInt("SCALE"));
+        col.setNotNull(colMeta.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls);
+
+        final String def = colMeta.getString("COLUMN_DEF");
+        if (!StringUtils.isEmpty(def) && !"null".equalsIgnoreCase(def)) {
+            col.setDefaultString(def);
+        }
+        return col;
+    }
+
     private Column[] getColumns(
             final Connection conn,
             final DBIdentifier schemaName,
             final DBIdentifier tableName,
-            final DBIdentifier columnName)
-            throws SQLException {
+            final DBIdentifier columnName) {
 
         if (DBIdentifier.isNull(tableName) && !supportsNullTableForGetColumns) {
             return null;
         }
 
-        String sqlSchemaName = null;
-        if (!DBIdentifier.isNull(schemaName)) {
-            sqlSchemaName = schemaName.getName();
-        }
-        if (!supportsSchemaForGetColumns) {
-            sqlSchemaName = null;
-        } else {
-            sqlSchemaName = getSchemaNameForMetadata(schemaName);
-        }
+        final String sqlSchema = supportsSchemaForGetColumns ? getSchemaNameForMetadata(schemaName) : null;
+        final String sqlTable = getTableNameForMetadata(tableName);
+        final String sqlColumn = getColumnNameForMetadata(columnName);
 
-        Map.Entry<Statement, ResultSet> cols = null;
+        final List<Column> columnList = new ArrayList<Column>();
 
+        Statement stmt = null;
+        ResultSet resultSet = null;
         try {
-            cols = SQLAzureUtils.getColumns(
-                    conn, sqlSchemaName, getTableNameForMetadata(tableName), getColumnNameForMetadata(columnName));
+            stmt = conn.createStatement();
+            resultSet = stmt.executeQuery("EXEC sp_columns " + sqlTable + ", " + sqlSchema + ", null, " + sqlColumn);
 
-            final List<Column> columnList = new ArrayList<Column>();
-
-            while (cols != null && cols.getValue() != null && cols.getValue().next()) {
-                final Column column = newColumn(cols.getValue());
+            while (resultSet.next()) {
+                final Column column = newColumn(resultSet);
                 columnList.add(column);
 
                 // for opta driver, which reports nvarchar as unknown type
                 String typeName = column.getTypeIdentifier().getName();
-
                 if (typeName == null) {
                     continue;
                 }
-
                 typeName = typeName.toUpperCase();
 
                 if ("NVARCHAR".equals(typeName)) {
@@ -136,18 +152,24 @@ public class SQLAzureDictionary extends SQLServerDictionary {
                     column.setType(Types.CLOB);
                 }
             }
-
-            return (Column[]) columnList.toArray(new Column[columnList.size()]);
+        } catch (SQLException e) {
+            log.error("Error getting columns", e);
         } finally {
-            if (cols != null && cols.getValue() != null) {
+            if (resultSet != null) {
                 try {
-                    cols.getValue().close();
-                    cols.getKey().close();
-                } catch (Exception ignore) {
-                    // ignore exception
+                    resultSet.close();
+                } catch (SQLException e) {
+                    log.error("Error closing result set", e);
                 }
             }
+            try {
+                stmt.close();
+            } catch (SQLException e) {
+                log.error("Error closing statement", e);
+            }
         }
+
+        return (Column[]) columnList.toArray(new Column[columnList.size()]);
     }
 
     /**
@@ -159,15 +181,13 @@ public class SQLAzureDictionary extends SQLServerDictionary {
     }
 
     public String[] getCreateTableSQL(final Table table, final Federation federation) {
-
         final List<String> toBeCreated = new ArrayList<String>();
 
-        final DataSource ds = conf.getDataSource2(null);
-
-        if (ds != null) {
+        final DataSource dataSource = conf.getDataSource2(null);
+        if (dataSource != null) {
             Connection conn = null;
             try {
-                conn = ds.getConnection();
+                conn = dataSource.getConnection();
 
                 if (federation == null) {
                     toBeCreated.add(getCreateTableStm(table));
@@ -176,7 +196,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
                     toBeCreated.addAll(getStatements(table, federation));
                 }
             } catch (SQLException e) {
-                conf.getLog("SQLAzure").error("Error creating schema", e);
+                log.error("Error creating schema", e);
             } finally {
                 if (conn != null) {
                     try {

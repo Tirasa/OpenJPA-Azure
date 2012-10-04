@@ -11,3 +11,4 @@ target/
 # Netbeans
 nbactions.xml
 nbactions-dev.xml
+nb-configuration.xml

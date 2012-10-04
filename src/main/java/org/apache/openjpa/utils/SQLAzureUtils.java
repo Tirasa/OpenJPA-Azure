@@ -22,11 +22,8 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.AbstractMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.federation.jdbc.Federation;
 import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
 import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration.RangeType;
@@ -211,45 +208,6 @@ public final class SQLAzureUtils {
         }
 
         return res;
-    }
-
-    /**
-     * Retrieve table columns looking for them into system tables.
-     *
-     * @param conn Connection.
-     * @param tableName Table name.
-     * @return Result set of column info.
-     * @throws SQLException in case of statement failure.
-     */
-    public static Map.Entry<Statement, ResultSet> getColumns(
-            final Connection conn, final String schemaName, final String tableName, final String columnName)
-            throws SQLException {
-
-        final StringBuilder queryBuilder = new StringBuilder();
-        queryBuilder.append("SELECT ");
-        queryBuilder.append("SCHEMA_NAME(o.schema_id) AS [TABLE_SCHEM], ");
-        queryBuilder.append("OBJECT_NAME (c.object_id) AS [TABLE_NAME], ");
-        queryBuilder.append("c.name AS [COLUMN_NAME], ");
-        queryBuilder.append("c.user_type_id AS [DATA_TYPE], ");
-        queryBuilder.append("TYPE_NAME (c.user_type_id) AS [TYPE_NAME], ");
-        queryBuilder.append("c.max_length AS [COLUMN_SIZE], ");
-        queryBuilder.append("c.precision AS [DECIMAL_DIGITS], ");
-        queryBuilder.append("c.is_nullable AS [NULLABLE], ");
-        queryBuilder.append("OBJECT_DEFINITION (c.default_object_id) AS [COLUMN_DEF] ");
-        queryBuilder.append("FROM sys.all_columns c, sys.all_objects o ");
-        queryBuilder.append("WHERE c.object_id=o.object_id ");
-        queryBuilder.append("AND OBJECT_NAME (c.object_id)='").append(tableName).append("'");
-
-        if (StringUtils.isNotBlank(schemaName)) {
-            queryBuilder.append(" AND c.name='").append(columnName).append("'");
-        }
-
-        if (StringUtils.isNotBlank(columnName)) {
-            queryBuilder.append(" AND SCHEMA_NAME(o.schema_id)='").append(schemaName).append("'");
-        }
-
-        final Statement stm = conn.createStatement();
-        return new AbstractMap.SimpleEntry<Statement, ResultSet>(stm, stm.executeQuery(queryBuilder.toString()));
     }
 
     public static Set<Federation> getTargetFederation(
