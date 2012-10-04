@@ -16,26 +16,28 @@
  * specific language governing permissions and limitations
  * under the License.    
  */
-package org.apache.openjpa.jdbc.sql;
+package org.apache.openjpa.azure.jdbc.sql;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import org.apache.openjpa.azure.jdbc.AzureDelegatingConnection;
 import org.apache.openjpa.conf.OpenJPAConfiguration;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
+import org.apache.openjpa.jdbc.kernel.AzureStoreManager.AzureRefCountConnection;
 import org.apache.openjpa.jdbc.kernel.JDBCFetchConfiguration;
 import org.apache.openjpa.jdbc.kernel.JDBCStore;
-import org.apache.openjpa.jdbc.kernel.SQLAzureDelegatingConnection;
-import org.apache.openjpa.jdbc.kernel.SQLAzureStoreManager.SQLAzureRefCountConnection;
+import org.apache.openjpa.jdbc.sql.Result;
+import org.apache.openjpa.jdbc.sql.SelectImpl;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.lib.log.Log;
 
-public class SQLAzureSelectImpl extends SelectImpl {
+public class AzureSelectImpl extends SelectImpl {
 
     private final JDBCConfiguration _conf;
 
     private final Log _log;
 
-    public SQLAzureSelectImpl(final JDBCConfiguration conf) {
+    public AzureSelectImpl(final JDBCConfiguration conf) {
         super(conf);
         this._conf = conf;
         this._log = conf.getLog(OpenJPAConfiguration.LOG_RUNTIME);
@@ -51,7 +53,7 @@ public class SQLAzureSelectImpl extends SelectImpl {
 
         final Connection conn = store.getConnection();
 
-        ((SQLAzureDelegatingConnection) ((SQLAzureRefCountConnection) conn).getConn()).selectWorkingConnections();
+        ((AzureDelegatingConnection) ((AzureRefCountConnection) conn).getConn()).selectWorkingConnections();
 
         return super.execute(ctx, store, fetch, lockLevel);
     }

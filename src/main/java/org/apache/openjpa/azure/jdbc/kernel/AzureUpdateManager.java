@@ -16,24 +16,17 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.utils;
+package org.apache.openjpa.azure.jdbc.kernel;
 
-public class ObjectIdException extends Exception {
+import java.sql.Connection;
+import org.apache.openjpa.jdbc.kernel.BatchingConstraintUpdateManager;
+import org.apache.openjpa.jdbc.kernel.JDBCStore;
+import org.apache.openjpa.jdbc.kernel.PreparedStatementManager;
 
-    /**
-     * Creates a new instance of
-     * <code>ObjectIdException</code> without detail message.
-     */
-    public ObjectIdException() {
-    }
+public class AzureUpdateManager extends BatchingConstraintUpdateManager {
 
-    /**
-     * Constructs an instance of
-     * <code>ObjectIdException</code> with the specified detail message.
-     *
-     * @param msg the detail message.
-     */
-    public ObjectIdException(String msg) {
-        super(msg);
+    @Override
+    protected PreparedStatementManager newPreparedStatementManager(final JDBCStore store, final Connection conn) {
+        return new AzurePreparedStatementManager(store, conn, dict.getBatchLimit());
     }
 }

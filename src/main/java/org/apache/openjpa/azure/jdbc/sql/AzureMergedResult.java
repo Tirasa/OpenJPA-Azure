@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.jdbc.sql;
+package org.apache.openjpa.azure.jdbc.sql;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -40,9 +40,13 @@ import org.apache.openjpa.jdbc.kernel.JDBCStore;
 import org.apache.openjpa.jdbc.meta.ClassMapping;
 import org.apache.openjpa.jdbc.meta.FieldMapping;
 import org.apache.openjpa.jdbc.schema.Column;
+import org.apache.openjpa.jdbc.sql.AbstractResult;
+import org.apache.openjpa.jdbc.sql.Joins;
+import org.apache.openjpa.jdbc.sql.MergedResult;
+import org.apache.openjpa.jdbc.sql.Result;
 import org.apache.openjpa.util.UnsupportedException;
 
-public class SQLAzureMergedResult extends AbstractResult {
+public class AzureMergedResult extends AbstractResult {
 
     private static final byte NEXT = 0;
 
@@ -65,14 +69,14 @@ public class SQLAzureMergedResult extends AbstractResult {
     /**
      * Constructor; supply delegates.
      */
-    public SQLAzureMergedResult(Result[] res) {
+    public AzureMergedResult(Result[] res) {
         this(res, null);
     }
 
     /**
      * Constructor; supply delegates and comparator for ordering results.
      */
-    public SQLAzureMergedResult(Result[] res, MergedResult.ResultComparator comp) {
+    public AzureMergedResult(Result[] res, MergedResult.ResultComparator comp) {
         _res = (Result[]) ArrayUtils.clone(res);
         _comp = comp;
         _order = (comp == null) ? null : new Object[res.length];

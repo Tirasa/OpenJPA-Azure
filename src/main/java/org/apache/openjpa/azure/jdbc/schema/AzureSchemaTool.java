@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.jdbc.schema;
+package org.apache.openjpa.azure.jdbc.schema;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -29,15 +29,20 @@ import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.apache.commons.lang.StringUtils;
-import org.apache.openjpa.federation.jdbc.Federation;
-import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
+import org.apache.openjpa.azure.Federation;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
-import org.apache.openjpa.jdbc.sql.SQLAzureDictionary;
+import org.apache.openjpa.jdbc.schema.ForeignKey;
+import org.apache.openjpa.jdbc.schema.Schema;
+import org.apache.openjpa.jdbc.schema.SchemaGroup;
+import org.apache.openjpa.jdbc.schema.SchemaTool;
+import org.apache.openjpa.jdbc.schema.Table;
+import org.apache.openjpa.jdbc.sql.AzureDictionary;
 import org.apache.openjpa.lib.log.Log;
 import org.apache.openjpa.lib.util.Localizer;
-import org.apache.openjpa.utils.SQLAzureUtils;
+import org.apache.openjpa.azure.util.AzureUtils;
 
-public class SQLAzureSchemaTool extends SchemaTool {
+public class AzureSchemaTool extends SchemaTool {
 
     private final Log _log;
 
@@ -45,21 +50,21 @@ public class SQLAzureSchemaTool extends SchemaTool {
 
     private final DataSource _ds;
 
-    private final SQLAzureDictionary _dict;
+    private final AzureDictionary _dict;
 
     private String _sqlTerminator = ";";
 
-    private static final Localizer _loc = Localizer.forPackage(SQLAzureSchemaTool.class);
+    private static final Localizer _loc = Localizer.forPackage(AzureSchemaTool.class);
 
-    public SQLAzureSchemaTool(final JDBCConfiguration conf, final String action) {
+    public AzureSchemaTool(final JDBCConfiguration conf, final String action) {
         super(conf, action);
         this._conf = conf;
         this._ds = conf.getDataSource2(null);
-        this._dict = (SQLAzureDictionary) conf.getDBDictionaryInstance();
+        this._dict = (AzureDictionary) conf.getDBDictionaryInstance();
         this._log = conf.getLog(JDBCConfiguration.LOG_SCHEMA);
     }
 
-    public SQLAzureSchemaTool(final JDBCConfiguration conf) {
+    public AzureSchemaTool(final JDBCConfiguration conf) {
         this(conf, null);
     }
 
@@ -82,7 +87,7 @@ public class SQLAzureSchemaTool extends SchemaTool {
             throws SQLException {
 
         final List<Federation> federations =
-                ((SQLAzureConfiguration) _conf).getFederations(table.getFullIdentifier().getName());
+                ((AzureConfiguration) _conf).getFederations(table.getFullIdentifier().getName());
 
         boolean res = true;
 
@@ -90,7 +95,7 @@ public class SQLAzureSchemaTool extends SchemaTool {
 
         for (Map.Entry<Connection, Federation> conn : connections.entrySet()) {
             try {
-                if (!SQLAzureUtils.tableExists(conn.getKey(), table)) {
+                if (!AzureUtils.tableExists(conn.getKey(), table)) {
                     res &= executeSQL(_dict.getCreateTableSQL(table, conn.getValue()), conn.getKey());
                 }
 
@@ -109,7 +114,7 @@ public class SQLAzureSchemaTool extends SchemaTool {
     public boolean addForeignKey(ForeignKey fk)
             throws SQLException {
         final List<Federation> federations =
-                ((SQLAzureConfiguration) _conf).getFederations(fk.getPrimaryKeyTable().getFullIdentifier().getName());
+                ((AzureConfiguration) _conf).getFederations(fk.getPrimaryKeyTable().getFullIdentifier().getName());
 
         boolean res = true;
 
@@ -140,14 +145,14 @@ public class SQLAzureSchemaTool extends SchemaTool {
             final Table[] tableArray = new Table[]{table};
 
             final List<Federation> federations =
-                    ((SQLAzureConfiguration) _conf).getFederations(table.getFullIdentifier().getName());
+                    ((AzureConfiguration) _conf).getFederations(table.getFullIdentifier().getName());
 
             final Map<Connection, Federation> connections = getWorkingConnections(federations);
 
             for (Map.Entry<Connection, Federation> conn : connections.entrySet()) {
                 try {
 
-                    if (!SQLAzureUtils.tableExists(conn.getKey(), table)) {
+                    if (!AzureUtils.tableExists(conn.getKey(), table)) {
                         internalDeleteTableContents(tableArray, conn.getKey());
                     }
 
@@ -255,9 +260,9 @@ public class SQLAzureSchemaTool extends SchemaTool {
         } else {
             try {
                 for (Federation federation : federations) {
-                    for (Object memberId : SQLAzureUtils.getMemberDistribution(root, federation)) {
+                    for (Object memberId : AzureUtils.getMemberDistribution(root, federation)) {
                         Connection conn = _ds.getConnection();
-                        SQLAzureUtils.useFederation(conn, federation, memberId);
+                        AzureUtils.useFederation(conn, federation, memberId);
                         connections.put(conn, federation);
                     }
                 }

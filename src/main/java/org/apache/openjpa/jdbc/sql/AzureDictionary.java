@@ -27,19 +27,19 @@ import java.util.Collection;
 import java.util.List;
 import javax.sql.DataSource;
 import org.apache.commons.lang.StringUtils;
-import org.apache.openjpa.federation.jdbc.Federation;
-import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
+import org.apache.openjpa.azure.Federation;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
+import org.apache.openjpa.azure.util.AzureUtils;
 import org.apache.openjpa.jdbc.identifier.DBIdentifier;
 import org.apache.openjpa.jdbc.schema.Column;
 import org.apache.openjpa.jdbc.schema.PrimaryKey;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.jdbc.schema.Unique;
-import org.apache.openjpa.utils.SQLAzureUtils;
 
 /**
  * Dictionary for Windows Azure SQL Database.
  */
-public class SQLAzureDictionary extends SQLServerDictionary {
+public class AzureDictionary extends SQLServerDictionary {
 
     @Override
     public Column[] getColumns(
@@ -51,11 +51,11 @@ public class SQLAzureDictionary extends SQLServerDictionary {
             final Connection conn)
             throws SQLException {
 
-        SQLAzureUtils.useRootFederation(conn);
+        AzureUtils.useRootFederation(conn);
 
         final Collection<Federation> federations = tableName == null
-                ? ((SQLAzureConfiguration) conf).getFederations()
-                : ((SQLAzureConfiguration) conf).getFederations(tableName.getName());
+                ? ((AzureConfiguration) conf).getFederations()
+                : ((AzureConfiguration) conf).getFederations(tableName.getName());
 
         Column[] columns = null;
 
@@ -63,8 +63,8 @@ public class SQLAzureDictionary extends SQLServerDictionary {
             columns = getColumns(conn, schemaName, tableName, columnName);
         } else {
             for (Federation federation : federations) {
-                for (Object memberId : SQLAzureUtils.getMemberDistribution(conn, federation)) {
-                    SQLAzureUtils.useFederation(conn, federation, memberId);
+                for (Object memberId : AzureUtils.getMemberDistribution(conn, federation)) {
+                    AzureUtils.useFederation(conn, federation, memberId);
 
                     columns = getColumns(conn, schemaName, tableName, columnName);
 
@@ -72,7 +72,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
                         return new Column[0];
                     }
                 }
-                SQLAzureUtils.useRootFederation(conn);
+                AzureUtils.useRootFederation(conn);
             }
         }
 

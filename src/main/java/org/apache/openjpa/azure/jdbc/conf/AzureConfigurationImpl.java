@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.federation.jdbc;
+package org.apache.openjpa.azure.jdbc.conf;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,17 +26,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang.StringUtils;
+import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.jdbc.conf.JDBCConfigurationImpl;
 import org.apache.openjpa.lib.conf.StringListValue;
 import org.apache.openjpa.lib.util.Localizer;
 
-public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements SQLAzureConfiguration {
+public class AzureConfigurationImpl extends JDBCConfigurationImpl implements AzureConfiguration {
 
     private static final long serialVersionUID = 8033042262237726572L;
 
-    public static final String PREFIX_FEDERATION = "openjpa.sqlazure.";
+    public static final String PREFIX_FEDERATION = "openjpa.azure.";
 
-    private static final Localizer _loc = Localizer.forPackage(SQLAzureConfiguration.class);
+    private static final Localizer _loc = Localizer.forPackage(AzureConfiguration.class);
 
     private final StringListValue federationsPlugin;
 
@@ -44,7 +45,7 @@ public class SQLAzureConfigurationImpl extends JDBCConfigurationImpl implements 
 
     private Map<String, List<Federation>> federatedTables = new HashMap<String, List<Federation>>();
 
-    public SQLAzureConfigurationImpl() {
+    public AzureConfigurationImpl() {
         super();
 
         federationsPlugin = addStringList(PREFIX_FEDERATION + "Federations");

@@ -18,7 +18,7 @@
              http://java.sun.com/xml/ns/persistence/persistence_2_0.xsd"
              version="2.0">
   
-  <persistence-unit name="jpasqlazurePersistenceUnit">
+  <persistence-unit name="openjpaAzurePersistenceUnit">
     <mapping-file>META-INF/orm.xml</mapping-file>
     <validation-mode>NONE</validation-mode>
 
@@ -32,33 +32,33 @@
     
       <property name="openjpa.jdbc.MappingDefaults" value="ForeignKeyDeleteAction=restrict, JoinForeignKeyDeleteAction=restrict"/>
       
-      <property name="openjpa.jdbc.UpdateManager" value="org.apache.openjpa.jdbc.kernel.SQLAzureUpdateManager"/>
-      <property name="openjpa.BrokerFactory" value="org.apache.openjpa.jdbc.kernel.SQLAzureBrokerFactory"/>
-      <property name="openjpa.jdbc.SQLFactory" value="org.apache.openjpa.jdbc.sql.SQLAzureSQLFactory"/>
+      <property name="openjpa.jdbc.UpdateManager" value="org.apache.openjpa.azure.jdbc.kernel.AzureUpdateManager"/>
+      <property name="openjpa.BrokerFactory" value="org.apache.openjpa.azure.jdbc.kernel.AzureBrokerFactory"/>
+      <property name="openjpa.jdbc.SQLFactory" value="org.apache.openjpa.azure.jdbc.sql.AzureSQLFactory"/>
         
-      <property name="openjpa.sqlazure.Federations" value="FED_1, FED_2, FED_3, FED_4, FED_5" />
+      <property name="openjpa.azure.Federations" value="FED_1, FED_2, FED_3, FED_4, FED_5" />
         
-      <property name="openjpa.sqlazure.FED_1.RangeMappingType" value="BIGINT" />
-      <property name="openjpa.sqlazure.FED_1.Tables" value="Person,BusinessRole" />
-      <property name="openjpa.sqlazure.FED_1.Person.RangeMappingName" value="id" />
-      <property name="openjpa.sqlazure.FED_1.BusinessRole.RangeMappingName" value="id" />
-<!--      <property name="openjpa.sqlazure.FED_1.PObject.RangeMappingName" value="id" />-->
+      <property name="openjpa.azure.FED_1.RangeMappingType" value="BIGINT" />
+      <property name="openjpa.azure.FED_1.Tables" value="Person,BusinessRole" />
+      <property name="openjpa.azure.FED_1.Person.RangeMappingName" value="id" />
+      <property name="openjpa.azure.FED_1.BusinessRole.RangeMappingName" value="id" />
+<!--      <property name="openjpa.azure.FED_1.PObject.RangeMappingName" value="id" />-->
         
-      <property name="openjpa.sqlazure.FED_2.RangeMappingType" value="UNIQUEIDENTIFIER" />
-      <property name="openjpa.sqlazure.FED_2.Tables" value="PersonUID" />
-      <property name="openjpa.sqlazure.FED_2.PersonUID.RangeMappingName" value="code" />
+      <property name="openjpa.azure.FED_2.RangeMappingType" value="UNIQUEIDENTIFIER" />
+      <property name="openjpa.azure.FED_2.Tables" value="PersonUID" />
+      <property name="openjpa.azure.FED_2.PersonUID.RangeMappingName" value="code" />
         
-      <property name="openjpa.sqlazure.FED_3.RangeMappingType" value="INT" />
-      <property name="openjpa.sqlazure.FED_3.Tables" value="PersonINT" />
-      <property name="openjpa.sqlazure.FED_3.PersonINT.RangeMappingName" value="code" />
+      <property name="openjpa.azure.FED_3.RangeMappingType" value="INT" />
+      <property name="openjpa.azure.FED_3.Tables" value="PersonINT" />
+      <property name="openjpa.azure.FED_3.PersonINT.RangeMappingName" value="code" />
         
-      <property name="openjpa.sqlazure.FED_4.RangeMappingType" value="VERBINARY" />
-      <property name="openjpa.sqlazure.FED_4.Tables" value="PersonBIN" />
-      <property name="openjpa.sqlazure.FED_4.PersonBIN.RangeMappingName" value="code" />
+      <property name="openjpa.azure.FED_4.RangeMappingType" value="VERBINARY" />
+      <property name="openjpa.azure.FED_4.Tables" value="PersonBIN" />
+      <property name="openjpa.azure.FED_4.PersonBIN.RangeMappingName" value="code" />
       
-      <property name="openjpa.sqlazure.FED_5.RangeMappingType" value="BIGINT" />
-      <property name="openjpa.sqlazure.FED_5.Tables" value="PObject" />
-      <property name="openjpa.sqlazure.FED_5.PObject.RangeMappingName" value="id" />
+      <property name="openjpa.azure.FED_5.RangeMappingType" value="BIGINT" />
+      <property name="openjpa.azure.FED_5.Tables" value="PObject" />
+      <property name="openjpa.azure.FED_5.PObject.RangeMappingName" value="id" />
     </properties>
   </persistence-unit>
   
@@ -80,23 +80,23 @@
     <class>net.tirasa.jpasqlazure.beans.BusinessRole</class>
     
     <properties>
-      <property name="openjpa.jdbc.UpdateManager" value="org.apache.openjpa.jdbc.kernel.SQLAzureUpdateManager"/>
-      <property name="openjpa.BrokerFactory" value="org.apache.openjpa.jdbc.kernel.SQLAzureBrokerFactory"/>
-      <property name="openjpa.jdbc.SQLFactory" value="org.apache.openjpa.jdbc.sql.SQLAzureSQLFactory"/>
+      <property name="openjpa.jdbc.UpdateManager" value="org.apache.openjpa.azure.jdbc.kernel.AzureUpdateManager"/>
+      <property name="openjpa.BrokerFactory" value="org.apache.openjpa.azure.jdbc.kernel.AzureBrokerFactory"/>
+      <property name="openjpa.jdbc.SQLFactory" value="org.apache.openjpa.azure.jdbc.sql.AzureSQLFactory"/>
+      <property name="openjpa.jdbc.DBDictionary" value="org.apache.openjpa.jdbc.sql.AzureDictionary"/>
         
       <property name="openjpa.ConnectionURL" 
-                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
-      <property name="openjpa.jdbc.DBDictionary" value="org.apache.openjpa.jdbc.sql.SQLAzureDictionary"/>
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test2;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.ConnectionDriverName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
       <property name="openjpa.ConnectionUserName" value="${jpa.username}"/>
       <property name="openjpa.ConnectionPassword" value="${jpa.password}"/>
       
       <property name="openjpa.jdbc.MappingDefaults" value="ForeignKeyDeleteAction=restrict, JoinForeignKeyDeleteAction=restrict"/>
       
-      <property name="openjpa.sqlazure.Federations" value="TEST_FED1,TEST_FED2"/>
-      <property name="openjpa.sqlazure.TEST_FED1.RangeMappingType" value="BIGINT"/>
-      <property name="openjpa.sqlazure.TEST_FED1.Tables" value="PObject"/>
-      <property name="openjpa.sqlazure.TEST_FED1.PObject.RangeMappingName" value="id"/>
+      <property name="openjpa.azure.Federations" value="TEST_FED1,TEST_FED2"/>
+      <property name="openjpa.azure.TEST_FED1.RangeMappingType" value="BIGINT"/>
+      <property name="openjpa.azure.TEST_FED1.Tables" value="PObject"/>
+      <property name="openjpa.azure.TEST_FED1.PObject.RangeMappingName" value="id"/>
         
       <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
       <property name="openjpa.DynamicEnhancementAgent" value="false"/>

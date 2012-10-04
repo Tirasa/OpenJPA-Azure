@@ -16,17 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.federation.jdbc;
+package org.apache.openjpa.azure.jdbc.conf;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 
 /**
  * Configuration class interface.
  */
-public interface SQLAzureConfiguration extends JDBCConfiguration {
+public interface AzureConfiguration extends JDBCConfiguration {
 
     public enum RangeType {
 

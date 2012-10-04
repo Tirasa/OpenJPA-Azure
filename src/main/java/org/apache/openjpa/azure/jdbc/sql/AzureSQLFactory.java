@@ -16,12 +16,15 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.jdbc.sql;
+package org.apache.openjpa.azure.jdbc.sql;
 
-public class SQLAzureSQLFactory extends SQLFactoryImpl {
+import org.apache.openjpa.jdbc.sql.SQLFactoryImpl;
+import org.apache.openjpa.jdbc.sql.Select;
+
+public class AzureSQLFactory extends SQLFactoryImpl {
 
     @Override
     public Select newSelect() {
-        return new SQLAzureSelectImpl(getConfiguration());
+        return new AzureSelectImpl(getConfiguration());
     }
 }

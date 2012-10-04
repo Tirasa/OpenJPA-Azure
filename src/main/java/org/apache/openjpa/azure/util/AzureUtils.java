@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.utils;
+package org.apache.openjpa.azure.util;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -24,16 +24,16 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
 import java.util.Set;
-import org.apache.openjpa.federation.jdbc.Federation;
-import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
-import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration.RangeType;
+import org.apache.openjpa.azure.Federation;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration.RangeType;
 import org.apache.openjpa.jdbc.schema.ForeignKey;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.springframework.security.crypto.codec.Hex;
 
-public final class SQLAzureUtils {
+public final class AzureUtils {
 
-    private SQLAzureUtils() {
+    private AzureUtils() {
     }
 
     public static void useFederation(final Connection conn, final Federation federation, final Object oid)
@@ -211,7 +211,7 @@ public final class SQLAzureUtils {
     }
 
     public static Set<Federation> getTargetFederation(
-            final SQLAzureConfiguration conf, final Table table, Set<String> tablesToBeExcluded) {
+            final AzureConfiguration conf, final Table table, Set<String> tablesToBeExcluded) {
 
         if (tablesToBeExcluded == null) {
             tablesToBeExcluded = new HashSet<String>();

@@ -16,16 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.jdbc.kernel;
+package org.apache.openjpa.azure.jdbc.kernel;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import org.apache.openjpa.jdbc.kernel.SQLAzureStoreManager.SQLAzureRefCountConnection;
+import org.apache.openjpa.azure.jdbc.AzureDelegatingConnection;
+import org.apache.openjpa.jdbc.kernel.BatchingPreparedStatementManagerImpl;
+import org.apache.openjpa.jdbc.kernel.JDBCStore;
+import org.apache.openjpa.jdbc.kernel.AzureStoreManager.AzureRefCountConnection;
 import org.apache.openjpa.jdbc.sql.RowImpl;
 
-public class SQLAzurePreparedStatementManager extends BatchingPreparedStatementManagerImpl {
+public class AzurePreparedStatementManager extends BatchingPreparedStatementManagerImpl {
 
-    public SQLAzurePreparedStatementManager(final JDBCStore store, final Connection conn, final int batchLimit) {
+    public AzurePreparedStatementManager(final JDBCStore store, final Connection conn, final int batchLimit) {
         super(store, conn, batchLimit);
     }
 
@@ -33,7 +36,7 @@ public class SQLAzurePreparedStatementManager extends BatchingPreparedStatementM
     protected void flushInternal(RowImpl row)
             throws SQLException {
 
-        ((SQLAzureDelegatingConnection) ((SQLAzureRefCountConnection) _conn).getConn()).selectWorkingConnections(row);
+        ((AzureDelegatingConnection) ((AzureRefCountConnection) _conn).getConn()).selectWorkingConnections(row);
 
         super.flushInternal(row);
     }

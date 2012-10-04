@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.jdbc.kernel;
+package org.apache.openjpa.azure.jdbc;
 
 import java.io.InputStream;
 import java.io.Reader;
@@ -45,7 +45,7 @@ import java.util.Map;
  * A chain of ResultSet. Assumes added ResultSet are identical in structure and fetches forward. Can not move absolutely
  * or change fetch direction.
  */
-public class SQLAzureResultSet implements ResultSet {
+public class AzureResultSet implements ResultSet {
 
     private LinkedList<ResultSet> results = new LinkedList<ResultSet>();
 

@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.federation.jdbc;
+package org.apache.openjpa.azure;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang.StringUtils;
-import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration.RangeType;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration.RangeType;
 
 public class Federation {
 
