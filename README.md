@@ -17,7 +17,7 @@ OpenJPA Azure
 Windows Azure SQL Database sharding support for OpenJPA
 
 ### Read more ###
-Want to know more about this project? [Read more](https://github.com/Tirasa/OpenJPASQLAzure/wiki/What-is-this-about%3F).
+Want to know more about this project? [Read more](https://github.com/Tirasa/OpenJPA-Azure/wiki/What-is-this-about%3F).
 
 ### Stay updated ###
 
