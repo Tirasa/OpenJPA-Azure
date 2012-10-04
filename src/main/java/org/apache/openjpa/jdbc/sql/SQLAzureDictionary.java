@@ -73,6 +73,7 @@ public class SQLAzureDictionary extends SQLServerDictionary {
                         return new Column[0];
                     }
                 }
+                SQLAzureUtils.useRootFederation(conn);
             }
         }
 

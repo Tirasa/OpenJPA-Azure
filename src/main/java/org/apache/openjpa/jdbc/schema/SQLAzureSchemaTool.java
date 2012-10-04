@@ -23,8 +23,10 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import javax.sql.DataSource;
 import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.federation.jdbc.Federation;
@@ -61,6 +63,20 @@ public class SQLAzureSchemaTool extends SchemaTool {
         this(conf, null);
     }
 
+    /**
+     * ${@inheritDoc}
+     */
+    @Override
+    public void run()
+            throws SQLException {
+
+        if (StringUtils.isNotBlank(getAction()) && ACTION_DELETE_TABLE_CONTENTS.equals(getAction())) {
+            deleteTableContents();
+        } else {
+            super.run();
+        }
+    }
+
     @Override
     public boolean createTable(final Table table)
             throws SQLException {
@@ -70,22 +86,17 @@ public class SQLAzureSchemaTool extends SchemaTool {
 
         boolean res = true;
 
-        if (federations.isEmpty()) {
-            res = super.createTable(table);
-        } else {
-            final Connection conn = _ds.getConnection();
+        final Map<Connection, Federation> connections = getWorkingConnections(federations);
+
+        for (Map.Entry<Connection, Federation> conn : connections.entrySet()) {
             try {
-                for (Federation federation : federations) {
-                    for (Object memberId : SQLAzureUtils.getMemberDistribution(conn, federation)) {
-                        SQLAzureUtils.useFederation(conn, federation, memberId);
-                        if (!SQLAzureUtils.tableExists(conn, table)) {
-                            res &= executeSQL(_dict.getCreateTableSQL(table, federation), conn);
-                        }
-                    }
+                if (!SQLAzureUtils.tableExists(conn.getKey(), table)) {
+                    res &= executeSQL(_dict.getCreateTableSQL(table, conn.getValue()), conn.getKey());
                 }
+
             } finally {
                 try {
-                    conn.close();
+                    conn.getKey().close();
                 } catch (SQLException se) {
                 }
             }
@@ -107,6 +118,47 @@ public class SQLAzureSchemaTool extends SchemaTool {
         }
 
         return res;
+    }
+
+    /**
+     * Issue DELETE statement against all known tables.
+     */
+    protected void deleteTableContents()
+            throws SQLException {
+
+        final SchemaGroup group = getSchemaGroup();
+        final Schema[] schemas = group.getSchemas();
+        final Collection<Table> tables = new LinkedHashSet<Table>();
+        for (int i = 0; i < schemas.length; i++) {
+            final Table[] ts = schemas[i].getTables();
+            for (int j = 0; j < ts.length; j++) {
+                tables.add(ts[j]);
+            }
+        }
+
+        for (Table table : tables) {
+            final Table[] tableArray = new Table[]{table};
+
+            final List<Federation> federations =
+                    ((SQLAzureConfiguration) _conf).getFederations(table.getFullIdentifier().getName());
+
+            final Map<Connection, Federation> connections = getWorkingConnections(federations);
+
+            for (Map.Entry<Connection, Federation> conn : connections.entrySet()) {
+                try {
+
+                    if (!SQLAzureUtils.tableExists(conn.getKey(), table)) {
+                        internalDeleteTableContents(tableArray, conn.getKey());
+                    }
+
+                } finally {
+                    try {
+                        conn.getKey().close();
+                    } catch (SQLException se) {
+                    }
+                }
+            }
+        }
     }
 
     private boolean executeSQL(String[] sql, final Connection conn)
@@ -184,68 +236,42 @@ public class SQLAzureSchemaTool extends SchemaTool {
         _sqlTerminator = terminator;
     }
 
-    /**
-     * Run the tool action.
-     */
-    @Override
-    public void run()
+    protected void internalDeleteTableContents(final Table[] tableArray, final Connection conn)
             throws SQLException {
-
-        if (StringUtils.isNotBlank(getAction()) && ACTION_DELETE_TABLE_CONTENTS.equals(getAction())) {
-            deleteTableContents();
-        } else {
-            super.run();
-        }
-    }
-
-    protected void internalDeleteTableContents(final Table[] tableArray, final Connection conn) throws SQLException {
         final String[] sql = _conf.getDBDictionaryInstance().getDeleteTableContentsSQL(tableArray, conn);
         if (!executeSQL(sql, conn)) {
             _log.warn(_loc.get("delete-table-contents"));
         }
     }
 
-    /**
-     * Issue DELETE statement against all known tables.
-     */
-    protected void deleteTableContents()
+    private Map<Connection, Federation> getWorkingConnections(final List<Federation> federations)
             throws SQLException {
+        final Map<Connection, Federation> connections = new HashMap<Connection, Federation>();
 
-        final SchemaGroup group = getSchemaGroup();
-        final Schema[] schemas = group.getSchemas();
-        final Collection<Table> tables = new LinkedHashSet<Table>();
-        for (int i = 0; i < schemas.length; i++) {
-            final Table[] ts = schemas[i].getTables();
-            for (int j = 0; j < ts.length; j++) {
-                tables.add(ts[j]);
-            }
-        }
+        final Connection root = _ds.getConnection();
 
-        for (Table table : tables) {
-            final Table[] tableArray = new Table[]{table};
-            final List<Federation> federations =
-                    ((SQLAzureConfiguration) _conf).getFederations(table.getFullIdentifier().getName());
-
-            final Connection conn = _ds.getConnection();
+        if (federations.isEmpty()) {
+            connections.put(root, null);
+        } else {
             try {
-                if (federations.isEmpty()) {
-                    internalDeleteTableContents(tableArray, conn);
-                } else {
-                    for (Federation federation : federations) {
-                        for (Object memberId : SQLAzureUtils.getMemberDistribution(conn, federation)) {
-                            SQLAzureUtils.useFederation(conn, federation, memberId);
-                            if (!SQLAzureUtils.tableExists(conn, table)) {
-                                internalDeleteTableContents(tableArray, conn);
-                            }
-                        }
+                for (Federation federation : federations) {
+                    for (Object memberId : SQLAzureUtils.getMemberDistribution(root, federation)) {
+                        Connection conn = _ds.getConnection();
+                        SQLAzureUtils.useFederation(conn, federation, memberId);
+                        connections.put(conn, federation);
                     }
                 }
             } finally {
-                try {
-                    conn.close();
-                } catch (SQLException se) {
+                if (root != null) {
+                    try {
+                        root.close();
+                    } catch (SQLException ignore) {
+                        // ignore
+                    }
                 }
             }
         }
+
+        return connections;
     }
 }

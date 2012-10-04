@@ -43,7 +43,7 @@ public class SQLAzureUtils {
         Statement stm = null;
 
         final String rangeId = RangeType.UNIQUEIDENTIFIER == federation.getRangeMappingType()
-                ? "'" + getUidAsString(oid) + "'" : getObjectIdAsString(oid);
+                ? getUidAsString(oid) : getObjectIdAsString(oid);
 
         try {
 
@@ -79,6 +79,55 @@ public class SQLAzureUtils {
                 }
             }
         }
+    }
+
+    public static Object getMemberDistribution(final Connection conn, final Federation federation, final Object oid)
+            throws SQLException {
+
+        final RangeType type = federation.getRangeMappingType();
+
+        final String rangeId = RangeType.UNIQUEIDENTIFIER == type
+                ? "CAST(" + getUidAsString(oid) + " AS UNIQUEIDENTIFIER)" : getObjectIdAsString(oid);
+
+        Statement stm = null;
+        ResultSet federation_id = null;
+        ResultSet member_distribution = null;
+
+        Object res = null;
+
+        try {
+            stm = conn.createStatement();
+
+            federation_id = stm.executeQuery(
+                    "SELECT * "
+                    + "FROM sys.Federations "
+                    + "WHERE name = '" + federation.getName() + "'");
+
+            if (federation_id.next()) {
+                member_distribution = stm.executeQuery(
+                        "SELECT CAST(MAX(range_low) as " + type.getValue() + ") FROM sys.federation_member_distributions "
+                        + "WHERE federation_id=" + federation_id.getInt(1) + " and range_low<=" + rangeId);
+
+                if (member_distribution.next()) {
+                    res = member_distribution.getObject(1);
+                }
+            }
+
+        } finally {
+            if (stm != null) {
+                stm.close();
+            }
+
+            if (federation_id != null) {
+                federation_id.close();
+            }
+
+            if (member_distribution != null) {
+                member_distribution.close();
+            }
+        }
+
+        return res;
     }
 
     public static MemberDistribution getMemberDistribution(final Connection conn, final Federation federation)
@@ -233,7 +282,7 @@ public class SQLAzureUtils {
         return federations;
     }
 
-    private static String getObjectIdAsString(final Object oid) {
+    public static String getObjectIdAsString(final Object oid) {
         final String res;
 
         if (oid instanceof byte[]) {
@@ -251,7 +300,7 @@ public class SQLAzureUtils {
         if (oid instanceof byte[]) {
             res = new String((byte[]) oid);
         } else {
-            res = oid.toString();
+            res = "'" + oid.toString() + "'";
         }
 
         return res;

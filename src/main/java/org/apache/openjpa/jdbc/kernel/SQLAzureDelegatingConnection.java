@@ -23,7 +23,9 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.sql.DataSource;
 import org.apache.openjpa.conf.OpenJPAConfiguration;
 import org.apache.openjpa.federation.jdbc.Federation;
@@ -43,6 +45,8 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
     private final SQLAzureConfiguration conf;
 
     private final DataSource ds;
+
+    private final Map<String, Connection> availableFedConnections = new HashMap<String, Connection>();
 
     private final List<Connection> openedConnections;
 
@@ -78,9 +82,20 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
             // add federation connections
             for (Federation federation : conf.getFederations()) {
                 for (Object memberId : SQLAzureUtils.getMemberDistribution(this.conn, federation)) {
-                    Connection conn = ds.getConnection();
-                    SQLAzureUtils.useFederation(conn, federation, memberId);
-                    openedConnections.add(conn);
+                    final String memberKey = federation.getName() + ":" + SQLAzureUtils.getObjectIdAsString(memberId);
+
+                    final Connection conn;
+
+                    if (availableFedConnections.containsKey(memberKey)) {
+                        conn = availableFedConnections.get(memberKey);
+                    } else {
+                        conn = ds.getConnection();
+                        conn.setAutoCommit(this.conn.getAutoCommit());
+                        SQLAzureUtils.useFederation(conn, federation, memberId);
+                        availableFedConnections.put(memberKey, conn);
+                        openedConnections.add(conn);
+                    }
+
                     workingConnections.add(conn);
                 }
             }
@@ -113,18 +128,30 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
                     final Column col = table.getColumn(DBIdentifier.newColumn(rangeMappingName), false);
 
                     memberDistribution = new MemberDistribution(federation.getRangeMappingType());
-                    memberDistribution.addValue(row.getVals()[col.getIndex()]);
+
+                    memberDistribution.addValue(
+                            SQLAzureUtils.getMemberDistribution(conn, federation, row.getVals()[col.getIndex()]));
                 } else {
                     memberDistribution = SQLAzureUtils.getMemberDistribution(this.conn, federation);
                 }
 
                 for (Object memberId : memberDistribution) {
-                    Connection conn = ds.getConnection();
-                    SQLAzureUtils.useFederation(conn, federation, memberId);
-                    openedConnections.add(conn);
+                    final String memberKey = federation.getName() + ":" + SQLAzureUtils.getObjectIdAsString(memberId);
+
+                    final Connection conn;
+
+                    if (availableFedConnections.containsKey(memberKey)) {
+                        conn = availableFedConnections.get(memberKey);
+                    } else {
+                        conn = ds.getConnection();
+                        conn.setAutoCommit(this.conn.getAutoCommit());
+                        SQLAzureUtils.useFederation(conn, federation, memberId);
+                        availableFedConnections.put(memberKey, conn);
+                        openedConnections.add(conn);
+                    }
+
                     workingConnections.add(conn);
                 }
-
             }
         } catch (SQLException e) {
             conf.getLog(OpenJPAConfiguration.LOG_RUNTIME).error("Error connecting to the database", e);
@@ -193,7 +220,7 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
         }
 
         conn.close();
-        
+
         openedConnections.clear();
         workingConnections.clear();
     }
@@ -205,7 +232,7 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
             c.rollback();
         }
 
-        conn.rollback();
+//        conn.rollback();
     }
 
     @Override
@@ -215,6 +242,6 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
             c.rollback(svptn);
         }
 
-        conn.rollback(svptn);
+//        conn.rollback(svptn);
     }
 }

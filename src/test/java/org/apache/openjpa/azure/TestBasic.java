@@ -74,9 +74,8 @@ public class TestBasic extends AbstractAzureTestCase {
 
         entityManager.getTransaction().begin();
         final int before = count(PObject.class);
-        System.out.println("MMMMMMMMMMMMMM0 ");
+        
         final List<PObject> all = entityManager.createQuery("SELECT p FROM PObject p").getResultList();
-        System.out.println("MMMMMMMMMMMMMMM " + all);
         assertFalse(all.isEmpty());
         entityManager.remove(all.get(0));
         entityManager.getTransaction().commit();

@@ -22,7 +22,12 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.openjpa.datacache.QueryCache;
+import org.apache.openjpa.datacache.QueryCacheStoreQuery;
 import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
+import org.apache.openjpa.kernel.QueryLanguages;
+import org.apache.openjpa.kernel.StoreQuery;
+import org.apache.openjpa.kernel.exps.ExpressionParser;
 
 public class SQLAzureStoreManager extends JDBCStoreManager {
 
@@ -51,5 +56,33 @@ public class SQLAzureStoreManager extends JDBCStoreManager {
         public Connection getConn() {
             return conn;
         }
+    }
+
+    public StoreQuery newQuery(String language) {
+        StoreQuery sq = newStoreQuery(language);
+        if (sq == null || QueryLanguages.parserForLanguage(language) == null) {
+            return sq;
+        }
+
+        QueryCache queryCache = getContext().getConfiguration().getDataCacheManagerInstance().getSystemQueryCache();
+        if (queryCache == null) {
+            return sq;
+        }
+
+        return new QueryCacheStoreQuery(sq, queryCache);
+    }
+
+    private StoreQuery newStoreQuery(String language) {
+        ExpressionParser ep = QueryLanguages.parserForLanguage(language);
+        if (ep != null) {
+            return new JDBCStoreQuery(this, ep);
+        }
+        if (QueryLanguages.LANG_SQL.equals(language)) {
+            return new SQLStoreQuery(this);
+        }
+        if (QueryLanguages.LANG_PREPARED_SQL.equals(language)) {
+            return new SQLAzurePreparedSQLStoreQuery(this);
+        }
+        return null;
     }
 }

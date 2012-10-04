@@ -14,13 +14,16 @@
 package net.tirasa.jpasqlazure;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
 import javax.persistence.Query;
 import net.tirasa.jpasqlazure.beans.BusinessRole;
 import net.tirasa.jpasqlazure.beans.Gender;
+import net.tirasa.jpasqlazure.beans.PObject;
 import net.tirasa.jpasqlazure.beans.Person;
 import net.tirasa.jpasqlazure.beans.PersonBIN;
 import net.tirasa.jpasqlazure.beans.PersonBIN_PK;
@@ -56,7 +59,7 @@ public class BasicCRUDTest {
 
     private static int USER_NUMBER = 3;
 
-    private static EntityManager entityManager;
+    private static EntityManagerFactory entityManagerFactory;
 
     private static PersonRepository repository = null;
 
@@ -103,7 +106,28 @@ public class BasicCRUDTest {
         repositoryUID = ctx.getBean(PersonUidRepository.class);
         repositoryBIN = ctx.getBean(PersonBinRepository.class);
         roleRepository = ctx.getBean(RoleRepository.class);
-        entityManager = (EntityManager) ctx.getBean("entityManager");
+
+        entityManagerFactory = (EntityManagerFactory) ctx.getBean("entityManagerFactory");
+
+        for (Person person : repository.findAll()) {
+            repository.delete(person);
+        }
+
+        for (PersonUID person : repositoryUID.findAll()) {
+            repositoryUID.delete(person);
+        }
+
+        for (PersonINT person : repositoryINT.findAll()) {
+            repositoryINT.delete(person);
+        }
+
+        for (PersonBIN person : repositoryBIN.findAll()) {
+            repositoryBIN.delete(person);
+        }
+
+        for (BusinessRole role : roleRepository.findAll()) {
+            roleRepository.delete(role);
+        }
 
         for (int i = 0; i < USER_NUMBER; i++) {
             Person user = new Person();
@@ -120,7 +144,6 @@ public class BasicCRUDTest {
     }
 
     @Test
-    @Ignore
     public void bigintTest()
             throws UnsupportedEncodingException {
 
@@ -147,7 +170,6 @@ public class BasicCRUDTest {
     }
 
     @Test
-    @Ignore
     public void uniqueidentifierTest()
             throws UnsupportedEncodingException {
         PersonUID_PK pk = new PersonUID_PK();
@@ -176,7 +198,6 @@ public class BasicCRUDTest {
     }
 
     @Test
-    @Ignore
     public void varbinaryTest()
             throws UnsupportedEncodingException {
         PersonBIN_PK pk = new PersonBIN_PK();
@@ -203,7 +224,6 @@ public class BasicCRUDTest {
     }
 
     @Test
-    @Ignore
     public void intTest()
             throws UnsupportedEncodingException {
 
@@ -232,7 +252,6 @@ public class BasicCRUDTest {
     }
 
     @Test
-    @Ignore
     public void addNewRoleToPerson()
             throws UnsupportedEncodingException {
 
@@ -261,42 +280,29 @@ public class BasicCRUDTest {
     }
 
     @Test
-    public void nativeQuery()
+    @Ignore
+    public void createNativeQuery()
             throws UnsupportedEncodingException {
-        Person user = repository.findByUsername("Bob_1");
-        assertNotNull(user);
-        assertTrue(user.getRoles().isEmpty());
-
-        BusinessRole br = new BusinessRole();
-        br.setName("roleA");
-
-        user.setRoles(new HashSet<BusinessRole>(Collections.singleton(br)));
-
-        user = repository.save(user);
-        assertEquals(1, user.getRoles().size());
-
-        Query query = entityManager.createNativeQuery("SELECT * FROM Membership");
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+        Query query = entityManager.createNativeQuery("SELECT * FROM Person");
         List res = query.getResultList();
 
         assertFalse(res.isEmpty());
+    }
 
-        boolean found = false;
+    @Test
+    public void createQuery()
+            throws UnsupportedEncodingException {
 
-        br = user.getRoles().iterator().next();
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
 
-        for (Object[] objects : (List<Object[]>) res) {
-            if (((Long) objects[0]).equals(user.getId())
-                    && ((Long) objects[1]).equals(br.getId())) {
-                found = true;
-            }
-        }
+        createIndependentObjects(1);
 
-        assertTrue(found);
+        final Query query = entityManager.createQuery("SELECT e FROM PObject e");
 
-        user.getRoles().clear();
-        repository.save(user);
+        final List<PObject> res = query.getResultList();
 
-        roleRepository.delete(br);
+        assertFalse(res.isEmpty());
     }
 
     @AfterClass
@@ -314,5 +320,21 @@ public class BasicCRUDTest {
         if (driverName.contains("SQLServerDriver")) {
             Initialize.executeQueries(schemaPurgeQueries);
         }
+    }
+
+    protected List<PObject> createIndependentObjects(final int num) {
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+        final List<PObject> pcs = new ArrayList<PObject>();
+        entityManager.getTransaction().begin();
+        for (int i = 0; i < num; i++) {
+            final PObject pobj = new PObject();
+            pcs.add(pobj);
+            entityManager.persist(pobj);
+            pobj.setValue(10 + i);
+        }
+        entityManager.getTransaction().commit();
+        entityManager.clear();
+        return pcs;
     }
 }
