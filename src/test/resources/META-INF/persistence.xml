@@ -86,7 +86,7 @@
       <property name="openjpa.jdbc.DBDictionary" value="org.apache.openjpa.jdbc.sql.AzureDictionary"/>
         
       <property name="openjpa.ConnectionURL" 
-                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test2;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.ConnectionDriverName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
       <property name="openjpa.ConnectionUserName" value="${jpa.username}"/>
       <property name="openjpa.ConnectionPassword" value="${jpa.password}"/>
