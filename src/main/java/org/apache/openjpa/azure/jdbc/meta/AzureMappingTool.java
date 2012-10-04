@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.    
  */
-package org.apache.openjpa.jdbc.meta;
+package org.apache.openjpa.azure.jdbc.meta;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -27,8 +27,15 @@ import java.util.Map;
 import java.util.Set;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.kernel.JDBCSeq;
+import org.apache.openjpa.jdbc.meta.ClassMapping;
+import org.apache.openjpa.jdbc.meta.FieldMapping;
+import org.apache.openjpa.jdbc.meta.MappingRepository;
+import org.apache.openjpa.jdbc.meta.MappingStrategyInstaller;
+import org.apache.openjpa.jdbc.meta.MappingTool;
+import org.apache.openjpa.jdbc.meta.RefreshStrategyInstaller;
+import org.apache.openjpa.jdbc.meta.RuntimeStrategyInstaller;
 import org.apache.openjpa.jdbc.schema.Column;
-import org.apache.openjpa.jdbc.schema.SQLAzureSchemaTool;
+import org.apache.openjpa.azure.jdbc.schema.AzureSchemaTool;
 import org.apache.openjpa.jdbc.schema.Schema;
 import org.apache.openjpa.jdbc.schema.SchemaGroup;
 import org.apache.openjpa.jdbc.schema.SchemaSerializer;
@@ -51,14 +58,9 @@ import org.apache.openjpa.meta.ValueStrategies;
 import org.apache.openjpa.util.GeneralException;
 import org.apache.openjpa.util.MetaDataException;
 
-/**
- * Tool for manipulating class mappings and associated schema.
- *
- * @author Abe White
- */
-public class SQLAzureMappingTool extends MappingTool {
+public class AzureMappingTool extends MappingTool {
 
-    private static final Localizer _loc = Localizer.forPackage(SQLAzureMappingTool.class);
+    private static final Localizer _loc = Localizer.forPackage(AzureMappingTool.class);
 
     private final JDBCConfiguration _conf;
 
@@ -82,7 +84,7 @@ public class SQLAzureMappingTool extends MappingTool {
     /**
      * Constructor. Supply configuration and action.
      */
-    public SQLAzureMappingTool(final JDBCConfiguration conf, final String action, final boolean meta) {
+    public AzureMappingTool(final JDBCConfiguration conf, final String action, final boolean meta) {
         super(conf, action, meta);
 
         this._conf = conf;
@@ -114,7 +116,7 @@ public class SQLAzureMappingTool extends MappingTool {
         if (SCHEMA_ACTION_NONE.equals(action)) {
             action = null;
         }
-        final SchemaTool tool = new SQLAzureSchemaTool(_conf, action);
+        final SchemaTool tool = new AzureSchemaTool(_conf, action);
         tool.setIgnoreErrors(getIgnoreErrors());
         tool.setPrimaryKeys(getPrimaryKeys());
         tool.setForeignKeys(getForeignKeys());
@@ -173,7 +175,7 @@ public class SQLAzureMappingTool extends MappingTool {
                             && (getSchemaWriter() == null || (_schemaTool != null
                             && _schemaTool.getWriter() != null))) {
 
-                        final SQLAzureSchemaTool tool = (SQLAzureSchemaTool) newSchemaTool(schemaActions[i]);
+                        final AzureSchemaTool tool = (AzureSchemaTool) newSchemaTool(schemaActions[i]);
 
                         // configure the tool with additional settings
                         if (flags != null) {

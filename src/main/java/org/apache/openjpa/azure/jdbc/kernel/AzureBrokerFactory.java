@@ -16,42 +16,44 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.jdbc.kernel;
+package org.apache.openjpa.azure.jdbc.kernel;
 
 import java.util.Arrays;
 import java.util.Collection;
 import org.apache.commons.lang.StringUtils;
-import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
-import org.apache.openjpa.federation.jdbc.SQLAzureConfigurationImpl;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfigurationImpl;
+import org.apache.openjpa.azure.jdbc.meta.AzureMappingTool;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
+import org.apache.openjpa.jdbc.kernel.AzureStoreManager;
+import org.apache.openjpa.jdbc.kernel.JDBCBrokerFactory;
 import org.apache.openjpa.jdbc.meta.MappingRepository;
 import org.apache.openjpa.jdbc.meta.MappingTool;
-import org.apache.openjpa.jdbc.meta.SQLAzureMappingTool;
 import org.apache.openjpa.kernel.StoreManager;
 import org.apache.openjpa.lib.conf.ConfigurationProvider;
 import org.apache.openjpa.lib.conf.Configurations;
 import org.apache.openjpa.lib.util.Localizer;
 import org.apache.openjpa.util.UserException;
 
-public class SQLAzureBrokerFactory extends JDBCBrokerFactory {
+public class AzureBrokerFactory extends JDBCBrokerFactory {
 
     private static final long serialVersionUID = 1641615009581406164L;
 
-    private static final Localizer _loc = Localizer.forPackage(SQLAzureBrokerFactory.class);
+    private static final Localizer _loc = Localizer.forPackage(AzureBrokerFactory.class);
 
-    public SQLAzureBrokerFactory(SQLAzureConfiguration conf) {
+    public AzureBrokerFactory(AzureConfiguration conf) {
         super(conf);
     }
 
     @Override
     protected StoreManager newStoreManager() {
-        return new SQLAzureStoreManager();
+        return new AzureStoreManager();
     }
 
     public static JDBCBrokerFactory newInstance(ConfigurationProvider cp) {
-        SQLAzureConfiguration conf = new SQLAzureConfigurationImpl();
+        AzureConfiguration conf = new AzureConfigurationImpl();
         cp.setInto(conf);
-        return new SQLAzureBrokerFactory(conf);
+        return new AzureBrokerFactory(conf);
     }
 
     @Override
@@ -69,7 +71,7 @@ public class SQLAzureBrokerFactory extends JDBCBrokerFactory {
 
         final String props = Configurations.getProperties(action);
         action = Configurations.getClassName(action);
-        SQLAzureMappingTool tool = new SQLAzureMappingTool(conf, action, false);
+        AzureMappingTool tool = new AzureMappingTool(conf, action, false);
         Configurations.configureInstance(tool, conf, props, "SynchronizeMappings");
 
         // initialize the schema

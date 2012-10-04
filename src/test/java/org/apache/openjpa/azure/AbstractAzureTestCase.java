@@ -18,8 +18,8 @@
  */
 package org.apache.openjpa.azure;
 
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import javax.persistence.EntityManager;
-import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
 import org.apache.openjpa.persistence.test.SingleEMFTestCase;
 
 public abstract class AbstractAzureTestCase extends SingleEMFTestCase {
@@ -29,7 +29,7 @@ public abstract class AbstractAzureTestCase extends SingleEMFTestCase {
         super.setUp(props);
         assertTrue(emf.getClass().getName() + " is not a SQL Azure configuration. "
                 + "Check that BrokerFactory for the persistence unit is set to azure",
-                emf.getConfiguration() instanceof SQLAzureConfiguration);
+                emf.getConfiguration() instanceof AzureConfiguration);
 
     }
 

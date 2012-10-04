@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.utils;
+package org.apache.openjpa.azure.util;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration.RangeType;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration.RangeType;
 
 public class MemberDistribution implements Iterable<Object> {
 

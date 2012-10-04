@@ -16,18 +16,19 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.jdbc.kernel;
+package org.apache.openjpa.azure.jdbc;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import org.apache.openjpa.slice.jdbc.DistributedPreparedStatement;
 
-public class SQLAzurePreparedStatement extends DistributedPreparedStatement {
+public class AzurePreparedStatement extends DistributedPreparedStatement {
 
     private final int workingIndex;
 
-    public SQLAzurePreparedStatement(final SQLAzureDelegatingConnection conn) {
+    public AzurePreparedStatement(final AzureDelegatingConnection conn) {
+
         super(conn);
         workingIndex = conn.getWorkingIndex();
     }
@@ -36,7 +37,7 @@ public class SQLAzurePreparedStatement extends DistributedPreparedStatement {
     public ResultSet executeQuery()
             throws SQLException {
 
-        final SQLAzureResultSet mrs = new SQLAzureResultSet();
+        final AzureResultSet mrs = new AzureResultSet();
 
         for (PreparedStatement stm : this) {
             try {

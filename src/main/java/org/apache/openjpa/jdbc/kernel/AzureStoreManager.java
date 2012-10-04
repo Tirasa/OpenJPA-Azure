@@ -22,10 +22,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
+import org.apache.openjpa.azure.jdbc.AzureDelegatingConnection;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.kernel.StoreQuery;
 
-public class SQLAzureStoreManager extends JDBCStoreManager {
+public class AzureStoreManager extends JDBCStoreManager {
 
     @Override
     protected RefCountConnection connectInternal()
@@ -34,17 +35,17 @@ public class SQLAzureStoreManager extends JDBCStoreManager {
         final List<Connection> connections = new ArrayList<Connection>();
         connections.add(getDataSource().getConnection());
 
-        final SQLAzureDelegatingConnection conn = new SQLAzureDelegatingConnection(
-                connections, getDataSource(), (SQLAzureConfiguration) getConfiguration());
+        final AzureDelegatingConnection conn = new AzureDelegatingConnection(
+                connections, getDataSource(), (AzureConfiguration) getConfiguration());
 
-        return new SQLAzureRefCountConnection(conn);
+        return new AzureRefCountConnection(conn);
     }
 
-    public class SQLAzureRefCountConnection extends RefCountConnection {
+    public class AzureRefCountConnection extends RefCountConnection {
 
         private final Connection conn;
 
-        public SQLAzureRefCountConnection(final Connection conn) {
+        public AzureRefCountConnection(final Connection conn) {
             super(conn);
             this.conn = conn;
         }
@@ -54,8 +55,9 @@ public class SQLAzureStoreManager extends JDBCStoreManager {
         }
     }
 
-    public StoreQuery newQuery(String language) {
-        ((SQLAzureDelegatingConnection) ((SQLAzureRefCountConnection) getConnection()).getConn()).
+    @Override
+    public StoreQuery newQuery(final String language) {
+        ((AzureDelegatingConnection) ((AzureRefCountConnection) getConnection()).getConn()).
                 selectWorkingConnections();
 
         return super.newQuery(language);

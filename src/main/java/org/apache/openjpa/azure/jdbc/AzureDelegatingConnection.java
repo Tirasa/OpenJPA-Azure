@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.jdbc.kernel;
+package org.apache.openjpa.azure.jdbc;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -28,9 +28,9 @@ import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
 import org.apache.commons.lang.StringUtils;
+import org.apache.openjpa.azure.Federation;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.conf.OpenJPAConfiguration;
-import org.apache.openjpa.federation.jdbc.Federation;
-import org.apache.openjpa.federation.jdbc.SQLAzureConfiguration;
 import org.apache.openjpa.jdbc.identifier.DBIdentifier;
 import org.apache.openjpa.jdbc.schema.Column;
 import org.apache.openjpa.jdbc.schema.Table;
@@ -38,12 +38,12 @@ import org.apache.openjpa.jdbc.sql.Row;
 import org.apache.openjpa.jdbc.sql.RowImpl;
 import org.apache.openjpa.slice.jdbc.DistributedConnection;
 import org.apache.openjpa.slice.jdbc.DistributedPreparedStatement;
-import org.apache.openjpa.utils.MemberDistribution;
-import org.apache.openjpa.utils.SQLAzureUtils;
+import org.apache.openjpa.azure.util.MemberDistribution;
+import org.apache.openjpa.azure.util.AzureUtils;
 
-public class SQLAzureDelegatingConnection extends DistributedConnection {
+public class AzureDelegatingConnection extends DistributedConnection {
 
-    private final SQLAzureConfiguration conf;
+    private final AzureConfiguration conf;
 
     private final DataSource ds;
 
@@ -58,8 +58,8 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
     // root connection
     private final Connection conn;
 
-    public SQLAzureDelegatingConnection(
-            final List<Connection> connections, final DataSource ds, final SQLAzureConfiguration conf)
+    public AzureDelegatingConnection(
+            final List<Connection> connections, final DataSource ds, final AzureConfiguration conf)
             throws SQLException {
 
         super(connections);
@@ -85,8 +85,8 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
 
             // add federation connections
             for (Federation federation : conf.getFederations()) {
-                for (Object memberId : SQLAzureUtils.getMemberDistribution(this.conn, federation)) {
-                    final String memberKey = federation.getName() + ":" + SQLAzureUtils.getObjectIdAsString(memberId);
+                for (Object memberId : AzureUtils.getMemberDistribution(this.conn, federation)) {
+                    final String memberKey = federation.getName() + ":" + AzureUtils.getObjectIdAsString(memberId);
 
                     final Connection conn;
 
@@ -95,7 +95,7 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
                     } else {
                         conn = ds.getConnection();
                         conn.setAutoCommit(this.conn.getAutoCommit());
-                        SQLAzureUtils.useFederation(conn, federation, memberId);
+                        AzureUtils.useFederation(conn, federation, memberId);
                         availableFedConnections.put(memberKey, conn);
                         openedConnections.add(conn);
                     }
@@ -141,19 +141,19 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
                         memberDistribution = new MemberDistribution(federation.getRangeMappingType());
 
                         memberDistribution.addValue(
-                                SQLAzureUtils.getMemberDistribution(conn, federation, row.getVals()[col.getIndex()]));
+                                AzureUtils.getMemberDistribution(conn, federation, row.getVals()[col.getIndex()]));
                     } else {
-                        memberDistribution = SQLAzureUtils.getMemberDistribution(this.conn, federation);
+                        memberDistribution = AzureUtils.getMemberDistribution(this.conn, federation);
                     }
 
                     workingIndex++;
                 } else {
-                    memberDistribution = SQLAzureUtils.getMemberDistribution(this.conn, federation);
+                    memberDistribution = AzureUtils.getMemberDistribution(this.conn, federation);
                     workingIndex += memberDistribution.size();
                 }
 
                 for (Object memberId : memberDistribution) {
-                    final String memberKey = federation.getName() + ":" + SQLAzureUtils.getObjectIdAsString(memberId);
+                    final String memberKey = federation.getName() + ":" + AzureUtils.getObjectIdAsString(memberId);
 
                     final Connection conn;
 
@@ -162,7 +162,7 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
                     } else {
                         conn = ds.getConnection();
                         conn.setAutoCommit(this.conn.getAutoCommit());
-                        SQLAzureUtils.useFederation(conn, federation, memberId);
+                        AzureUtils.useFederation(conn, federation, memberId);
                         availableFedConnections.put(memberKey, conn);
                         openedConnections.add(conn);
                     }
@@ -183,7 +183,7 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
     public PreparedStatement prepareStatement(final String sql)
             throws SQLException {
 
-        final DistributedPreparedStatement ret = new SQLAzurePreparedStatement(this);
+        final DistributedPreparedStatement ret = new AzurePreparedStatement(this);
 
         for (Connection c : workingConnections) {
             ret.add(c.prepareStatement(sql));
@@ -196,7 +196,7 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
     public PreparedStatement prepareStatement(final String sql, final int rsType, final int rsConcur)
             throws SQLException {
 
-        final DistributedPreparedStatement ret = new SQLAzurePreparedStatement(this);
+        final DistributedPreparedStatement ret = new AzurePreparedStatement(this);
 
         for (Connection c : workingConnections) {
             ret.add(c.prepareStatement(sql, rsType, rsConcur));
@@ -209,7 +209,7 @@ public class SQLAzureDelegatingConnection extends DistributedConnection {
     public PreparedStatement prepareStatement(String sql, String[] arg1)
             throws SQLException {
 
-        final DistributedPreparedStatement ret = new SQLAzurePreparedStatement(this);
+        final DistributedPreparedStatement ret = new AzurePreparedStatement(this);
 
         for (Connection c : workingConnections) {
             ret.add(c.prepareStatement(sql, arg1));
