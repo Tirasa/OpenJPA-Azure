@@ -33,8 +33,7 @@ public class TestNativeQuery extends AbstractAzureTestCase {
 
     @Override
     public void setUp() {
-        //super.setUp(getClasses("org.apache.openjpa.azure.beans"), CLEAR_TABLES);
-        super.setUp(PObject.class, CLEAR_TABLES);
+        super.setUp(getClasses("org.apache.openjpa.azure.beans"), CLEAR_TABLES);
     }
 
     public void testSelect() {
