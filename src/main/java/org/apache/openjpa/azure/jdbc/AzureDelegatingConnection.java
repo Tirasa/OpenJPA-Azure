@@ -108,9 +108,7 @@ public class AzureDelegatingConnection extends DistributedConnection {
             conf.getLog(OpenJPAConfiguration.LOG_RUNTIME).error("Error connecting to the database", e);
         }
 
-        if (workingConnections.isEmpty()) {
-            workingConnections.add(this.conn);
-        }
+        workingConnections.add(this.conn);
 
         workingIndex = workingConnections.size();
     }

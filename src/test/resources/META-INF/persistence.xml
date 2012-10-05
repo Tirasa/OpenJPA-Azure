@@ -75,6 +75,8 @@
       <property name="openjpa.azure.FED_5.RangeMappingType" value="BIGINT" />
       <property name="openjpa.azure.FED_5.Tables" value="PObject" />
       <property name="openjpa.azure.FED_5.PObject.RangeMappingName" value="id" />
+      
+      <property name="openjpa.Log" value="DefaultLevel=WARN, Runtime=TRACE, Tool=TRACE, SQL=TRACE"/>
     </properties>
   </persistence-unit>
   
