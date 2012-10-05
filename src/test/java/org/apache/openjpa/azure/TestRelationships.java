@@ -35,18 +35,6 @@ public class TestRelationships extends AbstractAzureTestCase {
         return System.getProperty("unit", "azure-FEDDB");
     }
 
-<<<<<<< Updated upstream
-    @Override
-    public void setUp() {
-        super.setUp(
-                PersonBINT.class,
-                BusinessRole.class,
-                CLEAR_TABLES);
-    }
-
-    @Test
-=======
->>>>>>> Stashed changes
     public void testJoinTable()
             throws UnsupportedEncodingException {
 

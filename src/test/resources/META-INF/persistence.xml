@@ -22,13 +22,12 @@
     <mapping-file>META-INF/orm.xml</mapping-file>
     
     <class>org.apache.openjpa.azure.beans.BusinessRole</class>
-    <class>org.apache.openjpa.azure.beans.Gender</class>
     <class>org.apache.openjpa.azure.beans.PObject</class>
-    <class>org.apache.openjpa.azure.beans.PersonBIN</class>
     <class>org.apache.openjpa.azure.beans.PersonBINT</class>
-    <class>org.apache.openjpa.azure.beans.PersonBIN_PK</class>
     <class>org.apache.openjpa.azure.beans.PersonINT</class>
     <class>org.apache.openjpa.azure.beans.PersonINT_PK</class>
+    <class>org.apache.openjpa.azure.beans.PersonBIN_PK</class>
+    <class>org.apache.openjpa.azure.beans.PersonBIN</class>
     <class>org.apache.openjpa.azure.beans.PersonUID</class>
     <class>org.apache.openjpa.azure.beans.PersonUID_PK</class>
 
@@ -83,13 +82,12 @@
     <mapping-file>META-INF/orm.xml</mapping-file>
 
     <class>org.apache.openjpa.azure.beans.BusinessRole</class>
-    <class>org.apache.openjpa.azure.beans.Gender</class>
     <class>org.apache.openjpa.azure.beans.PObject</class>
-    <class>org.apache.openjpa.azure.beans.PersonBIN</class>
     <class>org.apache.openjpa.azure.beans.PersonBINT</class>
-    <class>org.apache.openjpa.azure.beans.PersonBIN_PK</class>
     <class>org.apache.openjpa.azure.beans.PersonINT</class>
     <class>org.apache.openjpa.azure.beans.PersonINT_PK</class>
+    <class>org.apache.openjpa.azure.beans.PersonBIN_PK</class>
+    <class>org.apache.openjpa.azure.beans.PersonBIN</class>
     <class>org.apache.openjpa.azure.beans.PersonUID</class>
     <class>org.apache.openjpa.azure.beans.PersonUID_PK</class>
     
@@ -103,7 +101,7 @@
       <property name="openjpa.DynamicEnhancementAgent" value="false"/>
       
       <property name="openjpa.ConnectionURL" 
-                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test2;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.ConnectionDriverName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
       <property name="openjpa.ConnectionUserName" value="${jpa.username}"/>
       <property name="openjpa.ConnectionPassword" value="${jpa.password}"/>

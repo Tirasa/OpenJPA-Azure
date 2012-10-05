@@ -138,6 +138,7 @@
         <version>2.12.4</version>
         <configuration>
           <skip>true</skip>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
         </configuration>
       </plugin>
       
@@ -190,13 +191,13 @@
     <profile>
       <id>test</id>
 
-      <!--      <dependencies>
+      <dependencies>
         <dependency>
           <groupId>org.apache.openjpa</groupId>
           <artifactId>openjpa</artifactId>
           <version>${openjpa.version}</version>
         </dependency>
-      </dependencies>-->
+      </dependencies>
 
       <build>
         <defaultGoal>clean test</defaultGoal>
@@ -205,11 +206,11 @@
           <plugin>
             <groupId>org.apache.maven.plugins</groupId>
             <artifactId>maven-surefire-plugin</artifactId>
-            <version>2.12.4</version>
+            <inherited>true</inherited>
             <configuration>
               <skip>false</skip>
-              <!--              <forkMode>pertest</forkMode>
-              <argLine>-javaagent:${settings.localRepository}/org/apache/openjpa/openjpa/${openjpa.version}/openjpa-${openjpa.version}.jar</argLine>-->
+              <forkMode>pertest</forkMode>
+              <argLine>-javaagent:${settings.localRepository}/org/apache/openjpa/openjpa/${openjpa.version}/openjpa-${openjpa.version}.jar</argLine>
             </configuration>
           </plugin>
         </plugins>

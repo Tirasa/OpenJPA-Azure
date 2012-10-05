@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import javax.persistence.EntityManager;
+import org.apache.openjpa.azure.beans.PObject;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.persistence.test.SingleEMFTestCase;
 
@@ -81,8 +82,8 @@ public abstract class AbstractAzureTestCase extends SingleEMFTestCase {
     }
 
     @Override
-    public void setUp() {
-        super.setUp(getClasses("org.apache.openjpa.azure.beans"), DROP_TABLES);
+    protected void setUp(final Object... props) {
+        super.setUp(props);
         assertTrue(emf.getClass().getName() + " is not a SQL Azure configuration. "
                 + "Check that BrokerFactory for the persistence unit is set to azure",
                 emf.getConfiguration() instanceof AzureConfiguration);
@@ -95,5 +96,30 @@ public abstract class AbstractAzureTestCase extends SingleEMFTestCase {
         // TODO: when COUNT() will be implemented change here accordingly
         final String query = "SELECT p FROM " + type.getSimpleName() + " p";
         return entityManager.createQuery(query).getResultList().size();
+    }
+
+    /**
+     * Persist num independent objects.
+     */
+    protected List<PObject> createIndependentObjects(final int num) {
+        final List<PObject> pcs = new ArrayList<PObject>();
+        final EntityManager entityManager = emf.createEntityManager();
+        entityManager.getTransaction().begin();
+        for (int i = 0; i < num; i++) {
+            final PObject pobj = new PObject();
+            pcs.add(pobj);
+            entityManager.persist(pobj);
+            pobj.setValue(10 + i);
+        }
+        entityManager.getTransaction().commit();
+        entityManager.clear();
+        return pcs;
+    }
+
+    /**
+     * Create a single object.
+     */
+    protected PObject createIndependentObject() {
+        return createIndependentObjects(1).get(0);
     }
 }

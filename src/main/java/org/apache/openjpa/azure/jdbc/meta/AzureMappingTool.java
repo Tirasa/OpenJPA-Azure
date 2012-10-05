@@ -25,6 +25,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import org.apache.openjpa.azure.jdbc.schema.AzureSchemaTool;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.kernel.JDBCSeq;
 import org.apache.openjpa.jdbc.meta.ClassMapping;
@@ -35,7 +36,6 @@ import org.apache.openjpa.jdbc.meta.MappingTool;
 import org.apache.openjpa.jdbc.meta.RefreshStrategyInstaller;
 import org.apache.openjpa.jdbc.meta.RuntimeStrategyInstaller;
 import org.apache.openjpa.jdbc.schema.Column;
-import org.apache.openjpa.azure.jdbc.schema.AzureSchemaTool;
 import org.apache.openjpa.jdbc.schema.Schema;
 import org.apache.openjpa.jdbc.schema.SchemaGroup;
 import org.apache.openjpa.jdbc.schema.SchemaSerializer;
@@ -60,7 +60,7 @@ import org.apache.openjpa.util.MetaDataException;
 
 public class AzureMappingTool extends MappingTool {
 
-    private static final Localizer _loc = Localizer.forPackage(AzureMappingTool.class);
+    private static final Localizer _loc = Localizer.forPackage(MappingTool.class);
 
     private final JDBCConfiguration _conf;
 
@@ -138,11 +138,10 @@ public class AzureMappingTool extends MappingTool {
      */
     @Override
     public void record(final Flags flags) {
-
-        MappingRepository repos = getRepository();
-        MetaDataFactory io = repos.getMetaDataFactory();
+        final MappingRepository repos = getRepository();
+        final MetaDataFactory io = repos.getMetaDataFactory();
+        
         ClassMapping[] mappings;
-
         if (!ACTION_DROP.equals(getAction())) {
             mappings = repos.getMappings();
         } else if (_dropMap != null) {
@@ -153,7 +152,7 @@ public class AzureMappingTool extends MappingTool {
 
         try {
             if (_dropCls != null && !_dropCls.isEmpty()) {
-                Class<?>[] cls = (Class[]) _dropCls.toArray(new Class[_dropCls.size()]);
+                final Class<?>[] cls = (Class[]) _dropCls.toArray(new Class[_dropCls.size()]);
                 if (!io.drop(cls, _mode, null)) {
                     _log.warn(_loc.get("bad-drop", _dropCls));
                 }
@@ -169,7 +168,7 @@ public class AzureMappingTool extends MappingTool {
 
                 // now run the schematool as long as we're doing some schema
                 // action and the user doesn't just want an xml output
-                String[] schemaActions = getSchemaAction().split(",");
+                final String[] schemaActions = getSchemaAction().split(",");
                 for (int i = 0; i < schemaActions.length; i++) {
                     if (!SCHEMA_ACTION_NONE.equals(schemaActions[i])
                             && (getSchemaWriter() == null || (_schemaTool != null
@@ -196,7 +195,7 @@ public class AzureMappingTool extends MappingTool {
                 // xml output of schema?
                 if (getSchemaWriter() != null) {
                     // serialize the planned schema to the stream
-                    SchemaSerializer ser = new XMLSchemaSerializer(_conf);
+                    final SchemaSerializer ser = new XMLSchemaSerializer(_conf);
                     ser.addAll(getSchemaGroup());
                     ser.serialize(getSchemaWriter(), MetaDataSerializer.PRETTY);
                     getSchemaWriter().flush();
@@ -206,8 +205,9 @@ public class AzureMappingTool extends MappingTool {
                 return;
             }
 
-            QueryMetaData[] queries = repos.getQueryMetaDatas();
-            SequenceMetaData[] seqs = repos.getSequenceMetaDatas();
+            final QueryMetaData[] queries = repos.getQueryMetaDatas();
+            final SequenceMetaData[] seqs = repos.getSequenceMetaDatas();
+            
             Map<File, String> output = null;
 
             // if we're outputting to stream, set all metas to same file so
@@ -234,9 +234,8 @@ public class AzureMappingTool extends MappingTool {
 
             // write to stream
             if (getMappingWriter() != null) {
-                PrintWriter out = new PrintWriter(getMappingWriter());
-                for (Iterator<String> itr = output.values().iterator();
-                        itr.hasNext();) {
+                final PrintWriter out = new PrintWriter(getMappingWriter());
+                for (final Iterator<String> itr = output.values().iterator(); itr.hasNext();) {
                     out.println(itr.next());
                 }
                 out.flush();
@@ -380,8 +379,7 @@ public class AzureMappingTool extends MappingTool {
         if (mapping != null) {
             return mapping;
         }
-        if (!validate || cls.isInterface()
-                || repos.getPersistenceAware(cls) != null) {
+        if (!validate || cls.isInterface() || repos.getPersistenceAware(cls) != null) {
             return null;
         }
         throw new MetaDataException(_loc.get("no-meta", cls, cls.getClassLoader()));
