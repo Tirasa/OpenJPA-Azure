@@ -50,7 +50,7 @@ public class TestRelationships extends AbstractAzureTestCase {
     }
 
     @Test
-    public void testJoinTable()
+    public void NOTtestJoinTable()
             throws UnsupportedEncodingException {
 
         PersonBINT user = new PersonBINT();
@@ -61,14 +61,16 @@ public class TestRelationships extends AbstractAzureTestCase {
         user.setPicture("picture".getBytes());
         user.setInfo("some info");
 
-        BusinessRole br = new BusinessRole();
-        br.setName("roleA");
-
         final EntityManager entityManager = emf.createEntityManager();
 
         entityManager.getTransaction().begin();
 
         user = entityManager.merge(user);
+
+        BusinessRole br = new BusinessRole();
+        br.setName("roleA");
+
+        br = entityManager.merge(br);
 
         user.setRoles(new HashSet<BusinessRole>(Collections.singleton(br)));
 
@@ -83,7 +85,8 @@ public class TestRelationships extends AbstractAzureTestCase {
         br = entityManager.find(BusinessRole.class, user.getRoles().iterator().next().getId());
         assertNotNull(br);
 
-        Query query = entityManager.createNativeQuery("SELECT personId FROM Membership WHERE personId = " + user.getId());
+        Query query =
+                entityManager.createNativeQuery("SELECT personId FROM Membership WHERE personId = " + user.getId());
         List res = query.getResultList();
         assertEquals(1, res.size());
 
