@@ -22,18 +22,12 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import org.apache.openjpa.azure.beans.PObject;
-import org.junit.Ignore;
 
 public class TestNativeQuery extends AbstractAzureTestCase {
 
     @Override
     protected String getPersistenceUnitName() {
         return System.getProperty("unit", "azure-test");
-    }
-
-    @Override
-    public void setUp() {
-        super.setUp(getClasses("org.apache.openjpa.azure.beans"), CLEAR_TABLES);
     }
 
     public void testSelect() {

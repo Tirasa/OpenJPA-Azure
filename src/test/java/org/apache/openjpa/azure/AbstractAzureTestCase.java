@@ -91,6 +91,11 @@ public abstract class AbstractAzureTestCase extends SingleEMFTestCase {
     }
 
     @Override
+    public void setUp() {
+        setUp(getClasses("org.apache.openjpa.azure.beans"), DROP_TABLES);
+    }
+
+    @Override
     public int count(final Class<?> type) {
         final EntityManager entityManager = emf.createEntityManager();
         // TODO: when COUNT() will be implemented change here accordingly

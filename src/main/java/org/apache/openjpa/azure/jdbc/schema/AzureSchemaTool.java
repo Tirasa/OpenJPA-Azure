@@ -22,15 +22,16 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
-import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
+import org.apache.openjpa.azure.util.AzureUtils;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.schema.ForeignKey;
 import org.apache.openjpa.jdbc.schema.Schema;
@@ -40,7 +41,6 @@ import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.jdbc.sql.AzureDictionary;
 import org.apache.openjpa.lib.log.Log;
 import org.apache.openjpa.lib.util.Localizer;
-import org.apache.openjpa.azure.util.AzureUtils;
 
 public class AzureSchemaTool extends SchemaTool {
 
@@ -54,7 +54,7 @@ public class AzureSchemaTool extends SchemaTool {
 
     private String _sqlTerminator = ";";
 
-    private static final Localizer _loc = Localizer.forPackage(AzureSchemaTool.class);
+    private static final Localizer _loc = Localizer.forPackage(SchemaTool.class);
 
     public AzureSchemaTool(final JDBCConfiguration conf, final String action) {
         super(conf, action);
@@ -75,7 +75,7 @@ public class AzureSchemaTool extends SchemaTool {
     public void run()
             throws SQLException {
 
-        if (StringUtils.isNotBlank(getAction()) && ACTION_DELETE_TABLE_CONTENTS.equals(getAction())) {
+        if (ACTION_DELETE_TABLE_CONTENTS.equals(getAction())) {
             deleteTableContents();
         } else {
             super.run();
@@ -111,18 +111,40 @@ public class AzureSchemaTool extends SchemaTool {
     }
 
     @Override
-    public boolean addForeignKey(ForeignKey fk)
+    public boolean addForeignKey(final ForeignKey fk)
             throws SQLException {
+
         final List<Federation> federations =
                 ((AzureConfiguration) _conf).getFederations(fk.getPrimaryKeyTable().getFullIdentifier().getName());
 
-        boolean res = true;
+        return federations.isEmpty() ? super.addForeignKey(fk) : true;
+    }
 
-        if (federations.isEmpty()) {
-            res = super.addForeignKey(fk);
+    @Override
+    public boolean dropTable(final Table table)
+            throws SQLException {
+
+        boolean result = true;
+
+        final List<Federation> federations =
+                ((AzureConfiguration) _conf).getFederations(table.getFullIdentifier().getName());
+
+        final Map<Connection, Federation> connections = getWorkingConnections(federations);
+        for (Map.Entry<Connection, Federation> conn : connections.entrySet()) {
+            try {
+                if (!AzureUtils.tableExists(conn.getKey(), table)) {
+                    final String[] sql = _dict.getDropTableSQL(table);
+                    result &= executeSQL(sql, conn.getKey());
+                }
+            } finally {
+                try {
+                    conn.getKey().close();
+                } catch (SQLException se) {
+                }
+            }
         }
 
-        return res;
+        return result;
     }
 
     /**
@@ -135,10 +157,7 @@ public class AzureSchemaTool extends SchemaTool {
         final Schema[] schemas = group.getSchemas();
         final Collection<Table> tables = new LinkedHashSet<Table>();
         for (int i = 0; i < schemas.length; i++) {
-            final Table[] ts = schemas[i].getTables();
-            for (int j = 0; j < ts.length; j++) {
-                tables.add(ts[j]);
-            }
+            tables.addAll(Arrays.asList(schemas[i].getTables()));
         }
 
         for (Table table : tables) {
@@ -148,14 +167,14 @@ public class AzureSchemaTool extends SchemaTool {
                     ((AzureConfiguration) _conf).getFederations(table.getFullIdentifier().getName());
 
             final Map<Connection, Federation> connections = getWorkingConnections(federations);
-
             for (Map.Entry<Connection, Federation> conn : connections.entrySet()) {
                 try {
-
                     if (!AzureUtils.tableExists(conn.getKey(), table)) {
-                        internalDeleteTableContents(tableArray, conn.getKey());
+                        final String[] sql = _dict.getDeleteTableContentsSQL(tableArray, conn.getKey());
+                        if (!executeSQL(sql, conn.getKey())) {
+                            _log.warn(_loc.get("delete-table-contents"));
+                        }
                     }
-
                 } finally {
                     try {
                         conn.getKey().close();
@@ -166,7 +185,7 @@ public class AzureSchemaTool extends SchemaTool {
         }
     }
 
-    private boolean executeSQL(String[] sql, final Connection conn)
+    private boolean executeSQL(final String[] sql, final Connection conn)
             throws SQLException {
 
         if (sql.length == 0) {
@@ -226,7 +245,7 @@ public class AzureSchemaTool extends SchemaTool {
         return !err;
     }
 
-    private void handleException(SQLException sql)
+    private void handleException(final SQLException sql)
             throws SQLException {
 
         if (!getIgnoreErrors()) {
@@ -241,16 +260,9 @@ public class AzureSchemaTool extends SchemaTool {
         _sqlTerminator = terminator;
     }
 
-    protected void internalDeleteTableContents(final Table[] tableArray, final Connection conn)
-            throws SQLException {
-        final String[] sql = _conf.getDBDictionaryInstance().getDeleteTableContentsSQL(tableArray, conn);
-        if (!executeSQL(sql, conn)) {
-            _log.warn(_loc.get("delete-table-contents"));
-        }
-    }
-
     private Map<Connection, Federation> getWorkingConnections(final List<Federation> federations)
             throws SQLException {
+
         final Map<Connection, Federation> connections = new HashMap<Connection, Federation>();
 
         final Connection root = _ds.getConnection();

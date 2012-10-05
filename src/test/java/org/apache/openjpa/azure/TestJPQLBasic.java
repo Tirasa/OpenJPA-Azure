@@ -31,11 +31,6 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         return System.getProperty("unit", "azure-test");
     }
 
-    @Override
-    public void setUp() {
-        super.setUp(getClasses("org.apache.openjpa.azure.beans"), CLEAR_TABLES);
-    }
-
     public void testFindOne() {
         final EntityManager entityManager = emf.createEntityManager();
 
