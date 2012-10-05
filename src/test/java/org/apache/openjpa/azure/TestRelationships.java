@@ -24,23 +24,18 @@ import java.util.HashSet;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
-import net.tirasa.jpasqlazure.beans.BusinessRole;
-import net.tirasa.jpasqlazure.beans.Gender;
-import net.tirasa.jpasqlazure.beans.PersonBINT;
-import org.junit.Test;
+import org.apache.openjpa.azure.beans.BusinessRole;
+import org.apache.openjpa.azure.beans.Gender;
+import org.apache.openjpa.azure.beans.PersonBINT;
 
 public class TestRelationships extends AbstractAzureTestCase {
 
-    /**
-     * Specify persistence unit name as System property
-     * <code>-Dunit</code> or use the default value as
-     * <code>"azure"</code>.
-     */
     @Override
     protected String getPersistenceUnitName() {
-        return System.getProperty("unit", "openjpaAzurePersistenceUnit");
+        return System.getProperty("unit", "azure-FEDDB");
     }
 
+<<<<<<< Updated upstream
     @Override
     public void setUp() {
         super.setUp(
@@ -50,6 +45,8 @@ public class TestRelationships extends AbstractAzureTestCase {
     }
 
     @Test
+=======
+>>>>>>> Stashed changes
     public void testJoinTable()
             throws UnsupportedEncodingException {
 

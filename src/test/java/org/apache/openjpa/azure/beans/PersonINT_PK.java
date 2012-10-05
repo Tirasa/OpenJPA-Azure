@@ -16,36 +16,50 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.tirasa.jpasqlazure.beans;
+package org.apache.openjpa.azure.beans;
 
 import java.io.Serializable;
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
-import org.apache.commons.lang.ArrayUtils;
 
 @Embeddable
-public class PersonBIN_PK implements Serializable {
+public class PersonINT_PK implements Serializable {
 
-    @Column(nullable = false, columnDefinition = "varbinary", length = 100)
-    private byte[] code;
+    private static final long serialVersionUID = 1L;
 
-    public byte[] getCode() {
-        return ArrayUtils.clone(code);
+    @Column(nullable = false)
+    private Long id;
+
+    @Column(nullable = false, columnDefinition = "int")
+    private Integer code;
+
+    public Integer getCode() {
+        return code;
     }
 
-    public void setCode(byte[] code) {
-        this.code = ArrayUtils.clone(code);
+    public void setCode(Integer code) {
+        this.code = code;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     @Override
     public boolean equals(Object o) {
-        return o != null && o instanceof PersonBIN_PK
-                && ArrayUtils.isEquals(this.getCode(), ((PersonBIN_PK) o).getCode());
+        return o != null && o instanceof PersonINT_PK
+                && this.getId().equals(((PersonINT_PK) o).getId())
+                && this.getCode().equals(((PersonINT_PK) o).getCode());
     }
 
     @Override
     public int hashCode() {
         int hash = 9;
+        hash = (31 * hash) + (null == id ? 0 : id.hashCode());
         hash = (31 * hash) + (null == code ? 0 : code.hashCode());
         return hash;
     }

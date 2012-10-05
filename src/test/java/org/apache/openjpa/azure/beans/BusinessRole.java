@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.tirasa.jpasqlazure.beans;
+package org.apache.openjpa.azure.beans;
 
 import java.io.Serializable;
 import javax.persistence.Column;
@@ -24,6 +24,8 @@ import org.apache.commons.lang.builder.ToStringStyle;
 
 @Entity
 public class BusinessRole implements Serializable {
+
+    private static final long serialVersionUID = -7348509047546666479L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

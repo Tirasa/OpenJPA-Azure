@@ -16,9 +16,38 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.tirasa.jpasqlazure.beans;
+package org.apache.openjpa.azure.beans;
 
-public enum Gender {
+import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicLong;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
-    F, M
+@Entity
+public class PObject implements Serializable {
+
+    private static final long serialVersionUID = -1733134082749978287L;
+
+    @Id
+    private long id;
+
+    private int value;
+
+    private static AtomicLong idCounter = new AtomicLong(System.currentTimeMillis());
+
+    public PObject() {
+        id = idCounter.addAndGet(1);
+    }
+
+    public long getId() {
+        return id;
+    }
+
+    public int getValue() {
+        return value;
+    }
+
+    public void setValue(int i) {
+        value = i;
+    }
 }

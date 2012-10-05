@@ -23,22 +23,13 @@ import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import org.apache.openjpa.azure.beans.PObject;
 
 public class TestBasic extends AbstractAzureTestCase {
 
-    /**
-     * Specify persistence unit name as System property
-     * <code>-Dunit</code> or use the default value as
-     * <code>"azure"</code>.
-     */
     @Override
     protected String getPersistenceUnitName() {
-        return System.getProperty("unit", "azure");
-    }
-
-    @Override
-    public void setUp() {
-        super.setUp(PObject.class, Person.class, Address.class, Country.class, CLEAR_TABLES);
+        return System.getProperty("unit", "azure-test");
     }
 
     /**

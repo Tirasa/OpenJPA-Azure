@@ -29,7 +29,6 @@ import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration.RangeType;
 import org.apache.openjpa.jdbc.schema.ForeignKey;
 import org.apache.openjpa.jdbc.schema.Table;
-import org.springframework.security.crypto.codec.Hex;
 
 public final class AzureUtils {
 
@@ -102,7 +101,8 @@ public final class AzureUtils {
 
             if (federation_id.next()) {
                 member_distribution = stm.executeQuery(
-                        "SELECT CAST(MAX(range_low) as " + type.getValue() + ") FROM sys.federation_member_distributions "
+                        "SELECT CAST(MAX(range_low) as " + type.getValue()
+                        + ") FROM sys.federation_member_distributions "
                         + "WHERE federation_id=" + federation_id.getInt(1) + " and range_low<=" + rangeId);
 
                 if (member_distribution.next()) {
@@ -235,7 +235,7 @@ public final class AzureUtils {
     }
 
     public static String getObjectIdAsString(final Object oid) {
-        return oid instanceof byte[] ? "0x" + new String(Hex.encode((byte[]) oid)) : oid.toString();
+        return oid instanceof byte[] ? "0x" + new String(HexEncoderDecoder.encode((byte[]) oid)) : oid.toString();
     }
 
     private static String getUidAsString(final Object oid) {

@@ -20,40 +20,24 @@ package org.apache.openjpa.azure;
 
 import java.util.List;
 import javax.persistence.EntityManager;
-import net.tirasa.jpasqlazure.beans.Gender;
-import net.tirasa.jpasqlazure.beans.PersonBIN;
-import net.tirasa.jpasqlazure.beans.PersonBINT;
-import net.tirasa.jpasqlazure.beans.PersonBIN_PK;
-import net.tirasa.jpasqlazure.beans.PersonINT;
-import net.tirasa.jpasqlazure.beans.PersonINT_PK;
-import net.tirasa.jpasqlazure.beans.PersonUID;
-import net.tirasa.jpasqlazure.beans.PersonUID_PK;
+import org.apache.openjpa.azure.beans.Gender;
+import org.apache.openjpa.azure.beans.PersonBIN;
+import org.apache.openjpa.azure.beans.PersonBINT;
+import org.apache.openjpa.azure.beans.PersonBIN_PK;
+import org.apache.openjpa.azure.beans.PersonINT;
+import org.apache.openjpa.azure.beans.PersonINT_PK;
+import org.apache.openjpa.azure.beans.PersonUID;
+import org.apache.openjpa.azure.beans.PersonUID_PK;
 
 public class TestDistributionType extends AbstractAzureTestCase {
 
-    /**
-     * Specify persistence unit name as System property
-     * <code>-Dunit</code> or use the default value as
-     * <code>"azure"</code>.
-     */
     @Override
     protected String getPersistenceUnitName() {
-        return System.getProperty("unit", "openjpaAzurePersistenceUnit");
-    }
-
-    @Override
-    public void setUp() {
-        super.setUp(
-                PersonBINT.class,
-                PersonUID.class,
-                PersonBIN.class,
-                PersonINT.class,
-                CLEAR_TABLES);
+        return System.getProperty("unit", "azure-FEDDB");
     }
 
     public void testBigint() {
-
-        PersonBINT user = new PersonBINT();
+        final PersonBINT user = new PersonBINT();
 
         user.setUsername("BobBint");
         user.setPassword("password");
@@ -81,12 +65,11 @@ public class TestDistributionType extends AbstractAzureTestCase {
     }
 
     public void testInt() {
-
-        PersonINT_PK pk = new PersonINT_PK();
+        final PersonINT_PK pk = new PersonINT_PK();
         pk.setCode(1);
         pk.setId(1L);
 
-        PersonINT user = new PersonINT();
+        final PersonINT user = new PersonINT();
         user.setPk(pk);
         user.setUsername("BobInt");
         user.setPassword("password");
@@ -114,11 +97,10 @@ public class TestDistributionType extends AbstractAzureTestCase {
     }
 
     public void testUniqueidentifier() {
-
-        PersonUID_PK pk = new PersonUID_PK();
+        final PersonUID_PK pk = new PersonUID_PK();
         pk.setCode("00000000-0000-0000-0000-000000000002");
 
-        PersonUID user = new PersonUID();
+        final PersonUID user = new PersonUID();
         user.setPk(pk);
         user.setUsername("BobUid");
         user.setPassword("password");
@@ -144,7 +126,6 @@ public class TestDistributionType extends AbstractAzureTestCase {
     }
 
     public void testVarbinary() {
-
         PersonBIN_PK pk = new PersonBIN_PK();
         pk.setCode("_!!MRTFBA77L26G141F!!_".getBytes());
 

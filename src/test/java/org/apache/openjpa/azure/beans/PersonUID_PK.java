@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.tirasa.jpasqlazure.beans;
+package org.apache.openjpa.azure.beans;
 
 import java.io.Serializable;
 import javax.persistence.Column;
@@ -27,8 +27,10 @@ import org.apache.commons.lang.ArrayUtils;
 @Embeddable
 public class PersonUID_PK implements Serializable {
 
+    private static final long serialVersionUID = -510231006086340896L;
+
     @Lob
-    @Column(nullable = false, columnDefinition="uniqueidentifier")
+    @Column(nullable = false, columnDefinition = "uniqueidentifier")
     private String code;
 
     public String getCode() {

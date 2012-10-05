@@ -11,7 +11,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.tirasa.jpasqlazure.beans;
+package org.apache.openjpa.azure.beans;
 
 import java.io.Serializable;
 import javax.persistence.Column;
@@ -24,10 +24,12 @@ import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
 @Entity
-public class PersonINT implements Serializable {
+public class PersonUID implements Serializable {
+
+    private static final long serialVersionUID = -7842288624981427214L;
 
     @EmbeddedId
-    private PersonINT_PK pk;
+    private PersonUID_PK pk;
 
     @Column(nullable = false)
     private String username;
@@ -45,11 +47,11 @@ public class PersonINT implements Serializable {
     @Lob
     private byte[] picture;
 
-    public PersonINT_PK getPk() {
+    public PersonUID_PK getPk() {
         return pk;
     }
 
-    public void setPk(PersonINT_PK pk) {
+    public void setPk(PersonUID_PK pk) {
         this.pk = pk;
     }
 
@@ -100,7 +102,7 @@ public class PersonINT implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        return o != null && o instanceof PersonINT && this.getPk().equals(((PersonINT) o).getPk());
+        return o != null && o instanceof PersonUID && this.getPk().equals(((PersonUID) o).getPk());
     }
 
     @Override

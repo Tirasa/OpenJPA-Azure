@@ -11,23 +11,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package net.tirasa.jpasqlazure.beans;
+package org.apache.openjpa.azure.beans;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
-import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 import javax.persistence.Lob;
+import javax.persistence.ManyToMany;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
 @Entity
-public class PersonUID implements Serializable {
+public class PersonBINT implements Serializable {
 
-    @EmbeddedId
-    private PersonUID_PK pk;
+    private static final long serialVersionUID = 885164993198128996L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(columnDefinition = "bigint")
+    private Long id;
 
     @Column(nullable = false)
     private String username;
@@ -45,12 +56,19 @@ public class PersonUID implements Serializable {
     @Lob
     private byte[] picture;
 
-    public PersonUID_PK getPk() {
-        return pk;
+    @ManyToMany(cascade = {CascadeType.MERGE, CascadeType.REFRESH}, fetch = FetchType.EAGER)
+    private Set<BusinessRole> roles;
+
+    public PersonBINT() {
+        roles = new HashSet<BusinessRole>();
     }
 
-    public void setPk(PersonUID_PK pk) {
-        this.pk = pk;
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getPassword() {
@@ -93,18 +111,16 @@ public class PersonUID implements Serializable {
         this.info = info;
     }
 
+    public Set<BusinessRole> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<BusinessRole> roles) {
+        this.roles = roles;
+    }
+
     @Override
     public String toString() {
         return ReflectionToStringBuilder.toString(this, ToStringStyle.MULTI_LINE_STYLE);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        return o != null && o instanceof PersonUID && this.getPk().equals(((PersonUID) o).getPk());
-    }
-
-    @Override
-    public int hashCode() {
-        return this.getPk().hashCode();
     }
 }
