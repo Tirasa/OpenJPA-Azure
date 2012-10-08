@@ -32,13 +32,7 @@
     <class>org.apache.openjpa.azure.beans.PersonUID_PK</class>
     
     <properties>
-      <property name="openjpa.jdbc.UpdateManager" value="org.apache.openjpa.azure.jdbc.kernel.AzureUpdateManager"/>
-      <property name="openjpa.BrokerFactory" value="org.apache.openjpa.azure.jdbc.kernel.AzureBrokerFactory"/>
-      <property name="openjpa.jdbc.SQLFactory" value="org.apache.openjpa.azure.jdbc.sql.AzureSQLFactory"/>
-      <property name="openjpa.jdbc.DBDictionary" value="org.apache.openjpa.jdbc.sql.AzureDictionary"/>
-        
-      <property name="openjpa.RuntimeUnenhancedClasses" value="unsupported"/>
-      <property name="openjpa.DynamicEnhancementAgent" value="false"/>
+      <property name="openjpa.BrokerFactory" value="azure"/>
       
       <property name="openjpa.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>

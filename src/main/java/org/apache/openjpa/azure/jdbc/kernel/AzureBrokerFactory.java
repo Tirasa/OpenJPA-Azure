@@ -41,7 +41,7 @@ public class AzureBrokerFactory extends JDBCBrokerFactory {
 
     private static final Localizer _loc = Localizer.forPackage(AzureBrokerFactory.class);
 
-    public AzureBrokerFactory(AzureConfiguration conf) {
+    public AzureBrokerFactory(final AzureConfiguration conf) {
         super(conf);
     }
 
@@ -50,28 +50,28 @@ public class AzureBrokerFactory extends JDBCBrokerFactory {
         return new AzureStoreManager();
     }
 
-    public static JDBCBrokerFactory newInstance(ConfigurationProvider cp) {
-        AzureConfiguration conf = new AzureConfigurationImpl();
-        cp.setInto(conf);
+    public static JDBCBrokerFactory newInstance(final ConfigurationProvider provider) {
+        final AzureConfiguration conf = new AzureConfigurationImpl();
+        provider.setInto(conf);
         return new AzureBrokerFactory(conf);
     }
 
     @Override
-    protected void synchronizeMappings(ClassLoader loader, JDBCConfiguration conf) {
+    protected void synchronizeMappings(final ClassLoader loader, final JDBCConfiguration conf) {
         String action = conf.getSynchronizeMappings();
         if (StringUtils.isEmpty(action)) {
             return;
         }
 
-        MappingRepository repo = conf.getMappingRepositoryInstance();
-        Collection<Class<?>> classes = repo.loadPersistentTypes(false, loader);
+        final MappingRepository repo = conf.getMappingRepositoryInstance();
+        final Collection<Class<?>> classes = repo.loadPersistentTypes(false, loader);
         if (classes.isEmpty()) {
             return;
         }
 
         final String props = Configurations.getProperties(action);
         action = Configurations.getClassName(action);
-        AzureMappingTool tool = new AzureMappingTool(conf, action, false);
+        final AzureMappingTool tool = new AzureMappingTool(conf, action, false);
         Configurations.configureInstance(tool, conf, props, "SynchronizeMappings");
 
         // initialize the schema
@@ -79,7 +79,7 @@ public class AzureBrokerFactory extends JDBCBrokerFactory {
             try {
                 tool.run(cls);
             } catch (IllegalArgumentException iae) {
-                throw new UserException(_loc.get("bad-synch-mappings", action, Arrays.asList(MappingTool.ACTIONS)));
+                throw new UserException(_loc.get("bad-synch-mappings", action, Arrays.asList(MappingTool.ACTIONS)), iae);
             }
         }
 

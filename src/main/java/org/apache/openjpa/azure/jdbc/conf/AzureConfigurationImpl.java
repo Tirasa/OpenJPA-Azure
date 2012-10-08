@@ -26,7 +26,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.openjpa.azure.Federation;
+import org.apache.openjpa.azure.ProductDerivation;
 import org.apache.openjpa.jdbc.conf.JDBCConfigurationImpl;
 import org.apache.openjpa.lib.conf.StringListValue;
 import org.apache.openjpa.lib.util.Localizer;
@@ -34,8 +37,6 @@ import org.apache.openjpa.lib.util.Localizer;
 public class AzureConfigurationImpl extends JDBCConfigurationImpl implements AzureConfiguration {
 
     private static final long serialVersionUID = 8033042262237726572L;
-
-    public static final String PREFIX_FEDERATION = "openjpa.azure.";
 
     private static final Localizer _loc = Localizer.forPackage(AzureConfiguration.class);
 
@@ -48,7 +49,7 @@ public class AzureConfigurationImpl extends JDBCConfigurationImpl implements Azu
     public AzureConfigurationImpl() {
         super();
 
-        federationsPlugin = addStringList(PREFIX_FEDERATION + "Federations");
+        federationsPlugin = addStringList(ProductDerivation.PREFIX_AZURE + ".Federations");
     }
 
     @Override
@@ -95,7 +96,7 @@ public class AzureConfigurationImpl extends JDBCConfigurationImpl implements Azu
         final Map<String, String> newProps = new HashMap<String, String>();
 
         for (Map.Entry<String, String> entry : ((Map<String, String>) original).entrySet()) {
-            if (entry.getKey().startsWith(PREFIX_FEDERATION)) {
+            if (entry.getKey().startsWith(ProductDerivation.PREFIX_AZURE)) {
                 newProps.put(entry.getKey(), entry.getValue());
             }
         }
@@ -106,25 +107,29 @@ public class AzureConfigurationImpl extends JDBCConfigurationImpl implements Azu
 
                 federation.setName(federationName);
 
-                federation.setDistributionName(newProps.get(PREFIX_FEDERATION + federationName + ".DistributionName"));
+                federation.setDistributionName(newProps.get(ProductDerivation.PREFIX_AZURE + "."
+                        + federationName + ".DistributionName"));
 
                 try {
                     federation.setRangeMappingType(RangeType.valueOf(
-                            newProps.get(PREFIX_FEDERATION + federationName + ".RangeMappingType")));
+                            newProps.get(ProductDerivation.PREFIX_AZURE + "."
+                            + federationName + ".RangeMappingType")));
                 } catch (Exception e) {
                     federation.setRangeMappingType(RangeType.BIGINT);
                 }
 
-                final String fedTableNames = newProps.get(PREFIX_FEDERATION + federationName + ".Tables");
+                final String fedTableNames = newProps.get(ProductDerivation.PREFIX_AZURE + "."
+                        + federationName + ".Tables");
 
                 final String[] tables = fedTableNames == null ? new String[0] : fedTableNames.split(",");
 
                 for (String federatedTable : tables) {
-                    String rangeMappingName = newProps.get(
-                            PREFIX_FEDERATION + federationName + "." + federatedTable + ".RangeMappingName");
+                    String rangeMappingName = newProps.get(ProductDerivation.PREFIX_AZURE + "."
+                            + federationName + "." + federatedTable + ".RangeMappingName");
 
                     if (StringUtils.isBlank(rangeMappingName)) {
-                        getConfigurationLog().info(_loc.get("invalid-property", PREFIX_FEDERATION + federationName));
+                        getConfigurationLog().info(_loc.get("invalid-property", ProductDerivation.PREFIX_AZURE + "."
+                                + federationName));
                         rangeMappingName = null;
                     }
 
@@ -141,5 +146,15 @@ public class AzureConfigurationImpl extends JDBCConfigurationImpl implements Azu
                 federations.put(federationName, federation);
             }
         }
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        return EqualsBuilder.reflectionEquals(this, obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return HashCodeBuilder.reflectionHashCode(this);
     }
 }
