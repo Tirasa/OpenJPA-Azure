@@ -1257,4 +1257,12 @@ public class AzureResultSet implements ResultSet {
             throws SQLException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+
+    public boolean isEmpty() {
+        return results.isEmpty();
+    }
+
+    public int size() {
+        return results.size();
+    }
 }

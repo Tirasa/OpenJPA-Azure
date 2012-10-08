@@ -70,8 +70,7 @@ public class TestRelationships extends AbstractAzureTestCase {
         br = entityManager.find(BusinessRole.class, user.getRoles().iterator().next().getId());
         assertNotNull(br);
 
-        Query query =
-                entityManager.createNativeQuery("SELECT * FROM Membership WHERE personId = " + user.getId());
+        Query query = entityManager.createNativeQuery("SELECT * FROM Membership WHERE personId = " + user.getId());
         List res = query.getResultList();
         assertEquals(1, res.size());
 

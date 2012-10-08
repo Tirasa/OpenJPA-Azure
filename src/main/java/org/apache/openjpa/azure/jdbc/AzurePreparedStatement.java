@@ -43,7 +43,7 @@ public class AzurePreparedStatement extends DistributedPreparedStatement {
             try {
                 mrs.add(stm.executeQuery());
             } catch (Throwable t) {
-                // ignore
+                // TODO: ignore since joins have been not supported yet
             }
         }
 
@@ -54,10 +54,28 @@ public class AzurePreparedStatement extends DistributedPreparedStatement {
     public int executeUpdate()
             throws SQLException {
 
-        int ret = 0;
+        SQLException exception = null;
+
+        int ret = -1;
 
         for (PreparedStatement stm : this) {
-            ret += stm.executeUpdate();
+            try {
+                ret += stm.executeUpdate();
+            } catch (Throwable t) {
+                // TODO: current implementation is needed to support native query
+                if (exception == null) {
+                    exception = new SQLException(t);
+                } else {
+                    exception.setNextException(new SQLException(t));
+                }
+            }
+        }
+
+        if (ret < 0 && exception != null) {
+            throw exception;
+        } else {
+            // it starts from -1 just for check
+            ret++;
         }
 
         // TODO: keep under control! This behavior have to be verified step-by-step.

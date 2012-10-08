@@ -39,7 +39,7 @@ public class TestNativeQuery extends AbstractAzureTestCase {
         assertFalse(all.isEmpty());
     }
 
-    public void NOTtestInsertUpdateDelete() {
+    public void testInsertUpdateDelete() {
         final EntityManager entityManager = emf.createEntityManager();
 
         PObject pobj = new PObject();
@@ -52,7 +52,7 @@ public class TestNativeQuery extends AbstractAzureTestCase {
         Query query = entityManager.createNativeQuery(
                 "INSERT INTO PObject VALUES(" + pobj.getId() + ", " + pobj.getValue() + ")");
         // inserted two objects: one per federation
-        assertEquals(1, query.executeUpdate());
+        assertEquals(2, query.executeUpdate());
 
         entityManager.getTransaction().commit();
         // --------------------
@@ -64,7 +64,7 @@ public class TestNativeQuery extends AbstractAzureTestCase {
 
         query = entityManager.createNativeQuery("UPDATE PObject SET value=10010 WHERE id=" + pobj.getId());
         // updated two objects: one per federation
-        assertEquals(1, query.executeUpdate());
+        assertEquals(2, query.executeUpdate());
 
         final List all = entityManager.createNativeQuery(
                 "SELECT value FROM PObject WHERE id=" + pobj.getId()).getResultList();
@@ -84,7 +84,7 @@ public class TestNativeQuery extends AbstractAzureTestCase {
 
         query = entityManager.createNativeQuery("DELETE FROM PObject WHERE id=" + pobj.getId());
         // deleted two objects: one per federation
-        assertEquals(1, query.executeUpdate());
+        assertEquals(2, query.executeUpdate());
 
         entityManager.getTransaction().commit();
         // --------------------
