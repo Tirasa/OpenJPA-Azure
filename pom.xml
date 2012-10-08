@@ -187,6 +187,103 @@
   </build>
   
   <profiles>
+    <profile>
+
+      <id>test-purge</id>
+        
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.openjpa</groupId>
+          <artifactId>openjpa</artifactId>
+          <version>${openjpa.version}</version>
+        </dependency>
+      </dependencies>
+
+      <build>
+        <defaultGoal>clean package exec:exec</defaultGoal>
+        
+        <plugins>
+          
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.2.1</version>
+            <configuration>
+              <mainClass>org.apache.openjpa.azure.tools.Initialize</mainClass>
+              <includeProjectDependencies>true</includeProjectDependencies>
+              <includePluginDependencies>true</includePluginDependencies>
+              <classpathScope>test</classpathScope>
+              <executable>java</executable>
+              
+              <arguments>
+                <argument>-javaagent:${settings.localRepository}/org/apache/openjpa/openjpa/${openjpa.version}/openjpa-${openjpa.version}.jar</argument>
+                <argument>-classpath</argument>
+                <classpath/>
+                <argument>org.apache.openjpa.azure.tools.Initialize</argument>
+                <argument>purge</argument>
+              </arguments>
+              
+            </configuration>
+          </plugin>
+        </plugins>
+        
+        <testResources>
+          <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+          </testResource>
+        </testResources>
+      </build>
+    </profile>
+    
+    <profile>
+
+      <id>test-init</id>
+        
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.openjpa</groupId>
+          <artifactId>openjpa</artifactId>
+          <version>${openjpa.version}</version>
+        </dependency>
+      </dependencies>
+
+      <build>
+        <defaultGoal>clean package exec:exec</defaultGoal>
+        
+        <plugins>
+          
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.2.1</version>
+            <configuration>
+              <mainClass>org.apache.openjpa.azure.tools.Initialize</mainClass>
+              <includeProjectDependencies>true</includeProjectDependencies>
+              <includePluginDependencies>true</includePluginDependencies>
+              <classpathScope>test</classpathScope>
+              <executable>java</executable>
+              
+              <arguments>
+                <argument>-javaagent:${settings.localRepository}/org/apache/openjpa/openjpa/${openjpa.version}/openjpa-${openjpa.version}.jar</argument>
+                <argument>-classpath</argument>
+                <classpath/>
+                <argument>org.apache.openjpa.azure.tools.Initialize</argument>
+                <argument>init</argument>
+              </arguments>
+              
+            </configuration>
+          </plugin>
+        </plugins>
+        
+        <testResources>
+          <testResource>
+            <directory>src/test/resources</directory>
+            <filtering>true</filtering>
+          </testResource>
+        </testResources>
+      </build>
+    </profile>
     
     <profile>
       <id>test</id>
