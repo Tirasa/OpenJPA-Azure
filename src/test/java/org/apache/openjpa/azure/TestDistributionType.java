@@ -33,7 +33,7 @@ public class TestDistributionType extends AbstractAzureTestCase {
 
     @Override
     protected String getPersistenceUnitName() {
-        return System.getProperty("unit", "azure-FEDDB");
+        return System.getProperty("unit", "azure-test");
     }
 
     public void NOTtestBigint() {
