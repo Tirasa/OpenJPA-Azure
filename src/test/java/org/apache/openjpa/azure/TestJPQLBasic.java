@@ -53,7 +53,7 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         assertEquals(pobj.getId(), actual.getId());
     }
 
-    public void NOTtestCrossRollBack() {
+    public void testCrossRollBack() {
         PObject pobj = new PObject();
 
         final EntityManager entityManager = emf.createEntityManager();
@@ -63,7 +63,7 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         final Query query = entityManager.createNativeQuery(
                 "INSERT INTO PObject VALUES(" + pobj.getId() + ", " + pobj.getValue() + ")");
         // inserted two objects: one per federation
-        assertEquals(1, query.executeUpdate());
+        assertEquals(2, query.executeUpdate());
 
         List all = entityManager.createNativeQuery("SELECT value FROM PObject WHERE id=" + pobj.getId()).getResultList();
         assertEquals(2, all.size());
