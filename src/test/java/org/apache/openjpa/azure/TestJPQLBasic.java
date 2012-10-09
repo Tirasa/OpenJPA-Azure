@@ -53,25 +53,20 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         assertEquals(pobj.getId(), actual.getId());
     }
 
-    public void testCrossRollBack() {
+    public void testDisyributedRollBack() {
         PObject pobj = new PObject();
+        pobj.setValue(10000);
 
         final EntityManager entityManager = emf.createEntityManager();
 
         entityManager.getTransaction().begin();
 
-        final Query query = entityManager.createNativeQuery(
-                "INSERT INTO PObject VALUES(" + pobj.getId() + ", " + pobj.getValue() + ")");
-        // inserted two objects: one per federation
-        assertEquals(2, query.executeUpdate());
-
-        List all = entityManager.createNativeQuery("SELECT value FROM PObject WHERE id=" + pobj.getId()).getResultList();
-        assertEquals(2, all.size());
+        entityManager.persist(pobj);
 
         entityManager.getTransaction().rollback();
 
-        all = entityManager.createNativeQuery("SELECT value FROM PObject WHERE id=" + pobj.getId()).getResultList();
-        assertTrue(all.isEmpty());
+        Query query = entityManager.createNativeQuery("SELECT value FROM PObject WHERE id = " + pobj.getId());
+        assertTrue(query.getResultList().isEmpty());
     }
 
     /**
@@ -97,7 +92,7 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
     /**
      * Delete in bulk by query.
      */
-    public void NOTtestBulkDelete() {
+    public void testBulkDelete() {
         final EntityManager entityManager = emf.createEntityManager();
 
         entityManager.getTransaction().begin();

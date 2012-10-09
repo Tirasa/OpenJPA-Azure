@@ -71,7 +71,7 @@ public class AzureStoreManager extends JDBCStoreManager {
         }
 
         if (QueryLanguages.LANG_PREPARED_SQL.equals(language)) {
-            return new PreparedSQLStoreQuery(this);
+            return new AzurePreparedSQLStoreQuery(this);
         }
 
         return null;
