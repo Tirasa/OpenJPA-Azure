@@ -53,7 +53,7 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         assertEquals(pobj.getId(), actual.getId());
     }
 
-    public void testDisyributedRollBack() {
+    public void testDistributedRollBack() {
         PObject pobj = new PObject();
         pobj.setValue(10000);
 
