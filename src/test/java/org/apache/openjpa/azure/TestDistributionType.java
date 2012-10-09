@@ -36,7 +36,7 @@ public class TestDistributionType extends AbstractAzureTestCase {
         return System.getProperty("unit", "azure-test");
     }
 
-    public void NOTtestBigint() {
+    public void testBigint() {
         final PersonBINT user = new PersonBINT();
 
         user.setUsername("BobBint");
@@ -51,17 +51,19 @@ public class TestDistributionType extends AbstractAzureTestCase {
 
         entityManager.persist(user);
 
-        List<PersonBINT> res = entityManager.createQuery("SELECT p FROM PersonBINT p").getResultList();
+        entityManager.getTransaction().commit();
 
+        List<PersonBINT> res = entityManager.createQuery("SELECT p FROM PersonBINT p").getResultList();
         assertEquals(1, res.size());
+
+        entityManager.getTransaction().begin();
 
         entityManager.remove(res.get(0));
 
-        res = entityManager.createQuery("SELECT p FROM PersonBINT p").getResultList();
-
-        assertTrue(res.isEmpty());
-
         entityManager.getTransaction().commit();
+
+        res = entityManager.createQuery("SELECT p FROM PersonBINT p").getResultList();
+        assertTrue(res.isEmpty());
     }
 
     public void testInt() {
