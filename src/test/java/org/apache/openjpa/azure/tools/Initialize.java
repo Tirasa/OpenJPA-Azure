@@ -25,11 +25,8 @@ import java.sql.Statement;
 import java.util.Map;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
-import javax.sql.DataSource;
 
-public class Initialize {
-
-    private static DataSource ds = null;
+public final class Initialize {
 
     private static String[] fedInitQueries = {
         "USE FEDERATION ROOT WITH RESET",
@@ -56,7 +53,10 @@ public class Initialize {
 
     private static Connection conn = null;
 
-    public static void main(String args[]) {
+    private Initialize() {
+    }
+
+    public static void main(final String args[]) {
         if (args.length != 1) {
             System.err.println("Usage java Initialization <purge|init>");
             return;
@@ -105,22 +105,20 @@ public class Initialize {
     }
 
     public static void executeQueries(final String[] queries) {
-        Statement stm = null;
-
         for (String query : queries) {
             System.out.println(query);
 
+            Statement stmt = null;
             try {
-                stm = conn.createStatement();
-                stm.execute(query);
-
+                stmt = conn.createStatement();
+                stmt.execute(query);
             } catch (Exception e) {
                 System.out.println("\t\t" + e.getMessage());
             } finally {
-                if (stm != null) {
+                if (stmt != null) {
                     try {
-                        stm.close();
-                        stm = null;
+                        stmt.close();
+                        stmt = null;
                     } catch (SQLException ignore) {
                         //ignore
                     }
