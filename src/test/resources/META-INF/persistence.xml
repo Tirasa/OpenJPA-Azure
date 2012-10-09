@@ -23,6 +23,7 @@
 
     <class>org.apache.openjpa.azure.beans.BusinessRole</class>
     <class>org.apache.openjpa.azure.beans.PObject</class>
+    <class>org.apache.openjpa.azure.beans.MPObject</class>
     <class>org.apache.openjpa.azure.beans.PersonBINT</class>
     <class>org.apache.openjpa.azure.beans.PersonINT</class>
     <class>org.apache.openjpa.azure.beans.PersonINT_PK</class>
@@ -48,10 +49,11 @@
       <property name="openjpa.azure.Federations" value="FED_1, FED_2, FED_3, FED_4, FED_5" />
         
       <property name="openjpa.azure.FED_1.RangeMappingType" value="BIGINT" />
-      <property name="openjpa.azure.FED_1.Tables" value="PersonBINT,BusinessRole,PObject" />
+      <property name="openjpa.azure.FED_1.Tables" value="PersonBINT,BusinessRole,PObject,MPObject" />
       <property name="openjpa.azure.FED_1.PersonBINT.RangeMappingName" value="id" />
       <property name="openjpa.azure.FED_1.BusinessRole.RangeMappingName" value="id" />
       <property name="openjpa.azure.FED_1.PObject.RangeMappingName" value="id" />
+      <property name="openjpa.azure.FED_1.MPObject.RangeMappingName" value="id" />
         
       <property name="openjpa.azure.FED_2.RangeMappingType" value="UNIQUEIDENTIFIER" />
       <property name="openjpa.azure.FED_2.Tables" value="PersonUID" />

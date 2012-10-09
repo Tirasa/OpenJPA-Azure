@@ -118,10 +118,8 @@ public class AzureSqlStoreQuery
                 _resultMapping = null;
             } else {
                 ClassLoader envLoader = ctx.getStoreContext().getClassLoader();
-                MappingRepository repos = q.getStore().getConfiguration().
-                        getMappingRepositoryInstance();
-                _resultMapping = repos.getQueryResultMapping(ctx.getResultMappingScope(), resultMapping, envLoader,
-                        true);
+                MappingRepository repos = q.getStore().getConfiguration().getMappingRepositoryInstance();
+                _resultMapping = repos.getQueryResultMapping(ctx.getResultMappingScope(), resultMapping, envLoader, true);
             }
             _meta = candidate;
 
@@ -130,8 +128,7 @@ public class AzureSqlStoreQuery
                 throw new UserException(_loc.get("no-sql"));
             }
             _select = q.getStore().getDBDictionary().isSelect(sql);
-            _call = sql.length() > 4
-                    && sql.substring(0, 4).equalsIgnoreCase("call");
+            _call = sql.length() > 4 && sql.substring(0, 4).equalsIgnoreCase("call");
         }
 
         public int getOperation(StoreQuery q) {
@@ -232,8 +229,7 @@ public class AzureSqlStoreQuery
                 }
 
                 int index = 0;
-                for (Iterator i = paramList.iterator(); i.hasNext()
-                        && stmnt != null;) {
+                for (Iterator i = paramList.iterator(); i.hasNext() && stmnt != null;) {
                     dict.setUnknown(stmnt, ++index, i.next(), null);
                 }
 
@@ -241,9 +237,10 @@ public class AzureSqlStoreQuery
                 ResultSet rs = executeQuery(store, conn, stmnt, buf, paramList);
 
                 ResultSetResult res = stmnt != null
-                        ? new ResultSetResult(conn, stmnt, rs, store)
-                        : new ResultSetResult(conn, rs, dict);
+                        ? new ResultSetResult(conn, stmnt, rs, store) : new ResultSetResult(conn, rs, dict);
 
+                System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA "+q.getContext().getQueryString()+":"+q.getContext().getQuery().isAggregate());
+                
                 if (_resultMapping != null) {
                     rop = new MappedQueryResultObjectProvider(_resultMapping, store, fetch, res);
                 } else if (q.getContext().getCandidateType() != null) {
