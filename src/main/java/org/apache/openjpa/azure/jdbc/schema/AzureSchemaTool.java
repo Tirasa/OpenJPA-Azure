@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import javax.sql.DataSource;
 import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.util.AzureUtils;
@@ -39,47 +38,15 @@ import org.apache.openjpa.jdbc.schema.SchemaGroup;
 import org.apache.openjpa.jdbc.schema.SchemaTool;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.jdbc.sql.AzureDictionary;
-import org.apache.openjpa.lib.log.Log;
-import org.apache.openjpa.lib.util.Localizer;
 
 public class AzureSchemaTool extends SchemaTool {
 
-    private final Log _log;
-
-    private final JDBCConfiguration _conf;
-
-    private final DataSource _ds;
-
-    private final AzureDictionary _dict;
-
-    private String _sqlTerminator = ";";
-
-    private static final Localizer _loc = Localizer.forPackage(SchemaTool.class);
+    public AzureSchemaTool(final JDBCConfiguration conf) {
+        super(conf);
+    }
 
     public AzureSchemaTool(final JDBCConfiguration conf, final String action) {
         super(conf, action);
-        this._conf = conf;
-        this._ds = conf.getDataSource2(null);
-        this._dict = (AzureDictionary) conf.getDBDictionaryInstance();
-        this._log = conf.getLog(JDBCConfiguration.LOG_SCHEMA);
-    }
-
-    public AzureSchemaTool(final JDBCConfiguration conf) {
-        this(conf, null);
-    }
-
-    /**
-     * ${@inheritDoc}
-     */
-    @Override
-    public void run()
-            throws SQLException {
-
-        if (ACTION_DELETE_TABLE_CONTENTS.equals(getAction())) {
-            deleteTableContents();
-        } else {
-            super.run();
-        }
     }
 
     @Override
@@ -96,7 +63,8 @@ public class AzureSchemaTool extends SchemaTool {
         for (Map.Entry<Connection, Federation> conn : connections.entrySet()) {
             try {
                 if (!AzureUtils.tableExists(conn.getKey(), table)) {
-                    res &= executeSQL(_dict.getCreateTableSQL(table, conn.getValue()), conn.getKey());
+                    res &= executeSQL(((AzureDictionary) _dict).
+                            getCreateTableSQL(table, conn.getValue()), conn.getKey());
                 }
 
             } finally {
@@ -147,9 +115,7 @@ public class AzureSchemaTool extends SchemaTool {
         return result;
     }
 
-    /**
-     * Issue DELETE statement against all known tables.
-     */
+    @Override
     protected void deleteTableContents()
             throws SQLException {
 
@@ -192,13 +158,13 @@ public class AzureSchemaTool extends SchemaTool {
             return false;
         }
 
-        boolean wasAuto = conn.getAutoCommit();
+        final boolean wasAuto = conn.getAutoCommit();
 
         boolean err = false;
 
         try {
             if (getWriter() == null) {
-                Statement statement = null;
+                Statement stmt = null;
 
                 if (!wasAuto) {
                     conn.setAutoCommit(true);
@@ -211,8 +177,8 @@ public class AzureSchemaTool extends SchemaTool {
                         } catch (Exception e) {
                         }
 
-                        statement = conn.createStatement();
-                        statement.executeUpdate(sql[i]);
+                        stmt = conn.createStatement();
+                        stmt.executeUpdate(sql[i]);
 
                         try {
                             conn.commit();
@@ -222,9 +188,9 @@ public class AzureSchemaTool extends SchemaTool {
                         err = true;
                         handleException(se);
                     } finally {
-                        if (statement != null) {
+                        if (stmt != null) {
                             try {
-                                statement.close();
+                                stmt.close();
                             } catch (SQLException se) {
                             }
                         }
@@ -258,7 +224,7 @@ public class AzureSchemaTool extends SchemaTool {
             try {
                 for (Federation federation : federations) {
                     for (Object memberId : AzureUtils.getMemberDistribution(root, federation)) {
-                        Connection conn = _ds.getConnection();
+                        final Connection conn = _ds.getConnection();
                         AzureUtils.useFederation(conn, federation, memberId);
                         connections.put(conn, federation);
                     }
