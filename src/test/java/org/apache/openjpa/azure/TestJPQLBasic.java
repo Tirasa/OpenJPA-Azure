@@ -90,6 +90,30 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
     }
 
     /**
+     * Update in bulk by query.
+     */
+    public void testBulkUpdate() {
+        createIndependentObjects(15);
+
+        final EntityManager entityManager = emf.createEntityManager();
+
+        entityManager.getTransaction().begin();
+        final int count = count(PObject.class);
+        final int updated = entityManager.createQuery("UPDATE PObject p SET p.value = :value").
+                setParameter("value", 5).executeUpdate();
+        assertEquals(count, updated);
+        entityManager.getTransaction().commit();
+
+        assertEquals(count, count(PObject.class));
+
+        final List<PObject> all = entityManager.createQuery("SELECT p FROM PObject p").getResultList();
+        assertFalse(all.isEmpty());
+        for (PObject obj : all) {
+            assertEquals(5, obj.getValue());
+        }
+    }
+
+    /**
      * Delete in bulk by query.
      */
     public void testBulkDelete() {
