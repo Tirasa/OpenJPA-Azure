@@ -24,8 +24,10 @@ import java.util.Random;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import org.apache.openjpa.azure.beans.Gender;
 import org.apache.openjpa.azure.beans.MPObject;
 import org.apache.openjpa.azure.beans.PObject;
+import org.apache.openjpa.azure.beans.PersonBINT;
 
 public class TestJPQLBasic extends AbstractAzureTestCase {
 
@@ -197,5 +199,35 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
                 assertTrue(items[i].compareTo(items[i - 1]) <= 0);
             }
         }
+    }
+
+    public void testGroupByHaving() {
+        final EntityManager entityManager = emf.createEntityManager();
+        entityManager.getTransaction().begin();
+
+        PersonBINT person = new PersonBINT();
+        person.setUsername("username1");
+        person.setPassword("password1");
+        person.setGender(Gender.M);
+        entityManager.persist(person);
+
+        person = new PersonBINT();
+        person.setUsername("username2");
+        person.setPassword("password2");
+        person.setGender(Gender.M);
+        entityManager.persist(person);
+
+        person = new PersonBINT();
+        person.setUsername("username3");
+        person.setPassword("password3");
+        person.setGender(Gender.F);
+        entityManager.persist(person);
+
+        entityManager.getTransaction().commit();
+
+        List result = entityManager.createQuery("SELECT c.gender, COUNT(c) FROM PersonBINT c "
+                + "GROUP BY c.gender HAVING COUNT(c) > 1").getResultList();
+        assertNotNull(result);
+        assertEquals(1, result.size());
     }
 }
