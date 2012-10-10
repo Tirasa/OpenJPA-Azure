@@ -18,10 +18,13 @@
  */
 package org.apache.openjpa.azure;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import org.apache.openjpa.azure.beans.MPObject;
 import org.apache.openjpa.azure.beans.PObject;
 
 public class TestJPQLBasic extends AbstractAzureTestCase {
@@ -126,5 +129,73 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         entityManager.getTransaction().commit();
 
         assertEquals(0, count(PObject.class));
+    }
+
+    public void testOrderBy() {
+        final EntityManager entityManager = emf.createEntityManager();
+
+        entityManager.getTransaction().begin();
+        entityManager.createQuery("DELETE FROM MPObject p").executeUpdate();
+        entityManager.getTransaction().commit();
+        assertEquals(0, count(MPObject.class));
+
+        entityManager.getTransaction().begin();
+        final Random randomGenerator = new Random();
+        for (int i = 0; i < 10; i++) {
+            final MPObject obj = new MPObject();
+            obj.setId(i);
+            obj.setValue(randomGenerator.nextInt(100));
+            entityManager.persist(obj);
+        }
+        entityManager.getTransaction().commit();
+
+        final List<MPObject> ordered = entityManager.createQuery("SELECT p FROM MPObject p ORDER BY p.value").
+                getResultList();
+        assertEquals(count(MPObject.class), ordered.size());
+
+        final List<Integer> values = new ArrayList<Integer>(ordered.size());
+        for (MPObject obj : ordered) {
+            values.add(obj.getValue());
+        }
+        assertOrdering(values.toArray(new Integer[values.size()]), true);
+    }
+
+    public void testRepOrderBy() {
+        createIndependentObjects(10);
+
+        final EntityManager entityManager = emf.createEntityManager();
+        entityManager.getTransaction().begin();
+
+        final List<PObject> all = entityManager.createQuery("SELECT p FROM PObject p").getResultList();
+        assertFalse(all.isEmpty());
+        final Random randomGenerator = new Random();
+        for (PObject obj : all) {
+            obj.setValue(randomGenerator.nextInt(100));
+            entityManager.merge(obj);
+        }
+
+        entityManager.getTransaction().commit();
+
+        final List<PObject> ordered = entityManager.createQuery("SELECT p FROM PObject p ORDER BY p.value DESC").
+                getResultList();
+        assertEquals(all.size(), ordered.size());
+
+        final List<Integer> values = new ArrayList<Integer>(ordered.size());
+        for (PObject obj : ordered) {
+            values.add(obj.getValue());
+        }
+        assertOrdering(values.toArray(new Integer[values.size()]), false);
+    }
+
+    private void assertOrdering(Comparable[] items, boolean ascending) {
+        assertNotNull(items);
+        assertTrue(items.length > 0);
+        for (int i = 1; i < items.length; i++) {
+            if (ascending) {
+                assertTrue(items[i].compareTo(items[i - 1]) >= 0);
+            } else {
+                assertTrue(items[i].compareTo(items[i - 1]) <= 0);
+            }
+        }
     }
 }
