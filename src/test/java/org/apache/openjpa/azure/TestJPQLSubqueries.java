@@ -20,19 +20,10 @@ package org.apache.openjpa.azure;
 
 import java.util.List;
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
 import org.apache.openjpa.azure.beans.MPObject;
 import org.apache.openjpa.azure.beans.PObject;
 
-public class TestJPQLAggregate extends AbstractAzureTestCase {
-
-    private long pobjMin = -1;
-
-    private long pobjMax = -1;
-
-    private long pobjAvg = 0;
-
-    private long pobjSum = 0;
+public class TestJPQLSubqueries extends AbstractAzureTestCase {
 
     @Override
     protected String getPersistenceUnitName() {
@@ -57,83 +48,28 @@ public class TestJPQLAggregate extends AbstractAzureTestCase {
             entityManager.persist(mpobj);
 
             PObject pobj = new PObject();
-
-            if (pobjMin < 0) {
-                pobjMin = pobj.getId();
-            }
-
-            pobjMax = pobj.getId();
-
-            pobjSum += pobj.getId();
+            pobj.setValue(i + 1);
 
             entityManager.persist(pobj);
         }
 
         entityManager.getTransaction().commit();
-
-        pobjSum *= 2;
-        pobjAvg = pobjSum / 20;
     }
 
-    public void testSum() {
-        Long sum = (Long) emf.createEntityManager().createQuery("SELECT SUM(p.id) FROM MPObject p").getSingleResult();
-        assertEquals(45, sum.longValue());
-    }
-
-    public void testRepSum() {
-        Long sum = (Long) emf.createEntityManager().createQuery("SELECT SUM(p.id) FROM PObject p").getSingleResult();
-        assertEquals(pobjSum, sum.longValue());
-    }
-
-    public void testAvg() {
-        Long avg = (Long) emf.createEntityManager().createQuery("SELECT AVG(p.id) FROM MPObject p").getSingleResult();
-        assertEquals(4, avg.longValue());
-    }
-
-    public void testRepAvg() {
-        Long avg = (Long) emf.createEntityManager().createQuery("SELECT AVG(p.id) FROM PObject p").getSingleResult();
-        assertEquals(pobjAvg, avg.longValue());
-    }
-
-    public void testMax() {
-        Long max = (Long) emf.createEntityManager().createQuery("SELECT MAX(p.id) FROM MPObject p").getSingleResult();
-        assertEquals(9, max.longValue());
-    }
-
-    public void testRepMax() {
-        Long max = (Long) emf.createEntityManager().createQuery("SELECT MAX(p.id) FROM PObject p").getSingleResult();
-        assertEquals(pobjMax, max.longValue());
-    }
-
-    public void testMin() {
-        Long min = (Long) emf.createEntityManager().createQuery("SELECT MIN(p.id) FROM MPObject p").getSingleResult();
-        assertEquals(0, min.longValue());
-    }
-
-    public void testRepMin() {
-        Long min = (Long) emf.createEntityManager().createQuery("SELECT MIN(p.id) FROM PObject p").getSingleResult();
-        assertEquals(pobjMin, min.longValue());
-    }
-
-    public void testCount() {
+    public void NOTtestAll() {
         final EntityManager entityManager = emf.createEntityManager();
+        List<PObject> res = entityManager.createQuery(
+                "SELECT e FROM PObject e WHERE e.value > ALL(SELECT a.id FROM MPObject a)").getResultList();
 
-        Query query = entityManager.createQuery("SELECT p FROM MPObject p");
-        List all = query.getResultList();
-        assertEquals(10, all.size());
-
-        Long count = (Long) entityManager.createQuery("SELECT COUNT(p) FROM MPObject p").getSingleResult();
-        assertEquals(new Long(10L), count);
+        assertEquals(1, res.size());
+        assertEquals(10, res.get(0).getId());
     }
 
-    public void testRepCount() {
+    public void NOTtestAny() {
         final EntityManager entityManager = emf.createEntityManager();
+        List<PObject> res = entityManager.createQuery(
+                "SELECT e FROM MPObject e WHERE e.id > ANY(SELECT a.value FROM PObject a)").getResultList();
 
-        Query query = entityManager.createQuery("SELECT p FROM PObject p");
-        List all = query.getResultList();
-        assertEquals(20, all.size());
-
-        Long count = (Long) entityManager.createQuery("SELECT COUNT(p) FROM PObject p").getSingleResult();
-        assertEquals(new Long(20L), count);
+        assertEquals(9, res.size());
     }
 }
