@@ -98,9 +98,9 @@ public abstract class AbstractAzureTestCase extends SingleEMFTestCase {
     @Override
     public int count(final Class<?> type) {
         final EntityManager entityManager = emf.createEntityManager();
-        // TODO: when COUNT() will be implemented change here accordingly
-        final String query = "SELECT p FROM " + type.getSimpleName() + " p";
-        return entityManager.createQuery(query).getResultList().size();
+        final String query = "SELECT COUNT(p) FROM " + type.getSimpleName() + " p";
+        final Number number = (Number) entityManager.createQuery(query).getSingleResult();
+        return number.intValue();
     }
 
     /**
