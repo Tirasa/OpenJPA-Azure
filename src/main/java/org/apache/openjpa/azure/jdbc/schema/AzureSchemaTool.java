@@ -245,21 +245,6 @@ public class AzureSchemaTool extends SchemaTool {
         return !err;
     }
 
-    private void handleException(final SQLException sql)
-            throws SQLException {
-
-        if (!getIgnoreErrors()) {
-            throw sql;
-        }
-
-        _log.warn(sql.getMessage(), sql);
-    }
-
-    @Override
-    public void setSQLTerminator(final String terminator) {
-        _sqlTerminator = terminator;
-    }
-
     private Map<Connection, Federation> getWorkingConnections(final List<Federation> federations)
             throws SQLException {
 
