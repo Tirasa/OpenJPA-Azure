@@ -51,12 +51,9 @@ import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.util.UserException;
 
 /**
- * A SQL query.
- *
- * @author Abe White @nojavadoc
+ * A SQL query for Azure.
  */
-public class AzureSqlStoreQuery
-        extends SQLStoreQuery {
+public class AzureSqlStoreQuery extends SQLStoreQuery {
 
     private static final Localizer _loc = Localizer.forPackage(SQLStoreQuery.class);
 
@@ -67,32 +64,37 @@ public class AzureSqlStoreQuery
     /**
      * Construct a query managed by the given context.
      */
-    public AzureSqlStoreQuery(JDBCStore store) {
+    public AzureSqlStoreQuery(final JDBCStore store) {
         super(store);
         _store = store;
     }
 
+    @Override
     public JDBCStore getStore() {
         return _store;
     }
 
+    @Override
     public boolean supportsParameterDeclarations() {
         return false;
     }
 
+    @Override
     public boolean supportsDataStoreExecution() {
         return true;
     }
 
-    public StoreQuery.Executor newDataStoreExecutor(ClassMetaData meta,
-            boolean subclasses) {
+    @Override
+    public StoreQuery.Executor newDataStoreExecutor(final ClassMetaData meta, final boolean subclasses) {
         return new AzureSqlStoreQuery.SQLExecutor(this, meta);
     }
 
+    @Override
     public boolean requiresCandidateType() {
         return false;
     }
 
+    @Override
     public boolean requiresParameterDeclarations() {
         return false;
     }
@@ -111,81 +113,84 @@ public class AzureSqlStoreQuery
 
         private final QueryResultMapping _resultMapping;
 
-        public SQLExecutor(AzureSqlStoreQuery q, ClassMetaData candidate) {
-            QueryContext ctx = q.getContext();
-            String resultMapping = ctx.getResultMappingName();
+        public SQLExecutor(final AzureSqlStoreQuery query, final ClassMetaData candidate) {
+            final QueryContext ctx = query.getContext();
+            final String resultMapping = ctx.getResultMappingName();
             if (resultMapping == null) {
                 _resultMapping = null;
             } else {
-                ClassLoader envLoader = ctx.getStoreContext().getClassLoader();
-                MappingRepository repos = q.getStore().getConfiguration().getMappingRepositoryInstance();
-                _resultMapping = repos.getQueryResultMapping(ctx.getResultMappingScope(), resultMapping, envLoader, true);
+                final ClassLoader envLoader = ctx.getStoreContext().getClassLoader();
+                final MappingRepository repos = query.getStore().getConfiguration().getMappingRepositoryInstance();
+                _resultMapping = repos.
+                        getQueryResultMapping(ctx.getResultMappingScope(), resultMapping, envLoader, true);
             }
             _meta = candidate;
 
-            String sql = StringUtils.trimToNull(ctx.getQueryString());
+            final String sql = StringUtils.trimToNull(ctx.getQueryString());
             if (sql == null) {
                 throw new UserException(_loc.get("no-sql"));
             }
-            _select = q.getStore().getDBDictionary().isSelect(sql);
+            _select = query.getStore().getDBDictionary().isSelect(sql);
             _call = sql.length() > 4 && sql.substring(0, 4).equalsIgnoreCase("call");
         }
 
-        public int getOperation(StoreQuery q) {
+        @Override
+        public int getOperation(final StoreQuery query) {
             return _select ? OP_SELECT
-                    : (q.getContext().getCandidateType() != null
-                    || q.getContext().getResultType() != null
-                    || q.getContext().getResultMappingName() != null
-                    || q.getContext().getResultMappingScope() != null)
+                    : (query.getContext().getCandidateType() != null
+                    || query.getContext().getResultType() != null
+                    || query.getContext().getResultMappingName() != null
+                    || query.getContext().getResultMappingScope() != null)
                     ? OP_SELECT : OP_UPDATE;
         }
 
-        public Number executeUpdate(StoreQuery q, Object[] params) {
-            JDBCStore store = ((SQLStoreQuery) q).getStore();
-            DBDictionary dict = store.getDBDictionary();
-            String sql = q.getContext().getQueryString();
+        @Override
+        public Number executeUpdate(final StoreQuery query, final Object[] params) {
+            final JDBCStore store = ((SQLStoreQuery) query).getStore();
+            final DBDictionary dict = store.getDBDictionary();
+            final String sql = query.getContext().getQueryString();
 
-            List paramList = new ArrayList(Arrays.asList(params));
-            SQLBuffer buf = new SQLBuffer(dict).append(sql);
+            final List paramList = new ArrayList(Arrays.asList(params));
+            final SQLBuffer buf = new SQLBuffer(dict).append(sql);
 
             // we need to make sure we have an active store connection
             store.getContext().beginStore();
 
-            Connection conn = store.getConnection();
+            final Connection conn = store.getConnection();
 
             ((AzureDelegatingConnection) ((AzureStoreManager.AzureRefCountConnection) conn).getConn()).
                     selectWorkingConnections();
 
-            JDBCFetchConfiguration fetch = (JDBCFetchConfiguration) q.getContext().getFetchConfiguration();
+            final JDBCFetchConfiguration fetch = (JDBCFetchConfiguration) query.getContext().getFetchConfiguration();
 
-            PreparedStatement stmnt = null;
+            PreparedStatement stmt = null;
             try {
                 if (_call) {
-                    stmnt = prepareCall(conn, buf);
+                    stmt = prepareCall(conn, buf);
                 } else {
-                    stmnt = prepareStatement(conn, buf);
+                    stmt = prepareStatement(conn, buf);
                 }
 
                 buf.setParameters(paramList);
-                if (stmnt != null) {
-                    buf.setParameters(stmnt);
+                if (stmt != null) {
+                    buf.setParameters(stmt);
                 }
 
-                dict.setTimeouts(stmnt, fetch, true);
+                dict.setTimeouts(stmt, fetch, true);
 
-                int count = executeUpdate(store, conn, stmnt, buf);
+                int count = executeUpdate(store, conn, stmt, buf);
 
                 return count;
             } catch (SQLException se) {
                 throw SQLExceptions.getStore(se, dict);
             } finally {
-                if (stmnt != null) {
+                if (stmt != null) {
                     try {
-                        stmnt.close();
+                        stmt.close();
                     } catch (SQLException se) {
                         // safe to ignore
                     } finally {
-                        stmnt = null;
+                        stmt = null;
                     }
                 }
                 try {
@@ -195,63 +200,60 @@ public class AzureSqlStoreQuery
             }
         }
 
-        public ResultObjectProvider executeQuery(StoreQuery q,
-                Object[] params, StoreQuery.Range range) {
+        @Override
+        public ResultObjectProvider executeQuery(final StoreQuery query, final Object[] params,
+                final StoreQuery.Range range) {
 
-            QueryContext ctx = q.getContext();
+            final JDBCStore store = ((SQLStoreQuery) query).getStore();
+            final DBDictionary dict = store.getDBDictionary();
+            final String sql = query.getContext().getQueryString();
 
-            JDBCStore store = ((SQLStoreQuery) q).getStore();
-            DBDictionary dict = store.getDBDictionary();
-            String sql = q.getContext().getQueryString();
+            final List paramList = new ArrayList(Arrays.asList(params));
+            final SQLBuffer buf = new SQLBuffer(dict).append(sql);
 
-            List paramList = new ArrayList(Arrays.asList(params));
-            SQLBuffer buf = new SQLBuffer(dict).append(sql);
-
-            Connection conn = store.getConnection();
+            final Connection conn = store.getConnection();
 
             ((AzureDelegatingConnection) ((AzureStoreManager.AzureRefCountConnection) conn).getConn()).
                     selectWorkingConnections();
 
-            JDBCFetchConfiguration fetch = (JDBCFetchConfiguration) q.getContext().getFetchConfiguration();
+            final JDBCFetchConfiguration fetch = (JDBCFetchConfiguration) query.getContext().getFetchConfiguration();
 
             ResultObjectProvider rop;
-            PreparedStatement stmnt = null;
+            PreparedStatement stmt = null;
             try {
                 // use the right method depending on sel vs. proc, lrs setting
                 if (_select && !range.lrs) {
-                    stmnt = prepareStatement(conn, buf);
+                    stmt = prepareStatement(conn, buf);
                 } else if (_select) {
-                    stmnt = prepareStatement(conn, buf, fetch, -1, -1);
+                    stmt = prepareStatement(conn, buf, fetch, -1, -1);
                 } else if (!range.lrs) {
-                    stmnt = prepareCall(conn, buf);
+                    stmt = prepareCall(conn, buf);
                 } else {
-                    stmnt = prepareCall(conn, buf, fetch, -1, -1);
+                    stmt = prepareCall(conn, buf, fetch, -1, -1);
                 }
 
                 int index = 0;
-                for (Iterator i = paramList.iterator(); i.hasNext() && stmnt != null;) {
-                    dict.setUnknown(stmnt, ++index, i.next(), null);
+                for (Iterator i = paramList.iterator(); i.hasNext() && stmt != null;) {
+                    dict.setUnknown(stmt, ++index, i.next(), null);
                 }
 
-                dict.setTimeouts(stmnt, fetch, false);
-                ResultSet rs = executeQuery(store, conn, stmnt, buf, paramList);
+                dict.setTimeouts(stmt, fetch, false);
+                final ResultSet rs = executeQuery(store, conn, stmt, buf, paramList);
 
-                ResultSetResult res = stmnt != null
-                        ? new ResultSetResult(conn, stmnt, rs, store) : new ResultSetResult(conn, rs, dict);
+                final ResultSetResult res = stmt != null
+                        ? new ResultSetResult(conn, stmt, rs, store) : new ResultSetResult(conn, rs, dict);
 
-                System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA "+q.getContext().getQueryString()+":"+q.getContext().getQuery().isAggregate());
-                
                 if (_resultMapping != null) {
                     rop = new MappedQueryResultObjectProvider(_resultMapping, store, fetch, res);
-                } else if (q.getContext().getCandidateType() != null) {
+                } else if (query.getContext().getCandidateType() != null) {
                     rop = new GenericResultObjectProvider((ClassMapping) _meta, store, fetch, res);
                 } else {
-                    rop = new SQLProjectionResultObjectProvider(store, fetch, res, q.getContext().getResultType());
+                    rop = new SQLProjectionResultObjectProvider(store, fetch, res, query.getContext().getResultType());
                 }
             } catch (SQLException se) {
-                if (stmnt != null) {
+                if (stmt != null) {
                     try {
-                        stmnt.close();
+                        stmt.close();
                     } catch (SQLException se2) {
                     }
                 }
@@ -268,39 +270,44 @@ public class AzureSqlStoreQuery
             return rop;
         }
 
-        public String[] getDataStoreActions(StoreQuery q, Object[] params,
-                StoreQuery.Range range) {
-            return new String[]{q.getContext().getQueryString()};
+        @Override
+        public String[] getDataStoreActions(final StoreQuery query, final Object[] params,
+                final StoreQuery.Range range) {
+
+            return new String[]{query.getContext().getQueryString()};
         }
 
-        public boolean isPacking(StoreQuery q) {
-            return q.getContext().getCandidateType() == null;
+        @Override
+        public boolean isPacking(final StoreQuery query) {
+            return query.getContext().getCandidateType() == null;
         }
 
         /**
          * This method is to provide override for non-JDBC or JDBC-like implementation of preparing call statement.
          */
-        protected PreparedStatement prepareCall(Connection conn, SQLBuffer buf)
+        protected PreparedStatement prepareCall(final Connection conn, final SQLBuffer buf)
                 throws SQLException {
+
             return buf.prepareCall(conn);
         }
 
         /**
          * This method is to provide override for non-JDBC or JDBC-like implementation of executing update.
          */
-        protected int executeUpdate(JDBCStore store, Connection conn,
-                PreparedStatement stmnt, SQLBuffer buf)
+        protected int executeUpdate(final JDBCStore store, final Connection conn,
+                final PreparedStatement stmt, final SQLBuffer buf)
                 throws SQLException {
+
             int count = 0;
 
-            if (_call && stmnt.execute() == false) {
-                count = stmnt.getUpdateCount();
+            if (_call && stmt.execute() == false) {
+                count = stmt.getUpdateCount();
             } else {
-                if (stmnt instanceof AzurePreparedStatement) {
+                if (stmt instanceof AzurePreparedStatement) {
                     // native insert, update, delete
-                    count = ((AzurePreparedStatement) stmnt).executeUpdate();
+                    count = ((AzurePreparedStatement) stmt).executeUpdate();
                 } else {
-                    count = stmnt.executeUpdate();
+                    count = stmt.executeUpdate();
                 }
             }
             return count;
@@ -309,42 +316,43 @@ public class AzureSqlStoreQuery
         /**
          * This method is to provide override for non-JDBC or JDBC-like implementation of preparing call statement.
          */
-        protected PreparedStatement prepareCall(Connection conn, SQLBuffer buf,
-                JDBCFetchConfiguration fetch, int rsType, int rsConcur)
+        protected PreparedStatement prepareCall(final Connection conn, final SQLBuffer buf,
+                final JDBCFetchConfiguration fetch, final int rsType, final int rsConcur)
                 throws SQLException {
+
             return buf.prepareCall(conn, fetch, rsType, rsConcur);
         }
 
         /**
          * This method is to provide override for non-JDBC or JDBC-like implementation of preparing statement.
          */
-        protected PreparedStatement prepareStatement(Connection conn,
-                SQLBuffer buf)
+        protected PreparedStatement prepareStatement(final Connection conn, final SQLBuffer buf)
                 throws SQLException {
+
             return buf.prepareStatement(conn);
         }
 
         /**
          * This method is to provide override for non-JDBC or JDBC-like implementation of preparing statement.
          */
-        protected PreparedStatement prepareStatement(Connection conn,
-                SQLBuffer buf, JDBCFetchConfiguration fetch, int rsType,
-                int rsConcur)
+        protected PreparedStatement prepareStatement(final Connection conn, final SQLBuffer buf,
+                final JDBCFetchConfiguration fetch, final int rsType, final int rsConcur)
                 throws SQLException {
+
             return buf.prepareStatement(conn, fetch, rsType, rsConcur);
         }
 
         /**
          * This method is to provide override for non-JDBC or JDBC-like implementation of executing query.
          */
-        protected ResultSet executeQuery(JDBCStore store, Connection conn,
-                PreparedStatement stmnt, SQLBuffer buf, List paramList)
+        protected ResultSet executeQuery(final JDBCStore store, final Connection conn,
+                final PreparedStatement stmt, final SQLBuffer buf, final List paramList)
                 throws SQLException {
-            if (stmnt instanceof AzurePreparedStatement) {
-                return ((AzurePreparedStatement) stmnt).executeQuery();
-            } else {
-                return stmnt.executeQuery();
-            }
+
+            return (stmt instanceof AzurePreparedStatement)
+                    ? ((AzurePreparedStatement) stmt).executeQuery()
+                    : stmt.executeQuery();
+
         }
 
         /**
@@ -358,11 +366,12 @@ public class AzureSqlStoreQuery
          * keys as Integer and the same Integers must appear in the tokens.
          *
          */
-        public Object[] toParameterArray(StoreQuery q, Map userParams) {
+        @Override
+        public Object[] toParameterArray(final StoreQuery query, Map userParams) {
             if (userParams == null || userParams.isEmpty()) {
                 return StoreQuery.EMPTY_OBJECTS;
             }
-            String sql = q.getContext().getQueryString();
+            String sql = query.getContext().getQueryString();
             List<Integer> paramOrder = new ArrayList<Integer>();
             try {
                 sql = substituteParams(sql, paramOrder);
@@ -380,7 +389,7 @@ public class AzureSqlStoreQuery
                 result[idx++] = userParams.get(key);
             }
             // modify original JPA-style SQL to proper SQL
-            q.getContext().getQuery().setQuery(sql);
+            query.getContext().getQuery().setQuery(sql);
             return result;
         }
     }

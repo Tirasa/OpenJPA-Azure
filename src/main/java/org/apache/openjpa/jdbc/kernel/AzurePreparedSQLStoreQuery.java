@@ -44,13 +44,11 @@ import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.util.InternalException;
 
 /**
- * A executor for Prepared SQL Query.
- *
- * @author Pinaki Poddar
- *
+ * A executor for Prepared SQL Query in Azure.
  */
-@SuppressWarnings("serial")
 public class AzurePreparedSQLStoreQuery extends SQLStoreQuery {
+
+    private static final long serialVersionUID = -6940990468996547074L;
 
     private PreparedQueryImpl _cached;
 
