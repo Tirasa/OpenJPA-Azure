@@ -330,7 +330,6 @@ public class AzureResultSet implements ResultSet {
     @Override
     public ResultSetMetaData getMetaData()
             throws SQLException {
-
         return current.getMetaData();
     }
 

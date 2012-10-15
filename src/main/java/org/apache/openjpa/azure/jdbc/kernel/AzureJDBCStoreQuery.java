@@ -18,26 +18,22 @@
  */
 package org.apache.openjpa.azure.jdbc.kernel;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-import org.apache.openjpa.azure.jdbc.AzureDelegatingConnection;
-import org.apache.openjpa.jdbc.kernel.BatchingPreparedStatementManagerImpl;
+import org.apache.openjpa.azure.jdbc.kernel.exps.AzureJDBCExpressionFactory;
 import org.apache.openjpa.jdbc.kernel.JDBCStore;
-//import org.apache.openjpa.jdbc.kernel.AzureDistributedStoreManager.AzureRefCountConnection;
-import org.apache.openjpa.jdbc.sql.RowImpl;
+import org.apache.openjpa.jdbc.kernel.JDBCStoreQuery;
+import org.apache.openjpa.jdbc.meta.ClassMapping;
+import org.apache.openjpa.kernel.exps.ExpressionFactory;
+import org.apache.openjpa.kernel.exps.ExpressionParser;
+import org.apache.openjpa.meta.ClassMetaData;
 
-public class AzurePreparedStatementManager extends BatchingPreparedStatementManagerImpl {
+public class AzureJDBCStoreQuery extends JDBCStoreQuery {
 
-    public AzurePreparedStatementManager(final JDBCStore store, final Connection conn, final int batchLimit) {
-        super(store, conn, batchLimit);
+    public AzureJDBCStoreQuery(JDBCStore store, ExpressionParser parser) {
+        super(store, parser);
     }
 
     @Override
-    protected void flushInternal(RowImpl row)
-            throws SQLException {
-
-//        ((AzureDelegatingConnection) ((AzureRefCountConnection) _conn).getConn()).selectWorkingConnections(row);
-
-        super.flushInternal(row);
+    protected ExpressionFactory getExpressionFactory(ClassMetaData meta) {
+        return new AzureJDBCExpressionFactory((ClassMapping) meta);
     }
 }

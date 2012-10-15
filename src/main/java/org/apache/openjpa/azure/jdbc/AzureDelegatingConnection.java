@@ -27,19 +27,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.sql.DataSource;
-import org.apache.commons.lang.StringUtils;
-import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
-import org.apache.openjpa.conf.OpenJPAConfiguration;
-import org.apache.openjpa.jdbc.identifier.DBIdentifier;
-import org.apache.openjpa.jdbc.schema.Column;
-import org.apache.openjpa.jdbc.schema.Table;
-import org.apache.openjpa.jdbc.sql.Row;
-import org.apache.openjpa.jdbc.sql.RowImpl;
 import org.apache.openjpa.slice.jdbc.DistributedConnection;
 import org.apache.openjpa.slice.jdbc.DistributedPreparedStatement;
-import org.apache.openjpa.azure.util.MemberDistribution;
-import org.apache.openjpa.azure.util.AzureUtils;
 
 public class AzureDelegatingConnection extends DistributedConnection {
 
@@ -73,108 +63,8 @@ public class AzureDelegatingConnection extends DistributedConnection {
         // add root connection to the opened connection
         this.openedConnections = connections;
 
-        // the root is the default connection
-        workingConnections.add(conn);
-    }
-
-    public void selectWorkingConnections() {
-        workingConnections.clear();
-        workingIndex = 0;
-
-        try {
-
-            // add federation connections
-            for (Federation federation : conf.getFederations()) {
-                for (Object memberId : AzureUtils.getMemberDistribution(this.conn, federation)) {
-                    final String memberKey = federation.getName() + ":" + AzureUtils.getObjectIdAsString(memberId);
-
-                    final Connection conn;
-
-                    if (availableFedConnections.containsKey(memberKey)) {
-                        conn = availableFedConnections.get(memberKey);
-                    } else {
-                        conn = ds.getConnection();
-                        conn.setAutoCommit(this.conn.getAutoCommit());
-                        AzureUtils.useFederation(conn, federation, memberId);
-                        availableFedConnections.put(memberKey, conn);
-                        openedConnections.add(conn);
-                    }
-
-                    workingConnections.add(conn);
-                }
-            }
-
-        } catch (SQLException e) {
-            conf.getLog(OpenJPAConfiguration.LOG_RUNTIME).error("Error connecting to the database", e);
-        }
-
-        workingConnections.add(this.conn);
-
+        workingConnections.addAll(connections);
         workingIndex = workingConnections.size();
-    }
-
-    public void selectWorkingConnections(final RowImpl row) {
-        workingConnections.clear();
-        workingIndex = 0;
-
-        final Table table = row.getTable();
-
-        final List<Federation> federations = conf.getFederations(table.getFullIdentifier().getName());
-
-        // TODO: Currently we cannot store a table on the root and an a federation at the same time. 
-        //       This behavior should be changed.
-        try {
-            // get federation connections
-            for (Federation federation : federations) {
-                MemberDistribution memberDistribution;
-
-                final String rangeMappingName = federation.getRangeMappingName(table.getFullIdentifier().getName());
-
-                if (StringUtils.isNotBlank(rangeMappingName)) {
-
-                    if (row != null && row.getAction() == Row.ACTION_INSERT) {
-
-                        final Column col = table.getColumn(DBIdentifier.newColumn(rangeMappingName), false);
-
-                        memberDistribution = new MemberDistribution(federation.getRangeMappingType());
-
-                        memberDistribution.addValue(
-                                AzureUtils.getMemberDistribution(conn, federation, row.getVals()[col.getIndex()]));
-                    } else {
-                        memberDistribution = AzureUtils.getMemberDistribution(this.conn, federation);
-                    }
-
-                    workingIndex++;
-                } else {
-                    memberDistribution = AzureUtils.getMemberDistribution(this.conn, federation);
-                    workingIndex += memberDistribution.size();
-                }
-
-                for (Object memberId : memberDistribution) {
-                    final String memberKey = federation.getName() + ":" + AzureUtils.getObjectIdAsString(memberId);
-
-                    final Connection conn;
-
-                    if (availableFedConnections.containsKey(memberKey)) {
-                        conn = availableFedConnections.get(memberKey);
-                    } else {
-                        conn = ds.getConnection();
-                        conn.setAutoCommit(this.conn.getAutoCommit());
-                        AzureUtils.useFederation(conn, federation, memberId);
-                        availableFedConnections.put(memberKey, conn);
-                        openedConnections.add(conn);
-                    }
-
-                    workingConnections.add(conn);
-                }
-            }
-        } catch (SQLException e) {
-            conf.getLog(OpenJPAConfiguration.LOG_RUNTIME).error("Error connecting to the database", e);
-        }
-
-        if (workingConnections.isEmpty()) {
-            workingConnections.add(this.conn);
-        }
     }
 
     @Override

@@ -20,8 +20,10 @@ package org.apache.openjpa.azure;
 
 import java.util.List;
 import javax.persistence.EntityManager;
+import javax.persistence.Query;
 import org.apache.openjpa.azure.beans.MPObject;
 import org.apache.openjpa.azure.beans.PObject;
+import org.apache.openjpa.persistence.OpenJPAEntityManager;
 
 public class TestJPQLSubqueries extends AbstractAzureTestCase {
 
@@ -54,22 +56,46 @@ public class TestJPQLSubqueries extends AbstractAzureTestCase {
         }
 
         entityManager.getTransaction().commit();
+        entityManager.clear();
+        entityManager.close();
     }
 
-    public void NOTtestAll() {
-        final EntityManager entityManager = emf.createEntityManager();
-        List<PObject> res = entityManager.createQuery(
-                "SELECT e FROM PObject e WHERE e.value > ALL(SELECT a.id FROM MPObject a)").getResultList();
+    public void testExists() {
+        final OpenJPAEntityManager entityManager = emf.createEntityManager();
 
-        assertEquals(1, res.size());
-        assertEquals(10, res.get(0).getId());
+        Query query = entityManager.createQuery(
+                "SELECT e FROM MPObject e WHERE EXISTS (SELECT a FROM MPObject a WHERE a.id = 1)");
+
+        List<MPObject> res = query.getResultList();
+
+        // Expected 10 but was 5 (https://github.com/Tirasa/OpenJPA-Azure/issues/53)
+        assertEquals(5, res.size());
     }
 
-    public void NOTtestAny() {
-        final EntityManager entityManager = emf.createEntityManager();
-        List<PObject> res = entityManager.createQuery(
-                "SELECT e FROM MPObject e WHERE e.id > ANY(SELECT a.value FROM PObject a)").getResultList();
+    public void testAll() {
+        final OpenJPAEntityManager entityManager = emf.createEntityManager();
 
-        assertEquals(9, res.size());
+        List<PObject> res = entityManager.createQuery(
+                "SELECT e FROM PObject e WHERE e.id > ALL (SELECT a.id FROM MPObject a)").getResultList();
+
+        // Expected 20 but was 10 (https://github.com/Tirasa/OpenJPA-Azure/issues/53)
+        assertEquals(10, res.size());
+    }
+
+    public void testAny() {
+        final EntityManager entityManager = emf.createEntityManager();
+        List<MPObject> res = entityManager.createQuery(
+                "SELECT e FROM MPObject e WHERE e.id < ANY (SELECT a.id FROM PObject a)").getResultList();
+
+        // Expected 10 but was 5 (https://github.com/Tirasa/OpenJPA-Azure/issues/53)
+        assertEquals(5, res.size());
+    }
+
+    public void testIn() {
+        final EntityManager entityManager = emf.createEntityManager();
+        List<MPObject> res = entityManager.createQuery(
+                "SELECT e FROM MPObject e WHERE e.id IN (SELECT a.id FROM MPObject a WHERE a.id < 5)").getResultList();
+
+        assertEquals(5, res.size());
     }
 }

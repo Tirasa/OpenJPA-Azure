@@ -25,7 +25,7 @@ import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfigurationImpl;
 import org.apache.openjpa.azure.jdbc.meta.AzureMappingTool;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
-import org.apache.openjpa.jdbc.kernel.AzureStoreManager;
+import org.apache.openjpa.jdbc.kernel.AzureDistributedStoreManager;
 import org.apache.openjpa.jdbc.kernel.JDBCBrokerFactory;
 import org.apache.openjpa.jdbc.meta.MappingRepository;
 import org.apache.openjpa.jdbc.meta.MappingTool;
@@ -47,7 +47,7 @@ public class AzureBrokerFactory extends JDBCBrokerFactory {
 
     @Override
     protected StoreManager newStoreManager() {
-        return new AzureStoreManager();
+        return new AzureDistributedStoreManager();
     }
 
     public static JDBCBrokerFactory newInstance(final ConfigurationProvider provider) {

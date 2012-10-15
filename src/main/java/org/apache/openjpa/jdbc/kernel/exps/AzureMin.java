@@ -7,31 +7,32 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
- * under the License.    
+ * under the License.
  */
-package org.apache.openjpa.azure.jdbc.sql;
+package org.apache.openjpa.jdbc.kernel.exps;
 
-import org.apache.openjpa.conf.OpenJPAConfiguration;
-import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
-import org.apache.openjpa.jdbc.sql.SelectImpl;
-import org.apache.openjpa.lib.log.Log;
+import java.sql.SQLException;
+import org.apache.openjpa.jdbc.meta.JavaSQLTypes;
+import org.apache.openjpa.jdbc.sql.Result;
+import org.apache.openjpa.kernel.Filters;
 
-public class AzureSelectImpl extends SelectImpl {
+public class AzureMin extends Min {
 
-    private final JDBCConfiguration _conf;
+    public AzureMin(Val val) {
+        super(val);
+    }
 
-    private final Log _log;
-
-    public AzureSelectImpl(final JDBCConfiguration conf) {
-        super(conf);
-        this._conf = conf;
-        this._log = conf.getLog(OpenJPAConfiguration.LOG_RUNTIME);
+    @Override
+    public Object load(ExpContext ctx, ExpState state, Result res)
+            throws SQLException {
+        Object value = res.getObject(this, JavaSQLTypes.JDBC_DEFAULT, null);
+        return Filters.convert(value, getType());
     }
 }

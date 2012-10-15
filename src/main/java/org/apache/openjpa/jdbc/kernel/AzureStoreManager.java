@@ -7,14 +7,14 @@
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
  * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
  * KIND, either express or implied.  See the License for the
  * specific language governing permissions and limitations
- * under the License.
+ * under the License.    
  */
 package org.apache.openjpa.jdbc.kernel;
 
@@ -22,64 +22,77 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.azure.jdbc.AzureDelegatingConnection;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
+import org.apache.openjpa.azure.jdbc.kernel.AzureJDBCStoreQuery;
+import org.apache.openjpa.azure.util.AzureUtils;
 import org.apache.openjpa.datacache.QueryCache;
 import org.apache.openjpa.datacache.QueryCacheStoreQuery;
 import org.apache.openjpa.kernel.QueryLanguages;
 import org.apache.openjpa.kernel.StoreQuery;
 import org.apache.openjpa.kernel.exps.ExpressionParser;
 
+/**
+ * A specialized JDBCStoreManager for azure.
+ *
+ */
 public class AzureStoreManager extends JDBCStoreManager {
+
+    private final Federation fed;
+
+    private final Object distribution;
+
+    /**
+     * Construct with immutable logical name of the slice.
+     */
+    public AzureStoreManager(final Federation fed, final Object distribution) {
+        this.fed = fed;
+        this.distribution = distribution;
+    }
 
     @Override
     protected RefCountConnection connectInternal()
             throws SQLException {
 
-        final List<Connection> connections = new ArrayList<Connection>();
-        connections.add(getDataSource().getConnection());
+        final Connection conn = getDataSource().getConnection();
 
-        final AzureDelegatingConnection conn = new AzureDelegatingConnection(
+        if (fed != null && distribution != null) {
+            AzureUtils.useFederation(conn, fed, distribution);
+        }
+
+        final List<Connection> connections = new ArrayList<Connection>();
+        connections.add(conn);
+
+        final AzureDelegatingConnection azureConn = new AzureDelegatingConnection(
                 connections, getDataSource(), (AzureConfiguration) getConfiguration());
 
-        return new AzureRefCountConnection(conn);
+        return new RefCountConnection(azureConn);
     }
 
-    public class AzureRefCountConnection extends RefCountConnection {
+    public Object getDistribution() {
+        return distribution;
+    }
 
-        private final Connection conn;
-
-        public AzureRefCountConnection(final Connection conn) {
-            super(conn);
-            this.conn = conn;
-        }
-
-        public Connection getConn() {
-            return conn;
-        }
+    public Federation getFed() {
+        return fed;
     }
 
     private StoreQuery newStoreQuery(String language) {
+        ExpressionParser ep = QueryLanguages.parserForLanguage(language);
+        if (ep != null) {
+            return new AzureJDBCStoreQuery(this, ep);
+        }
         if (QueryLanguages.LANG_SQL.equals(language)) {
-            StoreQuery sq = new AzureSqlStoreQuery(this);
-            return sq;
+            return new SQLStoreQuery(this);
         }
-
-        ExpressionParser parser = QueryLanguages.parserForLanguage(language);
-        if (parser == null) {
-            throw new UnsupportedOperationException("Language [" + language + "] not supported");
-        }
-
         if (QueryLanguages.LANG_PREPARED_SQL.equals(language)) {
-            return new AzurePreparedSQLStoreQuery(this);
+            return new PreparedSQLStoreQuery(this);
         }
-
         return null;
     }
 
-    @Override
     public StoreQuery newQuery(String language) {
-
         StoreQuery sq = newStoreQuery(language);
         if (sq == null || QueryLanguages.parserForLanguage(language) == null) {
             return sq;

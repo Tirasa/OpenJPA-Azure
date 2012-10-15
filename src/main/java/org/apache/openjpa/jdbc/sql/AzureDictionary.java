@@ -80,8 +80,8 @@ public class AzureDictionary extends SQLServerDictionary {
     }
 
     /**
-     * Create a new column from the information in the schema metadata.
-     * Compared to DBDictionary.newColumn(), this will refer to column names reported by sp_columns.
+     * Create a new column from the information in the schema metadata. Compared to DBDictionary.newColumn(), this will
+     * refer to column names reported by sp_columns.
      */
     @Override
     protected Column newColumn(final ResultSet colMeta)

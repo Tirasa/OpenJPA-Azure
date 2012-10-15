@@ -56,11 +56,14 @@ public class AzurePreparedStatement extends DistributedPreparedStatement {
 
         SQLException exception = null;
 
-        int ret = -1;
+        boolean found = false;
+
+        int ret = 0;
 
         for (PreparedStatement stm : this) {
             try {
                 ret += stm.executeUpdate();
+                found = true;
             } catch (Throwable t) {
                 // TODO: current implementation is needed to support native query
                 if (exception == null) {
@@ -71,19 +74,13 @@ public class AzurePreparedStatement extends DistributedPreparedStatement {
             }
         }
 
-        if (ret < 0 && exception != null) {
+        if (!found && exception != null) {
             throw exception;
-        } else {
-            // it starts from -1 just for check
-            ret++;
         }
 
         // TODO: keep under control! This behavior have to be verified step-by-step.
-        if (ret < workingIndex) {
+        if (workingIndex == 0 || ret != workingIndex) {
             // update or delete of a specific object
-            return ret;
-        } else if (ret > workingIndex) {
-            // it sound like an error: probably more than one line per federation member has been updated.
             return ret;
         } else {
             // probably an insert or an update of the same object among different federations/members.
