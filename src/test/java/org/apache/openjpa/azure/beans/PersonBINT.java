@@ -18,6 +18,7 @@ import java.util.HashSet;
 import java.util.Set;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -50,6 +51,9 @@ public class PersonBINT implements Serializable {
     @Column(name = "gender")
     private Gender gender;
 
+    @ElementCollection(fetch= FetchType.EAGER)
+    private Set<String> nickNames = new HashSet<String>();
+
     @Lob
     private String info;
 
@@ -61,6 +65,7 @@ public class PersonBINT implements Serializable {
 
     public PersonBINT() {
         roles = new HashSet<BusinessRole>();
+        nickNames = new HashSet<String>();
     }
 
     public Long getId() {
@@ -113,6 +118,14 @@ public class PersonBINT implements Serializable {
 
     public Set<BusinessRole> getRoles() {
         return roles;
+    }
+
+    public Set<String> getNickNames() {
+        return nickNames;
+    }
+
+    public void setNickNames(Set<String> nickNames) {
+        this.nickNames = nickNames;
     }
 
     public void setRoles(Set<BusinessRole> roles) {

@@ -19,11 +19,14 @@
 package org.apache.openjpa.azure;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import org.apache.openjpa.azure.beans.BusinessRole;
 import org.apache.openjpa.azure.beans.Gender;
 import org.apache.openjpa.azure.beans.MPObject;
 import org.apache.openjpa.azure.beans.PObject;
