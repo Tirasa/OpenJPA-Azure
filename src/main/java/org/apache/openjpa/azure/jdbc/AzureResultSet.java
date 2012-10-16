@@ -42,8 +42,10 @@ import java.util.LinkedList;
 import java.util.Map;
 
 /**
- * A chain of ResultSet. Assumes added ResultSet are identical in structure and fetches forward. Can not move absolutely
- * or change fetch direction.
+ * A chain of ResultSet.
+ *
+ * Assumes added ResultSet are identical in structure and fetches forward. Can not move absolutely or change fetch
+ * direction.
  */
 public class AzureResultSet implements ResultSet {
 
@@ -635,15 +637,43 @@ public class AzureResultSet implements ResultSet {
     }
 
     @Override
-    public RowId getRowId(int arg0)
+    public int getRow()
             throws SQLException {
-        throw new UnsupportedOperationException("Not supported yet.");
+
+        if (current == null) {
+            return 0;
+        }
+
+        int row = 0;
+        for (int i = 0; i < cursor; i++) {
+            results.get(i).last();
+            row += results.get(i).getRow();
+        }
+        row += current.getRow();
+
+        return row;
     }
 
     @Override
-    public RowId getRowId(String arg0)
+    public RowId getRowId(int columnIndex)
             throws SQLException {
-        throw new UnsupportedOperationException("Not supported yet.");
+
+        if (current == null) {
+            throw new SQLException("current is not set");
+        }
+
+        return current.getRowId(columnIndex);
+    }
+
+    @Override
+    public RowId getRowId(String columnLabel)
+            throws SQLException {
+
+        if (current == null) {
+            throw new SQLException("current is not set");
+        }
+
+        return current.getRowId(columnLabel);
     }
 
     @Override
@@ -899,12 +929,6 @@ public class AzureResultSet implements ResultSet {
 
     @Override
     public boolean first()
-            throws SQLException {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public int getRow()
             throws SQLException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
