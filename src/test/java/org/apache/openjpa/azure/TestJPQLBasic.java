@@ -204,7 +204,7 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         }
     }
 
-    public void NOTtestGroupByHaving() {
+    public void testGroupByHaving() {
         final EntityManager entityManager = emf.createEntityManager();
         entityManager.getTransaction().begin();
 

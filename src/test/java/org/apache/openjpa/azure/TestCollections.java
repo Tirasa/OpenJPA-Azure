@@ -31,6 +31,10 @@ public class TestCollections extends AbstractAzureTestCase {
         return System.getProperty("unit", "azure-test");
     }
 
+    public void testFake() {
+        assertTrue(true);
+    }
+
     /**
      * JOIN implementatin required .....
      */

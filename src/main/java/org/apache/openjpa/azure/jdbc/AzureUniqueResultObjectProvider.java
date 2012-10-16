@@ -100,27 +100,27 @@ public class AzureUniqueResultObjectProvider implements ResultObjectProvider {
             String op = v.getClass().getSimpleName();
 
             for (ResultObjectProvider rop : _rops) {
-                if (i == 0) {
-                    rop.next();
-                }
-                Object[] row = (Object[]) rop.getResultObject();
+                if (rop.next()) {
 
-                if (isAggregate) {
-                    if (COUNT.equals(op)) {
-                        single[i] = count(single[i], row[i]);
-                    } else if (MAX.equals(op)) {
-                        single[i] = max(single[i], row[i]);
-                    } else if (MIN.equals(op)) {
-                        single[i] = min(single[i], row[i]);
-                    } else if (SUM.equals(op)) {
-                        single[i] = sum(single[i], row[i]);
+                    Object[] row = (Object[]) rop.getResultObject();
+
+                    if (isAggregate) {
+                        if (COUNT.equals(op)) {
+                            single[i] = count(single[i], row[i]);
+                        } else if (MAX.equals(op)) {
+                            single[i] = max(single[i], row[i]);
+                        } else if (MIN.equals(op)) {
+                            single[i] = min(single[i], row[i]);
+                        } else if (SUM.equals(op)) {
+                            single[i] = sum(single[i], row[i]);
+                        } else {
+                            throw new UnsupportedOperationException(_loc.get("aggregate-unsupported", op).toString());
+                        }
                     } else {
-                        throw new UnsupportedOperationException(_loc.get("aggregate-unsupported", op).toString());
+                        single[i] = row[i];
                     }
-                } else {
-                    single[i] = row[i];
+                    single[i] = Filters.convert(single[i], v.getType());
                 }
-                single[i] = Filters.convert(single[i], v.getType());
             }
         }
         _single = single;
