@@ -48,8 +48,8 @@
 
   <scm>
     <connection>scm:git:git@github.com:Tirasa/OpenJPA-Azure.git</connection>
-    <url>scm:git:git@github.com:Tirasa/OpenJPASQLAzure.git</url>
-    <developerConnection>scm:git:git@github.com:Tirasa/OpenJPASQLAzure.git</developerConnection>
+    <url>scm:git:git@github.com:Tirasa/OpenJPA-Azure.git</url>
+    <developerConnection>scm:git:git@github.com:Tirasa/OpenJPA-Azure.git</developerConnection>
   </scm>
 
   <mailingLists>
