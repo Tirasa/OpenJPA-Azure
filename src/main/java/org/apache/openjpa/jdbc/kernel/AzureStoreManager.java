@@ -39,13 +39,13 @@ import org.apache.openjpa.kernel.exps.ExpressionParser;
  */
 public class AzureStoreManager extends JDBCStoreManager {
 
-    private final Federation fed;
+    private Federation fed = null;
 
-    private final Object distribution;
+    private Object distribution = null;
 
-    /**
-     * Construct with immutable logical name of the slice.
-     */
+    public AzureStoreManager() {
+    }
+
     public AzureStoreManager(final Federation fed, final Object distribution) {
         this.fed = fed;
         this.distribution = distribution;

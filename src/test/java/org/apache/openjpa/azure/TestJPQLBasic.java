@@ -19,14 +19,11 @@
 package org.apache.openjpa.azure;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
-import org.apache.openjpa.azure.beans.BusinessRole;
 import org.apache.openjpa.azure.beans.Gender;
 import org.apache.openjpa.azure.beans.MPObject;
 import org.apache.openjpa.azure.beans.PObject;
@@ -37,6 +34,43 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
     @Override
     protected String getPersistenceUnitName() {
         return System.getProperty("unit", "azure-test");
+    }
+
+    public void testFindAll() {
+        final EntityManager entityManager = emf.createEntityManager();
+
+        entityManager.getTransaction().begin();
+
+        entityManager.persist(new PObject());
+        entityManager.persist(new PObject());
+
+        entityManager.getTransaction().commit();
+
+        final TypedQuery<PObject> query = entityManager.createQuery("SELECT e FROM PObject e", PObject.class);
+        assertEquals(4, query.getResultList().size());
+    }
+
+    public void testMultiFindAll() {
+        final EntityManager em1 = emf.createEntityManager();
+
+        em1.getTransaction().begin();
+
+        em1.persist(new PObject());
+        em1.persist(new PObject());
+
+        em1.getTransaction().commit();
+
+        assertFalse(em1.createQuery("SELECT e FROM PObject e", PObject.class).getResultList().isEmpty());
+
+        final EntityManager em2 = emf.createEntityManager();
+
+        assertFalse(em2.createQuery("SELECT e FROM PObject e", PObject.class).getResultList().isEmpty());
+
+        em2.close();
+
+        assertFalse(em1.createQuery("SELECT e FROM PObject e", PObject.class).getResultList().isEmpty());
+
+        em1.close();
     }
 
     public void testFindOne() {

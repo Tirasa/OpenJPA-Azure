@@ -19,7 +19,9 @@
 package org.apache.openjpa.azure.jdbc.kernel;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import org.apache.openjpa.azure.jdbc.AzureUniqueResultObjectProvider;
@@ -27,10 +29,9 @@ import org.apache.openjpa.jdbc.kernel.AzureDistributedStoreManager;
 import org.apache.openjpa.jdbc.kernel.AzureStoreManager;
 import org.apache.openjpa.jdbc.kernel.JDBCStore;
 import org.apache.openjpa.jdbc.kernel.SQLStoreQuery;
-import org.apache.openjpa.jdbc.meta.MappingRepository;
-import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.kernel.OrderingMergedResultObjectProvider;
 import org.apache.openjpa.kernel.QueryContext;
+import org.apache.openjpa.kernel.StoreManager;
 import org.apache.openjpa.kernel.StoreQuery;
 import org.apache.openjpa.lib.rop.MergedResultObjectProvider;
 import org.apache.openjpa.lib.rop.RangeResultObjectProvider;
@@ -46,7 +47,7 @@ import org.apache.openjpa.meta.ClassMetaData;
 @SuppressWarnings("serial")
 public class AzureSQLStoreQuery extends SQLStoreQuery {
 
-    private List<StoreQuery> queries = new ArrayList<StoreQuery>();
+    private Map<StoreManager, StoreQuery> queries = new HashMap<StoreManager, StoreQuery>();
 
     private String language;
 
@@ -59,31 +60,21 @@ public class AzureSQLStoreQuery extends SQLStoreQuery {
         return (AzureDistributedStoreManager) getStore();
     }
 
+    public void addQuery(final StoreManager store, final StoreQuery query) {
+        queries.put(store, query);
+    }
+
+    @Override
+    public void setContext(final QueryContext ctx) {
+        super.setContext(ctx);
+        for (StoreQuery query : queries.values()) {
+            query.setContext(ctx);
+        }
+    }
+
     @Override
     public StoreQuery.Executor newDataStoreExecutor(final ClassMetaData meta, final boolean subs) {
-        final ParallelExecutor pe = new ParallelExecutor(this, meta, subs);
-
-        String tableName = null;
-
-        if (meta != null) {
-            try {
-                MappingRepository repo = getStore().getConfiguration().getMappingRepositoryInstance();
-                Table table = repo.getMapping(meta.getDescribedType(), meta.getEnvClassLoader(), true).getTable();
-                tableName = table.getFullIdentifier().getName();
-            } catch (Exception e) {
-                // ignore exception and search for table by using all the connections
-            }
-        }
-
-        final List<AzureStoreManager> targets = getDistributedStore().getTargets(tableName, null);
-
-        for (AzureStoreManager target : targets) {
-            final StoreQuery query = target.newQuery(language);
-            query.setContext(ctx);
-            queries.add(query);
-        }
-
-        return pe;
+        return new ParallelExecutor(this, meta, subs);
     }
 
     /**
@@ -100,16 +91,17 @@ public class AzureSQLStoreQuery extends SQLStoreQuery {
 
         private final boolean subs;
 
-        public ParallelExecutor(AzureSQLStoreQuery dsq, ClassMetaData meta, boolean subs) {
+        private final List<AzureStoreManager> targets;
+
+        public ParallelExecutor(final AzureSQLStoreQuery dsq, final ClassMetaData meta, final boolean subs) {
             super(dsq, meta);
             owner = dsq;
             this.meta = meta;
             this.subs = subs;
+
+            targets = owner.getDistributedStore().getTargets(meta);
         }
 
-        /**
-         * Each child query must be executed with slice context and not the given query context.
-         */
         public ResultObjectProvider executeQuery(StoreQuery q, final Object[] params, final StoreQuery.Range range) {
             List<Future<ResultObjectProvider>> futures = new ArrayList<Future<ResultObjectProvider>>();
             final List<StoreQuery.Executor> usedExecutors = new ArrayList<StoreQuery.Executor>();
@@ -117,7 +109,8 @@ public class AzureSQLStoreQuery extends SQLStoreQuery {
 
             QueryContext ctx = q.getContext();
 
-            for (StoreQuery localQuery : owner.queries) {
+            for (AzureStoreManager target : targets) {
+                StoreQuery localQuery = owner.queries.get(target);
                 Executor executor = localQuery.newDataStoreExecutor(meta, subs);
 
                 usedExecutors.add(executor);
@@ -134,8 +127,9 @@ public class AzureSQLStoreQuery extends SQLStoreQuery {
                 }
             }
 
-            ResultObjectProvider[] tmp = rops.toArray(new ResultObjectProvider[rops.size()]);
             ResultObjectProvider result = null;
+
+            ResultObjectProvider[] tmp = rops.toArray(new ResultObjectProvider[rops.size()]);
 
             boolean[] ascending = getAscending(q);
             boolean isAscending = ascending.length > 0;
@@ -146,13 +140,15 @@ public class AzureSQLStoreQuery extends SQLStoreQuery {
                 result = new AzureUniqueResultObjectProvider(tmp, q, getQueryExpressions());
             } else if (isAscending) {
                 result = new OrderingMergedResultObjectProvider(
-                        tmp, ascending, usedExecutors.toArray(new StoreQuery.Executor[usedExecutors.size()]), q, params);
+                        tmp, ascending, usedExecutors.toArray(new StoreQuery.Executor[usedExecutors.size()]), q,
+                        params);
             } else {
                 result = new MergedResultObjectProvider(tmp);
             }
             if (hasRange) {
                 result = new RangeResultObjectProvider(result, ctx.getStartRange(), ctx.getEndRange());
             }
+
             return result;
         }
 
@@ -160,7 +156,8 @@ public class AzureSQLStoreQuery extends SQLStoreQuery {
             List<Future<Number>> futures = null;
             int result = 0;
 
-            for (StoreQuery localQuery : owner.queries) {
+            for (AzureStoreManager target : targets) {
+                StoreQuery localQuery = owner.queries.get(target);
                 Executor executor = localQuery.newDataStoreExecutor(meta, subs);
                 if (futures == null) {
                     futures = new ArrayList<Future<Number>>();
@@ -182,7 +179,8 @@ public class AzureSQLStoreQuery extends SQLStoreQuery {
             List<Future<Number>> futures = null;
             int result = 0;
 
-            for (StoreQuery localQuery : owner.queries) {
+            for (AzureStoreManager target : targets) {
+                StoreQuery localQuery = owner.queries.get(target);
                 Executor executor = localQuery.newDataStoreExecutor(meta, subs);
 
                 if (futures == null) {
