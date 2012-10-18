@@ -47,7 +47,7 @@
   </licenses>
 
   <scm>
-    <connection>scm:git:git@github.com:Tirasa/OpenJPASQLAzure.git</connection>
+    <connection>scm:git:git@github.com:Tirasa/OpenJPA-Azure.git</connection>
     <url>scm:git:git@github.com:Tirasa/OpenJPASQLAzure.git</url>
     <developerConnection>scm:git:git@github.com:Tirasa/OpenJPASQLAzure.git</developerConnection>
   </scm>
