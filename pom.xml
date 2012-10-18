@@ -25,7 +25,7 @@
 
   <groupId>net.tirasa.openjpa-azure</groupId>
   <artifactId>openjpa-azure</artifactId>
-  <version>0.2-SNAPSHOT</version>
+  <version>0.2</version>
   <name>OpenJPA support for Windows Azure SQL Database</name>
   <description>Windows Azure SQL Database sharding support for OpenJPA</description>
 
@@ -220,7 +220,7 @@
               <arguments>
                 <argument>-javaagent:${settings.localRepository}/org/apache/openjpa/openjpa/${openjpa.version}/openjpa-${openjpa.version}.jar</argument>
                 <argument>-classpath</argument>
-                <classpath/>
+                <classpath />
                 <argument>org.apache.openjpa.azure.tools.Initialize</argument>
                 <argument>purge</argument>
               </arguments>
@@ -269,7 +269,7 @@
               <arguments>
                 <argument>-javaagent:${settings.localRepository}/org/apache/openjpa/openjpa/${openjpa.version}/openjpa-${openjpa.version}.jar</argument>
                 <argument>-classpath</argument>
-                <classpath/>
+                <classpath />
                 <argument>org.apache.openjpa.azure.tools.Initialize</argument>
                 <argument>init</argument>
               </arguments>
