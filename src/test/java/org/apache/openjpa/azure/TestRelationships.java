@@ -30,6 +30,29 @@ import org.apache.openjpa.azure.beans.PersonBINT;
 
 public class TestRelationships extends AbstractAzureTestCase {
 
+    private static boolean initialized = false;
+
+    @Override
+    public void setUp() {
+        super.setUp(new Class[]{PersonBINT.class, BusinessRole.class}, CLEAR_TABLES);
+
+        if (!initialized) {
+            final EntityManager entityManager = emf.createEntityManager();
+
+            entityManager.getTransaction().begin();
+
+            entityManager.createNativeQuery("DELETE FROM Membership").executeUpdate();
+            entityManager.createQuery("DELETE FROM PersonBINT p").executeUpdate();
+            entityManager.createQuery("DELETE FROM BusinessRole p").executeUpdate();
+
+            entityManager.getTransaction().commit();
+            entityManager.clear();
+            entityManager.close();
+
+            initialized = true;
+        }
+    }
+
     @Override
     protected String getPersistenceUnitName() {
         return System.getProperty("unit", "azure-test");

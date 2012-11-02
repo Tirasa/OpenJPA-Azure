@@ -24,12 +24,53 @@ import java.util.Random;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
+import org.apache.openjpa.azure.beans.BusinessRole;
 import org.apache.openjpa.azure.beans.Gender;
 import org.apache.openjpa.azure.beans.MPObject;
 import org.apache.openjpa.azure.beans.PObject;
 import org.apache.openjpa.azure.beans.PersonBINT;
 
 public class TestJPQLBasic extends AbstractAzureTestCase {
+
+    private static boolean initialized = false;
+
+    @Override
+    public void setUp() {
+        super.setUp(new Class[]{PObject.class, MPObject.class, PersonBINT.class, BusinessRole.class}, CLEAR_TABLES);
+
+        if (!initialized) {
+            final EntityManager entityManager = emf.createEntityManager();
+
+            entityManager.getTransaction().begin();
+
+            entityManager.createNativeQuery("DELETE FROM Membership").executeUpdate();
+            entityManager.createQuery("DELETE FROM PersonBINT p").executeUpdate();
+            entityManager.createQuery("DELETE FROM BusinessRole p").executeUpdate();
+            entityManager.createQuery("DELETE FROM MPObject p").executeUpdate();
+            entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
+
+            final Random randomGenerator = new Random();
+
+            for (int i = 9; i >= 0; i--) {
+                MPObject mpobj = new MPObject();
+                mpobj.setId(i);
+                mpobj.setValue(randomGenerator.nextInt(100));
+
+                entityManager.persist(mpobj);
+
+                PObject pobj = new PObject();
+                pobj.setValue(randomGenerator.nextInt(100));
+
+                entityManager.persist(new PObject());
+            }
+
+            entityManager.getTransaction().commit();
+            entityManager.clear();
+            entityManager.close();
+
+            initialized = true;
+        }
+    }
 
     @Override
     protected String getPersistenceUnitName() {
@@ -41,13 +82,10 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
 
         entityManager.getTransaction().begin();
 
-        entityManager.persist(new PObject());
-        entityManager.persist(new PObject());
-
         entityManager.getTransaction().commit();
 
         final TypedQuery<PObject> query = entityManager.createQuery("SELECT e FROM PObject e", PObject.class);
-        assertEquals(4, query.getResultList().size());
+        assertEquals(20, query.getResultList().size());
     }
 
     public void testMultiFindAll() {
@@ -87,6 +125,7 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
 
         final TypedQuery<PObject> query =
                 entityManager.createQuery("SELECT e FROM PObject e WHERE e.id = :id", PObject.class);
+
         query.setParameter("id", pobj.getId());
         assertEquals(2, query.getResultList().size());
 
@@ -115,8 +154,6 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
      * Delete a single object by EntityManager.remove().
      */
     public void testDelete() {
-        createIndependentObjects(10);
-
         final EntityManager entityManager = emf.createEntityManager();
 
         entityManager.getTransaction().begin();
@@ -131,12 +168,49 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         assertEquals(before - 2, count(PObject.class));
     }
 
+    public void testOrderBy() {
+        final EntityManager entityManager = emf.createEntityManager();
+
+        final List<MPObject> ordered =
+                entityManager.createQuery("SELECT p FROM MPObject p ORDER BY p.value").getResultList();
+        assertEquals(count(MPObject.class), ordered.size());
+
+        final List<Integer> values = new ArrayList<Integer>(ordered.size());
+        for (MPObject obj : ordered) {
+            values.add(obj.getValue());
+        }
+        assertOrdering(values.toArray(new Integer[values.size()]), true);
+    }
+
+    public void testRepOrderBy() {
+        final EntityManager entityManager = emf.createEntityManager();
+        entityManager.getTransaction().begin();
+
+        final List<PObject> all = entityManager.createQuery("SELECT p FROM PObject p").getResultList();
+        assertFalse(all.isEmpty());
+        final Random randomGenerator = new Random();
+        for (PObject obj : all) {
+            obj.setValue(randomGenerator.nextInt(100));
+            entityManager.merge(obj);
+        }
+
+        entityManager.getTransaction().commit();
+
+        final List<PObject> ordered =
+                entityManager.createQuery("SELECT p FROM PObject p ORDER BY p.value DESC").getResultList();
+        assertEquals(all.size(), ordered.size());
+
+        final List<Integer> values = new ArrayList<Integer>(ordered.size());
+        for (PObject obj : ordered) {
+            values.add(obj.getValue());
+        }
+        assertOrdering(values.toArray(new Integer[values.size()]), false);
+    }
+
     /**
      * Update in bulk by query.
      */
     public void testBulkUpdate() {
-        createIndependentObjects(15);
-
         final EntityManager entityManager = emf.createEntityManager();
 
         entityManager.getTransaction().begin();
@@ -152,89 +226,6 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         assertFalse(all.isEmpty());
         for (PObject obj : all) {
             assertEquals(5, obj.getValue());
-        }
-    }
-
-    /**
-     * Delete in bulk by query.
-     */
-    public void testBulkDelete() {
-        final EntityManager entityManager = emf.createEntityManager();
-
-        entityManager.getTransaction().begin();
-        final int count = count(PObject.class);
-        final int deleted = entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
-        assertEquals(count, deleted);
-        entityManager.getTransaction().commit();
-
-        assertEquals(0, count(PObject.class));
-    }
-
-    public void testOrderBy() {
-        final EntityManager entityManager = emf.createEntityManager();
-
-        entityManager.getTransaction().begin();
-        entityManager.createQuery("DELETE FROM MPObject p").executeUpdate();
-        entityManager.getTransaction().commit();
-        assertEquals(0, count(MPObject.class));
-
-        entityManager.getTransaction().begin();
-        final Random randomGenerator = new Random();
-        for (int i = 0; i < 10; i++) {
-            final MPObject obj = new MPObject();
-            obj.setId(i);
-            obj.setValue(randomGenerator.nextInt(100));
-            entityManager.persist(obj);
-        }
-        entityManager.getTransaction().commit();
-
-        final List<MPObject> ordered = entityManager.createQuery("SELECT p FROM MPObject p ORDER BY p.value").
-                getResultList();
-        assertEquals(count(MPObject.class), ordered.size());
-
-        final List<Integer> values = new ArrayList<Integer>(ordered.size());
-        for (MPObject obj : ordered) {
-            values.add(obj.getValue());
-        }
-        assertOrdering(values.toArray(new Integer[values.size()]), true);
-    }
-
-    public void testRepOrderBy() {
-        createIndependentObjects(10);
-
-        final EntityManager entityManager = emf.createEntityManager();
-        entityManager.getTransaction().begin();
-
-        final List<PObject> all = entityManager.createQuery("SELECT p FROM PObject p").getResultList();
-        assertFalse(all.isEmpty());
-        final Random randomGenerator = new Random();
-        for (PObject obj : all) {
-            obj.setValue(randomGenerator.nextInt(100));
-            entityManager.merge(obj);
-        }
-
-        entityManager.getTransaction().commit();
-
-        final List<PObject> ordered = entityManager.createQuery("SELECT p FROM PObject p ORDER BY p.value DESC").
-                getResultList();
-        assertEquals(all.size(), ordered.size());
-
-        final List<Integer> values = new ArrayList<Integer>(ordered.size());
-        for (PObject obj : ordered) {
-            values.add(obj.getValue());
-        }
-        assertOrdering(values.toArray(new Integer[values.size()]), false);
-    }
-
-    private void assertOrdering(Comparable[] items, boolean ascending) {
-        assertNotNull(items);
-        assertTrue(items.length > 0);
-        for (int i = 1; i < items.length; i++) {
-            if (ascending) {
-                assertTrue(items[i].compareTo(items[i - 1]) >= 0);
-            } else {
-                assertTrue(items[i].compareTo(items[i - 1]) <= 0);
-            }
         }
     }
 
@@ -266,5 +257,32 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
                 + "GROUP BY c.gender HAVING COUNT(c) > 1").getResultList();
         assertNotNull(result);
         assertEquals(1, result.size());
+    }
+
+    /**
+     * Delete in bulk by query.
+     */
+    public void testBulkDelete() {
+        final EntityManager entityManager = emf.createEntityManager();
+
+        entityManager.getTransaction().begin();
+        final int count = count(PObject.class);
+        final int deleted = entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
+        assertEquals(count, deleted);
+        entityManager.getTransaction().commit();
+
+        assertEquals(0, count(PObject.class));
+    }
+
+    private void assertOrdering(Comparable[] items, boolean ascending) {
+        assertNotNull(items);
+        assertTrue(items.length > 0);
+        for (int i = 1; i < items.length; i++) {
+            if (ascending) {
+                assertTrue(items[i].compareTo(items[i - 1]) >= 0);
+            } else {
+                assertTrue(items[i].compareTo(items[i - 1]) <= 0);
+            }
+        }
     }
 }

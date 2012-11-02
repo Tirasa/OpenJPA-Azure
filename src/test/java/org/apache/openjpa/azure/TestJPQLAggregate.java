@@ -26,13 +26,15 @@ import org.apache.openjpa.azure.beans.PObject;
 
 public class TestJPQLAggregate extends AbstractAzureTestCase {
 
-    private long pobjMin = -1;
+    private static long pobjMin = -1;
 
-    private long pobjMax = -1;
+    private static long pobjMax = -1;
 
-    private long pobjAvg = 0;
+    private static long pobjAvg = 0;
 
-    private long pobjSum = 0;
+    private static long pobjSum = 0;
+
+    private static boolean initialized = false;
 
     @Override
     protected String getPersistenceUnitName() {
@@ -41,38 +43,45 @@ public class TestJPQLAggregate extends AbstractAzureTestCase {
 
     @Override
     public void setUp() {
-        super.setUp();
+        super.setUp(new Class[]{PObject.class, MPObject.class}, CLEAR_TABLES);
 
-        final EntityManager entityManager = emf.createEntityManager();
-        entityManager.getTransaction().begin();
+        if (!initialized) {
+            final EntityManager entityManager = emf.createEntityManager();
 
-        entityManager.createQuery("DELETE FROM MPObject p").executeUpdate();
-        entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
+            entityManager.getTransaction().begin();
 
-        for (int i = 9; i >= 0; i--) {
-            MPObject mpobj = new MPObject();
-            mpobj.setId(i);
-            mpobj.setValue(i);
+            entityManager.createQuery("DELETE FROM MPObject p").executeUpdate();
+            entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
 
-            entityManager.persist(mpobj);
+            for (int i = 9; i >= 0; i--) {
+                MPObject mpobj = new MPObject();
+                mpobj.setId(i);
+                mpobj.setValue(i);
 
-            PObject pobj = new PObject();
+                entityManager.persist(mpobj);
 
-            if (pobjMin < 0) {
-                pobjMin = pobj.getId();
+                PObject pobj = new PObject();
+
+                if (pobjMin < 0) {
+                    pobjMin = pobj.getId();
+                }
+
+                pobjMax = pobj.getId();
+
+                pobjSum += pobj.getId();
+
+                entityManager.persist(pobj);
             }
 
-            pobjMax = pobj.getId();
+            entityManager.getTransaction().commit();
+            entityManager.clear();
+            entityManager.close();
 
-            pobjSum += pobj.getId();
+            pobjSum *= 2;
+            pobjAvg = pobjSum / 20;
 
-            entityManager.persist(pobj);
+            initialized = true;
         }
-
-        entityManager.getTransaction().commit();
-
-        pobjSum *= 2;
-        pobjAvg = pobjSum / 20;
     }
 
     public void testSum() {
@@ -129,7 +138,7 @@ public class TestJPQLAggregate extends AbstractAzureTestCase {
         assertEquals(10, all.size());
 
         Long count = (Long) entityManager.createQuery("SELECT COUNT(p) FROM MPObject p").getSingleResult();
-        assertEquals(new Long(10L), count);
+        assertEquals(10L, count.longValue());
     }
 
     public void testRepCount() {
@@ -140,6 +149,6 @@ public class TestJPQLAggregate extends AbstractAzureTestCase {
         assertEquals(20, all.size());
 
         Long count = (Long) entityManager.createQuery("SELECT COUNT(p) FROM PObject p").getSingleResult();
-        assertEquals(new Long(20L), count);
+        assertEquals(20L, count.longValue());
     }
 }

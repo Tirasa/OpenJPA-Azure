@@ -27,6 +27,8 @@ import org.apache.openjpa.persistence.OpenJPAEntityManager;
 
 public class TestJPQLSubqueries extends AbstractAzureTestCase {
 
+    private static boolean initialized = false;
+
     @Override
     protected String getPersistenceUnitName() {
         return System.getProperty("unit", "azure-test");
@@ -34,30 +36,34 @@ public class TestJPQLSubqueries extends AbstractAzureTestCase {
 
     @Override
     public void setUp() {
-        super.setUp();
+        super.setUp(new Class[]{PObject.class, MPObject.class}, CLEAR_TABLES);
 
-        final EntityManager entityManager = emf.createEntityManager();
-        entityManager.getTransaction().begin();
+        if (!initialized) {
+            final EntityManager entityManager = emf.createEntityManager();
+            entityManager.getTransaction().begin();
 
-        entityManager.createQuery("DELETE FROM MPObject p").executeUpdate();
-        entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
+            entityManager.createQuery("DELETE FROM MPObject p").executeUpdate();
+            entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
 
-        for (int i = 9; i >= 0; i--) {
-            MPObject mpobj = new MPObject();
-            mpobj.setId(i);
-            mpobj.setValue(i);
+            for (int i = 9; i >= 0; i--) {
+                MPObject mpobj = new MPObject();
+                mpobj.setId(i);
+                mpobj.setValue(i);
 
-            entityManager.persist(mpobj);
+                entityManager.persist(mpobj);
 
-            PObject pobj = new PObject();
-            pobj.setValue(i + 1);
+                PObject pobj = new PObject();
+                pobj.setValue(i + 1);
 
-            entityManager.persist(pobj);
+                entityManager.persist(pobj);
+            }
+
+            entityManager.getTransaction().commit();
+            entityManager.clear();
+            entityManager.close();
+
+            initialized = true;
         }
-
-        entityManager.getTransaction().commit();
-        entityManager.clear();
-        entityManager.close();
     }
 
     public void testExists() {

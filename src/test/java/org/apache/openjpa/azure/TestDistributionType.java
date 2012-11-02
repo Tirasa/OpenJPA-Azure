@@ -20,6 +20,7 @@ package org.apache.openjpa.azure;
 
 import java.util.List;
 import javax.persistence.EntityManager;
+import org.apache.openjpa.azure.beans.BusinessRole;
 import org.apache.openjpa.azure.beans.Gender;
 import org.apache.openjpa.azure.beans.PersonBIN;
 import org.apache.openjpa.azure.beans.PersonBINT;
@@ -30,6 +31,38 @@ import org.apache.openjpa.azure.beans.PersonUID;
 import org.apache.openjpa.azure.beans.PersonUID_PK;
 
 public class TestDistributionType extends AbstractAzureTestCase {
+
+    private static boolean initialized = false;
+
+    @Override
+    public void setUp() {
+        super.setUp(
+                new Class[]{
+                    PersonBINT.class,
+                    PersonUID.class,
+                    PersonINT.class,
+                    PersonBIN.class,
+                    BusinessRole.class},
+                CLEAR_TABLES);
+
+        if (!initialized) {
+            final EntityManager entityManager = emf.createEntityManager();
+            entityManager.getTransaction().begin();
+
+            entityManager.createNativeQuery("DELETE FROM Membership").executeUpdate();
+            entityManager.createQuery("DELETE FROM PersonBINT p").executeUpdate();
+            entityManager.createQuery("DELETE FROM BusinessRole p").executeUpdate();
+            entityManager.createQuery("DELETE FROM PersonINT p").executeUpdate();
+            entityManager.createQuery("DELETE FROM PersonUID p").executeUpdate();
+            entityManager.createQuery("DELETE FROM PersonBIN p").executeUpdate();
+
+            entityManager.getTransaction().commit();
+            entityManager.clear();
+            entityManager.close();
+
+            initialized = true;
+        }
+    }
 
     @Override
     protected String getPersistenceUnitName() {

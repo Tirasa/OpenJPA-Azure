@@ -31,6 +31,17 @@ import org.apache.openjpa.persistence.test.SingleEMFTestCase;
 
 public abstract class AbstractAzureTestCase extends SingleEMFTestCase {
 
+    @Override
+    public void tearDown()
+            throws Exception {
+        if (emf == null) {
+            return;
+        }
+
+        closeEMF(emf);
+        emf = null;
+    }
+
     protected List<Class> findClasses(final File directory, final String packageName) {
         final List<Class> classes = new ArrayList<Class>();
         if (!directory.exists()) {

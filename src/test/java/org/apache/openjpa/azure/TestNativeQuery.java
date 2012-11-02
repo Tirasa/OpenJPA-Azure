@@ -25,6 +25,27 @@ import org.apache.openjpa.azure.beans.PObject;
 
 public class TestNativeQuery extends AbstractAzureTestCase {
 
+    private static boolean initialized = false;
+
+    @Override
+    public void setUp() {
+        super.setUp(new Class[]{PObject.class}, CLEAR_TABLES);
+
+        if (!initialized) {
+            final EntityManager entityManager = emf.createEntityManager();
+
+            entityManager.getTransaction().begin();
+
+            entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
+
+            entityManager.getTransaction().commit();
+            entityManager.clear();
+            entityManager.close();
+
+            initialized = true;
+        }
+    }
+
     @Override
     protected String getPersistenceUnitName() {
         return System.getProperty("unit", "azure-test");
