@@ -22,12 +22,13 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import org.apache.openjpa.azure.Federation;
-import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
+import org.apache.openjpa.jdbc.schema.Table;
+import org.apache.openjpa.slice.jdbc.DistributedJDBCConfiguration;
 
 /**
  * Configuration class interface.
  */
-public interface AzureConfiguration extends JDBCConfiguration {
+public interface AzureConfiguration extends DistributedJDBCConfiguration {
 
     public enum RangeType {
 
@@ -66,6 +67,14 @@ public interface AzureConfiguration extends JDBCConfiguration {
      * @return list of federations.
      */
     Collection<Federation> getFederations();
+
+    /**
+     * Get all the federations for provided table.
+     *
+     * @param table table.
+     * @return list of federation for provided table.
+     */
+    List<Federation> getFederations(final Table table);
 
     /**
      * Get all the federations for provided table.

@@ -34,14 +34,14 @@
     
     <properties>
       <property name="openjpa.BrokerFactory" value="azure"/>
-      
+
       <property name="openjpa.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.ConnectionDriverName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
       <property name="openjpa.ConnectionUserName" value="${jpa.username}"/>
       <property name="openjpa.ConnectionPassword" value="${jpa.password}"/>
       
-      <property name="openjpa.jdbc.MappingDefaults" value="ForeignKeyDeleteAction=restrict, JoinForeignKeyDeleteAction=restrict"/>
+<!--      <property name="openjpa.jdbc.MappingDefaults" value="ForeignKeyDeleteAction=restrict, JoinForeignKeyDeleteAction=restrict"/>-->
                   
       <property name="openjpa.Log" value="DefaultLevel=WARN, Runtime=TRACE, Tool=TRACE, SQL=TRACE"/>
 
@@ -50,6 +50,7 @@
         
       <property name="openjpa.azure.FED_1.RangeMappingType" value="BIGINT" />
       <property name="openjpa.azure.FED_1.Tables" value="PersonBINT,BusinessRole,PObject,MPObject" />
+<!--      <property name="openjpa.azure.FED_1.Tables" value="PObject,MPObject" />-->
       <property name="openjpa.azure.FED_1.PersonBINT.RangeMappingName" value="id" />
       <property name="openjpa.azure.FED_1.BusinessRole.RangeMappingName" value="id" />
       <property name="openjpa.azure.FED_1.PObject.RangeMappingName" value="id" />
@@ -68,8 +69,77 @@
       <property name="openjpa.azure.FED_4.PersonBIN.RangeMappingName" value="code" />
       
       <property name="openjpa.azure.FED_5.RangeMappingType" value="BIGINT" />
-      <property name="openjpa.azure.FED_5.Tables" value="PObject" />
-      <property name="openjpa.azure.FED_5.PObject.RangeMappingName" value="id" />
+<!--      <property name="openjpa.azure.FED_5.Tables" value="PObject" />
+      <property name="openjpa.azure.FED_5.PObject.RangeMappingName" value="id" />-->
+      
+<!--      <property name="openjpa.slice.Names"   value="ROOT,FED_1.1,FED_1.2,FED_2.1,FED_2.2,FED_3.1,FED_3.2,FED_4,FED_5"/>-->
+      <property name="openjpa.slice.Names"   value="ROOT, FED_1, FED_2, FED_3, FED_4, FED_5"/>
+      <property name="openjpa.slice.Master"  value="ROOT"/>
+      <property name="openjpa.slice.Lenient" value="true"/>
+      <property name="openjpa.slice.DistributionPolicy" value="org.apache.openjpa.azure.AzureDistributionPolicy"/>
+      <property name="openjpa.slice.QueryTargetPolicy" value="org.apache.openjpa.azure.AzureQueryTargetPolicy"/>
+      <property name="openjpa.slice.FinderTargetPolicy" value="org.apache.openjpa.azure.AzureFinderTargetPolicy"/>
+      <property name="openjpa.slice.ReplicationPolicy" value="org.apache.openjpa.azure.AzureReplicationPolicy"/>
+      
+      <property name="openjpa.slice.ROOT.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      <property name="openjpa.slice.ROOT.ConnectionDriverName" 
+                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+      
+      <property name="openjpa.slice.FED_1.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      <property name="openjpa.slice.FED_1.ConnectionDriverName" 
+                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+                
+<!--      <property name="openjpa.slice.FED_1.1.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      <property name="openjpa.slice.FED_1.1.ConnectionDriverName" 
+                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+                
+      <property name="openjpa.slice.FED_1.2.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      <property name="openjpa.slice.FED_1.2.ConnectionDriverName" 
+                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>-->
+      
+      <property name="openjpa.slice.FED_2.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      <property name="openjpa.slice.FED_2.ConnectionDriverName" 
+                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+                
+<!--      <property name="openjpa.slice.FED_2.1.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      <property name="openjpa.slice.FED_2.1.ConnectionDriverName" 
+                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+                
+      <property name="openjpa.slice.FED_2.2.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      <property name="openjpa.slice.FED_2.2.ConnectionDriverName" 
+                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>-->
+      
+      <property name="openjpa.slice.FED_3.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      <property name="openjpa.slice.FED_3.ConnectionDriverName" 
+                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+                
+<!--      <property name="openjpa.slice.FED_3.1.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      <property name="openjpa.slice.FED_3.1.ConnectionDriverName" 
+                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+                
+      <property name="openjpa.slice.FED_3.2.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      <property name="openjpa.slice.FED_3.2.ConnectionDriverName" 
+                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>-->
+                
+      <property name="openjpa.slice.FED_4.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      <property name="openjpa.slice.FED_4.ConnectionDriverName" 
+                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+                
+      <property name="openjpa.slice.FED_5.ConnectionURL" 
+                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
+      <property name="openjpa.slice.FED_5.ConnectionDriverName" 
+                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
     </properties>
   </persistence-unit>
 </persistence>

@@ -20,8 +20,6 @@ package org.apache.openjpa.azure;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.openjpa.azure.jdbc.kernel.AzureBrokerFactory;
-import org.apache.openjpa.azure.kernel.AzureBroker;
 import org.apache.openjpa.conf.OpenJPAProductDerivation;
 import org.apache.openjpa.jdbc.sql.AzureDictionary;
 import org.apache.openjpa.lib.conf.AbstractProductDerivation;
@@ -43,12 +41,11 @@ public class ProductDerivation extends AbstractProductDerivation implements Open
 
     static {
         AZURE_CONF_MAP.put("openjpa.jdbc.DBDictionary", AzureDictionary.class.getName());
-        AZURE_CONF_MAP.put("openjpa.BrokerImpl", AzureBroker.class.getName());
     }
 
     @Override
     public void putBrokerFactoryAliases(final Map<String, String> aliases) {
-        aliases.put("azure", AzureBrokerFactory.class.getName());
+        aliases.put("azure", AzureDistributedBrokerFactory.class.getName());
     }
 
     @Override

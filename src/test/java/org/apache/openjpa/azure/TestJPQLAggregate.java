@@ -50,10 +50,14 @@ public class TestJPQLAggregate extends AbstractAzureTestCase {
 
             entityManager.getTransaction().begin();
 
+            // Native query
+            entityManager.createNativeQuery("DELETE FROM PObject").executeUpdate();
+
+            // JPQL query
             entityManager.createQuery("DELETE FROM MPObject p").executeUpdate();
-            entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
 
             for (int i = 9; i >= 0; i--) {
+
                 MPObject mpobj = new MPObject();
                 mpobj.setId(i);
                 mpobj.setValue(i);
@@ -74,6 +78,7 @@ public class TestJPQLAggregate extends AbstractAzureTestCase {
             }
 
             entityManager.getTransaction().commit();
+
             entityManager.clear();
             entityManager.close();
 

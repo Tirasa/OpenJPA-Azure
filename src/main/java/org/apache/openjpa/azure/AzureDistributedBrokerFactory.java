@@ -16,48 +16,61 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.azure.jdbc.kernel;
+package org.apache.openjpa.azure;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfigurationImpl;
 import org.apache.openjpa.azure.jdbc.meta.AzureMappingTool;
-import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
-import org.apache.openjpa.jdbc.kernel.AzureDistributedStoreManager;
-import org.apache.openjpa.jdbc.kernel.JDBCBrokerFactory;
 import org.apache.openjpa.jdbc.meta.MappingRepository;
 import org.apache.openjpa.jdbc.meta.MappingTool;
-import org.apache.openjpa.kernel.StoreManager;
 import org.apache.openjpa.lib.conf.ConfigurationProvider;
 import org.apache.openjpa.lib.conf.Configurations;
 import org.apache.openjpa.lib.util.Localizer;
+import org.apache.openjpa.slice.Slice;
+import org.apache.openjpa.slice.jdbc.DistributedJDBCBrokerFactory;
+import org.apache.openjpa.slice.jdbc.DistributedJDBCConfiguration;
 import org.apache.openjpa.util.UserException;
 
-public class AzureBrokerFactory extends JDBCBrokerFactory {
+public class AzureDistributedBrokerFactory extends DistributedJDBCBrokerFactory {
 
-    private static final long serialVersionUID = 1641615009581406164L;
+    private static final Localizer _loc = Localizer.forPackage(AzureDistributedBrokerFactory.class);
 
-    private static final Localizer _loc = Localizer.forPackage(AzureBrokerFactory.class);
+    private static final long serialVersionUID = 3111066668150403201L;
 
-    public AzureBrokerFactory(final AzureConfiguration conf) {
+    public AzureDistributedBrokerFactory(AzureConfiguration conf) {
         super(conf);
     }
 
-    @Override
-    protected StoreManager newStoreManager() {
-        return new AzureDistributedStoreManager();
-    }
-
-    public static JDBCBrokerFactory newInstance(final ConfigurationProvider provider) {
-        final AzureConfiguration conf = new AzureConfigurationImpl();
-        provider.setInto(conf);
-        return new AzureBrokerFactory(conf);
+    public static AzureDistributedBrokerFactory newInstance(ConfigurationProvider cp) {
+        AzureConfigurationImpl conf = new AzureConfigurationImpl();
+        cp.setInto(conf);
+        return new AzureDistributedBrokerFactory(conf);
     }
 
     @Override
-    protected void synchronizeMappings(final ClassLoader loader, final JDBCConfiguration conf) {
+    public DistributedJDBCConfiguration getConfiguration() {
+        return (AzureConfiguration) super.getConfiguration();
+    }
+
+    @Override
+    protected void synchronizeMappings(ClassLoader loader) {
+        final String action = getConfiguration().getSynchronizeMappings();
+        if (!StringUtils.isEmpty(action)) {
+
+            List<Slice> slices = getConfiguration().getSlices(Slice.Status.ACTIVE);
+            for (Slice slice : slices) {
+                synchronizeMappings(loader, slice);
+            }
+        }
+    }
+
+    protected void synchronizeMappings(final ClassLoader loader, final Slice slice) {
+
+        final AzureConfiguration conf = (AzureConfiguration) getConfiguration();
         String action = conf.getSynchronizeMappings();
         if (StringUtils.isEmpty(action)) {
             return;
@@ -65,13 +78,15 @@ public class AzureBrokerFactory extends JDBCBrokerFactory {
 
         final MappingRepository repo = conf.getMappingRepositoryInstance();
         final Collection<Class<?>> classes = repo.loadPersistentTypes(false, loader);
+
         if (classes.isEmpty()) {
             return;
         }
 
-        final String props = Configurations.getProperties(action);
+        String props = Configurations.getProperties(action);
         action = Configurations.getClassName(action);
-        final AzureMappingTool tool = new AzureMappingTool(conf, action, false);
+
+        final MappingTool tool = new AzureMappingTool(slice, conf, action, false);
         Configurations.configureInstance(tool, conf, props, "SynchronizeMappings");
 
         // initialize the schema
@@ -79,7 +94,8 @@ public class AzureBrokerFactory extends JDBCBrokerFactory {
             try {
                 tool.run(cls);
             } catch (IllegalArgumentException iae) {
-                throw new UserException(_loc.get("bad-synch-mappings", action, Arrays.asList(MappingTool.ACTIONS)), iae);
+                throw new UserException(
+                        _loc.get("bad-synch-mappings", action, Arrays.asList(MappingTool.ACTIONS)), iae);
             }
         }
 

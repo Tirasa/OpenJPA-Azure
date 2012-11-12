@@ -30,11 +30,14 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.azure.ProductDerivation;
-import org.apache.openjpa.jdbc.conf.JDBCConfigurationImpl;
+import org.apache.openjpa.jdbc.schema.ForeignKey;
+import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.lib.conf.StringListValue;
 import org.apache.openjpa.lib.util.Localizer;
+import org.apache.openjpa.slice.Slice;
+import org.apache.openjpa.slice.jdbc.DistributedJDBCConfigurationImpl;
 
-public class AzureConfigurationImpl extends JDBCConfigurationImpl implements AzureConfiguration {
+public class AzureConfigurationImpl extends DistributedJDBCConfigurationImpl implements AzureConfiguration {
 
     private static final long serialVersionUID = 8033042262237726572L;
 
@@ -44,11 +47,12 @@ public class AzureConfigurationImpl extends JDBCConfigurationImpl implements Azu
 
     private Map<String, Federation> federations = new HashMap<String, Federation>();
 
+    private Map<Slice, Federation> sliceToFed = new HashMap<Slice, Federation>();
+
     private Map<String, List<Federation>> federatedTables = new HashMap<String, List<Federation>>();
 
     public AzureConfigurationImpl() {
         super();
-
         federationsPlugin = addStringList(ProductDerivation.PREFIX_AZURE + ".Federations");
     }
 
@@ -85,13 +89,33 @@ public class AzureConfigurationImpl extends JDBCConfigurationImpl implements Azu
     }
 
     @Override
+    public List<Federation> getFederations(final Table table) {
+        final List<Federation> federations = new ArrayList<Federation>();
+
+        if (table != null) {
+            String tableName = table.getFullIdentifier().getName();
+
+            federations.addAll(
+                    federatedTables.get(tableName) == null ? Collections.EMPTY_LIST : federatedTables.get(tableName));
+
+            for (ForeignKey fk : table.getForeignKeys()) {
+                federations.addAll(federatedTables.get(fk.getPrimaryKeyTable().getFullIdentifier().getName()));
+            }
+        }
+
+        return federations;
+    }
+
+    @Override
     public List<Federation> getFederations(final String tableName) {
         return federatedTables.get(tableName) == null ? Collections.EMPTY_LIST : federatedTables.get(tableName);
     }
 
     @Override
     public void fromProperties(final Map original) {
-        super.fromProperties(original);
+        if (original.containsKey(DistributedJDBCConfigurationImpl.PREFIX_SLICE + "Names")) {
+            super.fromProperties(original);
+        }
 
         final Map<String, String> newProps = new HashMap<String, String>();
 
@@ -103,6 +127,7 @@ public class AzureConfigurationImpl extends JDBCConfigurationImpl implements Azu
 
         if (!newProps.isEmpty()) {
             for (String federationName : federationsPlugin.get()) {
+
                 final Federation federation = new Federation();
 
                 federation.setName(federationName);
@@ -144,6 +169,8 @@ public class AzureConfigurationImpl extends JDBCConfigurationImpl implements Azu
                 }
 
                 federations.put(federationName, federation);
+
+                sliceToFed.put(getSlice(federationName), federation);
             }
         }
     }
@@ -156,5 +183,9 @@ public class AzureConfigurationImpl extends JDBCConfigurationImpl implements Azu
     @Override
     public int hashCode() {
         return HashCodeBuilder.reflectionHashCode(this);
+    }
+
+    public Federation getFederation(final Slice slice) {
+        return sliceToFed.get(slice);
     }
 }

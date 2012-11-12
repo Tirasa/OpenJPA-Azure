@@ -22,20 +22,31 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.AbstractMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration.RangeType;
+import org.apache.openjpa.jdbc.meta.MappingRepository;
 import org.apache.openjpa.jdbc.schema.ForeignKey;
 import org.apache.openjpa.jdbc.schema.Table;
+import org.apache.openjpa.meta.ClassMetaData;
 
 public final class AzureUtils {
 
     private AzureUtils() {
     }
 
-    public static void useFederation(final Connection conn, final Federation federation, final Object oid)
+    public static Connection useFederation(final Connection conn, final Federation federation)
+            throws SQLException {
+
+        final MemberDistribution memberDistribution = getMemberDistribution(conn, federation);
+        return useFederation(conn, federation, memberDistribution.iterator().next());
+    }
+
+    public static Connection useFederation(final Connection conn, final Federation federation, final Object oid)
             throws SQLException {
 
         final String distribution = RangeType.UNIQUEIDENTIFIER == federation.getRangeMappingType()
@@ -57,9 +68,11 @@ public final class AzureUtils {
                 }
             }
         }
+
+        return conn;
     }
 
-    public static void useRootFederation(final Connection conn)
+    public static Connection useRootFederation(final Connection conn)
             throws SQLException {
 
         Statement stm = null;
@@ -75,6 +88,8 @@ public final class AzureUtils {
                 }
             }
         }
+
+        return conn;
     }
 
     public static Object getMemberDistribution(final Connection conn, final Federation federation, final Object oid)
@@ -219,8 +234,7 @@ public final class AzureUtils {
 
         tablesToBeExcluded.add(table.getFullIdentifier().getName());
 
-        final Set<Federation> federations =
-                new HashSet<Federation>(conf.getFederations(table.getFullIdentifier().getName()));
+        final Set<Federation> federations = new HashSet<Federation>(conf.getFederations(table));
 
         final ForeignKey[] fks = table.getForeignKeys();
 
@@ -232,6 +246,49 @@ public final class AzureUtils {
         }
 
         return federations;
+    }
+
+    public static String getTableName(final AzureConfiguration conf, final ClassMetaData meta) {
+        return meta == null ? null : getTableName(conf, meta.getDescribedType());
+    }
+
+    public static Table getTable(final AzureConfiguration conf, final ClassMetaData meta) {
+        return meta == null ? null : getTable(conf, meta.getDescribedType());
+    }
+
+    public static String getTableName(final AzureConfiguration conf, final Class describedType) {
+        try {
+            final Table table = getTable(conf, describedType);
+            return table == null ? null : table.getFullIdentifier().getName();
+        } catch (Exception e) {
+            // ignore exception and search for table by using all the connections
+            return null;
+        }
+    }
+
+    public static Table getTable(final AzureConfiguration conf, final Class describedType) {
+        try {
+            final MappingRepository repo = conf.getMappingRepositoryInstance();
+            final Table table = repo.getMapping(describedType, conf.getClass().getClassLoader(), true).getTable();
+            return table;
+        } catch (Exception e) {
+            // ignore exception and search for table by using all the connections
+            return null;
+        }
+    }
+
+    public static Map.Entry<String, Object> getTargetId(final AzureConfiguration conf, final Class candidate) {
+        String tableName = getTableName(conf, candidate);
+
+        // TODO: improve looking for distribution value.
+        return new AbstractMap.SimpleEntry<String, Object>(tableName, null);
+    }
+
+    public static Map.Entry<String, Object> getTargetId(final AzureConfiguration conf, final ClassMetaData meta) {
+        String tableName = getTableName(conf, meta);
+
+        // TODO: improve looking for distribution value.
+        return new AbstractMap.SimpleEntry<String, Object>(tableName, null);
     }
 
     public static String getObjectIdAsString(final Object oid) {

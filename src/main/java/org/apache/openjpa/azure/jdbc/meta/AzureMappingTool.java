@@ -20,9 +20,11 @@ package org.apache.openjpa.azure.jdbc.meta;
 
 import java.io.File;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.openjpa.azure.jdbc.schema.AzureSchemaTool;
@@ -55,6 +57,7 @@ import org.apache.openjpa.meta.MetaDataFactory;
 import org.apache.openjpa.meta.QueryMetaData;
 import org.apache.openjpa.meta.SequenceMetaData;
 import org.apache.openjpa.meta.ValueStrategies;
+import org.apache.openjpa.slice.Slice;
 import org.apache.openjpa.util.GeneralException;
 import org.apache.openjpa.util.MetaDataException;
 
@@ -81,11 +84,15 @@ public class AzureMappingTool extends MappingTool {
 
     private boolean _flushSchema = false;
 
+    private final Slice slice;
+
     /**
      * Constructor. Supply configuration and action.
      */
-    public AzureMappingTool(final JDBCConfiguration conf, final String action, final boolean meta) {
+    public AzureMappingTool(final Slice slice, final JDBCConfiguration conf, final String action, final boolean meta) {
         super(conf, action, meta);
+
+        this.slice = slice;
 
         this._conf = conf;
         _log = conf.getLog(JDBCConfiguration.LOG_METADATA);
@@ -116,7 +123,7 @@ public class AzureMappingTool extends MappingTool {
         if (SCHEMA_ACTION_NONE.equals(action)) {
             action = null;
         }
-        final SchemaTool tool = new AzureSchemaTool(_conf, action);
+        final SchemaTool tool = new AzureSchemaTool(slice, _conf, action);
         tool.setIgnoreErrors(getIgnoreErrors());
         tool.setPrimaryKeys(getPrimaryKeys());
         tool.setForeignKeys(getForeignKeys());
@@ -140,7 +147,7 @@ public class AzureMappingTool extends MappingTool {
     public void record(final Flags flags) {
         final MappingRepository repos = getRepository();
         final MetaDataFactory io = repos.getMetaDataFactory();
-        
+
         ClassMapping[] mappings;
         if (!ACTION_DROP.equals(getAction())) {
             mappings = repos.getMappings();
@@ -174,7 +181,7 @@ public class AzureMappingTool extends MappingTool {
                             && (getSchemaWriter() == null || (_schemaTool != null
                             && _schemaTool.getWriter() != null))) {
 
-                        final AzureSchemaTool tool = (AzureSchemaTool) newSchemaTool(schemaActions[i]);
+                        final SchemaTool tool = newSchemaTool(schemaActions[i]);
 
                         // configure the tool with additional settings
                         if (flags != null) {
@@ -207,7 +214,7 @@ public class AzureMappingTool extends MappingTool {
 
             final QueryMetaData[] queries = repos.getQueryMetaDatas();
             final SequenceMetaData[] seqs = repos.getSequenceMetaDatas();
-            
+
             Map<File, String> output = null;
 
             // if we're outputting to stream, set all metas to same file so

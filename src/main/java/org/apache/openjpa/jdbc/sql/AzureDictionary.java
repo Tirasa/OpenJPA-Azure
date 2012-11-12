@@ -41,136 +41,136 @@ import org.apache.openjpa.jdbc.schema.Unique;
  */
 public class AzureDictionary extends SQLServerDictionary {
 
-    @Override
-    public Column[] getColumns(
-            final DatabaseMetaData meta,
-            final DBIdentifier catalog,
-            final DBIdentifier schemaName,
-            final DBIdentifier tableName,
-            final DBIdentifier columnName,
-            final Connection conn)
-            throws SQLException {
-
-        AzureUtils.useRootFederation(conn);
-
-        final Collection<Federation> federations = tableName == null
-                ? ((AzureConfiguration) conf).getFederations()
-                : ((AzureConfiguration) conf).getFederations(tableName.getName());
-
-        Column[] columns = null;
-
-        if (federations.isEmpty()) {
-            columns = getColumns(conn, schemaName, tableName, columnName);
-        } else {
-            for (Federation federation : federations) {
-                for (Object memberId : AzureUtils.getMemberDistribution(conn, federation)) {
-                    AzureUtils.useFederation(conn, federation, memberId);
-
-                    columns = getColumns(conn, schemaName, tableName, columnName);
-
-                    if (columns == null || columns.length == 0) {
-                        return new Column[0];
-                    }
-                }
-                AzureUtils.useRootFederation(conn);
-            }
-        }
-
-        return columns;
-    }
-
-    /**
-     * Create a new column from the information in the schema metadata. Compared to DBDictionary.newColumn(), this will
-     * refer to column names reported by sp_columns.
-     */
-    @Override
-    protected Column newColumn(final ResultSet colMeta)
-            throws SQLException {
-
-        final Column col = new Column();
-        col.setSchemaIdentifier(fromDBName(colMeta.getString("TABLE_OWNER"), DBIdentifier.DBIdentifierType.SCHEMA));
-        col.setTableIdentifier(fromDBName(colMeta.getString("TABLE_NAME"), DBIdentifier.DBIdentifierType.TABLE));
-        col.setIdentifier(fromDBName(colMeta.getString("COLUMN_NAME"), DBIdentifier.DBIdentifierType.COLUMN));
-        col.setType(colMeta.getInt("DATA_TYPE"));
-        col.setTypeIdentifier(fromDBName(colMeta.getString("TYPE_NAME"),
-                DBIdentifier.DBIdentifierType.COLUMN_DEFINITION));
-        col.setSize(colMeta.getInt("PRECISION"));
-        col.setDecimalDigits(colMeta.getInt("SCALE"));
-        col.setNotNull(colMeta.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls);
-
-        final String def = colMeta.getString("COLUMN_DEF");
-        if (!StringUtils.isEmpty(def) && !"null".equalsIgnoreCase(def)) {
-            col.setDefaultString(def);
-        }
-        return col;
-    }
-
-    private Column[] getColumns(
-            final Connection conn,
-            final DBIdentifier schemaName,
-            final DBIdentifier tableName,
-            final DBIdentifier columnName) {
-
-        if (DBIdentifier.isNull(tableName) && !supportsNullTableForGetColumns) {
-            return null;
-        }
-
-        final String sqlSchema = supportsSchemaForGetColumns ? getSchemaNameForMetadata(schemaName) : null;
-        final String sqlTable = getTableNameForMetadata(tableName);
-        final String sqlColumn = getColumnNameForMetadata(columnName);
-
-        final List<Column> columnList = new ArrayList<Column>();
-
-        Statement stmt = null;
-        ResultSet resultSet = null;
-        try {
-            stmt = conn.createStatement();
-            resultSet = stmt.executeQuery("EXEC sp_columns " + sqlTable + ", " + sqlSchema + ", null, " + sqlColumn);
-
-            while (resultSet.next()) {
-                final Column column = newColumn(resultSet);
-                columnList.add(column);
-
-                // for opta driver, which reports nvarchar as unknown type
-                String typeName = column.getTypeIdentifier().getName();
-                if (typeName == null) {
-                    continue;
-                }
-                typeName = typeName.toUpperCase();
-
-                if ("NVARCHAR".equals(typeName)) {
-                    column.setType(Types.VARCHAR);
-                } else if ("UNIQUEIDENTIFIER".equals(typeName)) {
-                    if (uniqueIdentifierAsVarbinary) {
-                        column.setType(Types.VARBINARY);
-                    } else {
-                        column.setType(Types.VARCHAR);
-                    }
-                } else if ("NCHAR".equals(typeName)) {
-                    column.setType(Types.CHAR);
-                } else if ("NTEXT".equals(typeName)) {
-                    column.setType(Types.CLOB);
-                }
-            }
-        } catch (SQLException e) {
-            log.error("Error getting columns", e);
-        } finally {
-            if (resultSet != null) {
-                try {
-                    resultSet.close();
-                } catch (SQLException e) {
-                    log.error("Error closing result set", e);
-                }
-            }
-            try {
-                stmt.close();
-            } catch (SQLException e) {
-                log.error("Error closing statement", e);
-            }
-        }
-
-        return (Column[]) columnList.toArray(new Column[columnList.size()]);
-    }
+//    @Override
+//    public Column[] getColumns(
+//            final DatabaseMetaData meta,
+//            final DBIdentifier catalog,
+//            final DBIdentifier schemaName,
+//            final DBIdentifier tableName,
+//            final DBIdentifier columnName,
+//            final Connection conn)
+//            throws SQLException {
+//
+//        AzureUtils.useRootFederation(conn);
+//
+//        final Collection<Federation> federations = tableName == null
+//                ? ((AzureConfiguration) conf).getFederations()
+//                : ((AzureConfiguration) conf).getFederations(tableName.getName());
+//
+//        Column[] columns = null;
+//
+//        if (federations.isEmpty()) {
+//            columns = getColumns(conn, schemaName, tableName, columnName);
+//        } else {
+//            for (Federation federation : federations) {
+//                for (Object memberId : AzureUtils.getMemberDistribution(conn, federation)) {
+//                    AzureUtils.useFederation(conn, federation, memberId);
+//
+//                    columns = getColumns(conn, schemaName, tableName, columnName);
+//
+//                    if (columns == null || columns.length == 0) {
+//                        return new Column[0];
+//                    }
+//                }
+//                AzureUtils.useRootFederation(conn);
+//            }
+//        }
+//
+//        return columns;
+//    }
+//
+//    /**
+//     * Create a new column from the information in the schema metadata. Compared to DBDictionary.newColumn(), this will
+//     * refer to column names reported by sp_columns.
+//     */
+//    @Override
+//    protected Column newColumn(final ResultSet colMeta)
+//            throws SQLException {
+//
+//        final Column col = new Column();
+//        col.setSchemaIdentifier(fromDBName(colMeta.getString("TABLE_OWNER"), DBIdentifier.DBIdentifierType.SCHEMA));
+//        col.setTableIdentifier(fromDBName(colMeta.getString("TABLE_NAME"), DBIdentifier.DBIdentifierType.TABLE));
+//        col.setIdentifier(fromDBName(colMeta.getString("COLUMN_NAME"), DBIdentifier.DBIdentifierType.COLUMN));
+//        col.setType(colMeta.getInt("DATA_TYPE"));
+//        col.setTypeIdentifier(fromDBName(colMeta.getString("TYPE_NAME"),
+//                DBIdentifier.DBIdentifierType.COLUMN_DEFINITION));
+//        col.setSize(colMeta.getInt("PRECISION"));
+//        col.setDecimalDigits(colMeta.getInt("SCALE"));
+//        col.setNotNull(colMeta.getInt("NULLABLE") == DatabaseMetaData.columnNoNulls);
+//
+//        final String def = colMeta.getString("COLUMN_DEF");
+//        if (!StringUtils.isEmpty(def) && !"null".equalsIgnoreCase(def)) {
+//            col.setDefaultString(def);
+//        }
+//        return col;
+//    }
+//
+//    private Column[] getColumns(
+//            final Connection conn,
+//            final DBIdentifier schemaName,
+//            final DBIdentifier tableName,
+//            final DBIdentifier columnName) {
+//
+//        if (DBIdentifier.isNull(tableName) && !supportsNullTableForGetColumns) {
+//            return null;
+//        }
+//
+//        final String sqlSchema = supportsSchemaForGetColumns ? getSchemaNameForMetadata(schemaName) : null;
+//        final String sqlTable = getTableNameForMetadata(tableName);
+//        final String sqlColumn = getColumnNameForMetadata(columnName);
+//
+//        final List<Column> columnList = new ArrayList<Column>();
+//
+//        Statement stmt = null;
+//        ResultSet resultSet = null;
+//        try {
+//            stmt = conn.createStatement();
+//            resultSet = stmt.executeQuery("EXEC sp_columns " + sqlTable + ", " + sqlSchema + ", null, " + sqlColumn);
+//
+//            while (resultSet.next()) {
+//                final Column column = newColumn(resultSet);
+//                columnList.add(column);
+//
+//                // for opta driver, which reports nvarchar as unknown type
+//                String typeName = column.getTypeIdentifier().getName();
+//                if (typeName == null) {
+//                    continue;
+//                }
+//                typeName = typeName.toUpperCase();
+//
+//                if ("NVARCHAR".equals(typeName)) {
+//                    column.setType(Types.VARCHAR);
+//                } else if ("UNIQUEIDENTIFIER".equals(typeName)) {
+//                    if (uniqueIdentifierAsVarbinary) {
+//                        column.setType(Types.VARBINARY);
+//                    } else {
+//                        column.setType(Types.VARCHAR);
+//                    }
+//                } else if ("NCHAR".equals(typeName)) {
+//                    column.setType(Types.CHAR);
+//                } else if ("NTEXT".equals(typeName)) {
+//                    column.setType(Types.CLOB);
+//                }
+//            }
+//        } catch (SQLException e) {
+//            log.error("Error getting columns", e);
+//        } finally {
+//            if (resultSet != null) {
+//                try {
+//                    resultSet.close();
+//                } catch (SQLException e) {
+//                    log.error("Error closing result set", e);
+//                }
+//            }
+//            try {
+//                stmt.close();
+//            } catch (SQLException e) {
+//                log.error("Error closing statement", e);
+//            }
+//        }
+//
+//        return (Column[]) columnList.toArray(new Column[columnList.size()]);
+//    }
 
     /**
      * {@inheritDoc}

@@ -22,51 +22,66 @@ import java.io.PrintWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import org.apache.openjpa.azure.Federation;
-import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfigurationImpl;
 import org.apache.openjpa.azure.util.AzureUtils;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.schema.ForeignKey;
+import org.apache.openjpa.jdbc.schema.Index;
 import org.apache.openjpa.jdbc.schema.Schema;
 import org.apache.openjpa.jdbc.schema.SchemaGroup;
 import org.apache.openjpa.jdbc.schema.SchemaTool;
 import org.apache.openjpa.jdbc.schema.Table;
+import org.apache.openjpa.jdbc.schema.Unique;
 import org.apache.openjpa.jdbc.sql.AzureDictionary;
+import org.apache.openjpa.slice.Slice;
 
 public class AzureSchemaTool extends SchemaTool {
 
+    private final Slice slice;
+
+    private final AzureConfigurationImpl globalConf;
+
+    private final List<String> managedTables = new ArrayList<String>();
+
     public AzureSchemaTool(final JDBCConfiguration conf) {
         super(conf);
+        this.slice = null;
+        this.globalConf = (AzureConfigurationImpl) conf;
     }
 
-    public AzureSchemaTool(final JDBCConfiguration conf, final String action) {
-        super(conf, action);
+    public AzureSchemaTool(final Slice slice, final JDBCConfiguration conf, final String action) {
+        super((JDBCConfiguration) slice.getConfiguration(), action);
+        this.slice = slice;
+        this.globalConf = (AzureConfigurationImpl) conf;
     }
 
     @Override
     public boolean createTable(final Table table)
             throws SQLException {
 
-        final List<Federation> federations =
-                ((AzureConfiguration) _conf).getFederations(table.getFullIdentifier().getName());
+        final Map.Entry<Connection, Federation> conn = getConnection(table);
 
         boolean res = true;
 
-        final Map<Connection, Federation> connections = getWorkingConnections(federations);
+        if (conn != null) {
 
-        for (Map.Entry<Connection, Federation> conn : connections.entrySet()) {
             try {
                 if (!AzureUtils.tableExists(conn.getKey(), table)) {
-                    res &= executeSQL(((AzureDictionary) _dict).
-                            getCreateTableSQL(table, conn.getValue()), conn.getKey());
-                }
+                    res &= executeSQL(
+                            ((AzureDictionary) _dict).getCreateTableSQL(table, conn.getValue()), conn.getKey());
 
+                    if (res) {
+                        managedTables.add(table.getFullIdentifier().getName());
+                    }
+                }
             } finally {
                 try {
                     conn.getKey().close();
@@ -82,27 +97,64 @@ public class AzureSchemaTool extends SchemaTool {
     public boolean addForeignKey(final ForeignKey fk)
             throws SQLException {
 
-        final List<Federation> federations =
-                ((AzureConfiguration) _conf).getFederations(fk.getPrimaryKeyTable().getFullIdentifier().getName());
+        return true;
+//        return managedTables.contains(fk.getPrimaryKeyTable().getFullIdentifier().getName())
+//                ? super.addForeignKey(fk) : true;
+    }
 
-        return federations.isEmpty() ? super.addForeignKey(fk) : true;
+    @Override
+    public boolean createIndex(Index idx, Table table, Unique[] uniques)
+            throws SQLException {
+        // Informix will automatically create a unique index for the 
+        // primary key, so don't create another index again
+
+        if (!_dict.needsToCreateIndex(idx, table, uniques)) {
+            return false;
+        }
+
+        int max = _dict.maxIndexesPerTable;
+
+        int len = table.getIndexes().length;
+        if (table.getPrimaryKey() != null) {
+            len += table.getPrimaryKey().getColumns().length;
+        }
+
+        if (len >= max) {
+            _log.warn(_loc.get("too-many-indexes", idx, table, max + ""));
+            return false;
+        }
+
+
+        boolean res = true;
+
+        if (managedTables.contains(table.getFullIdentifier().getName())) {
+            final Connection conn = getConnection();
+
+            try {
+                res &= executeSQL(_dict.getCreateIndexSQL(idx), conn);
+            } finally {
+                try {
+                    conn.close();
+                } catch (SQLException se) {
+                }
+            }
+        }
+
+        return res;
     }
 
     @Override
     public boolean dropTable(final Table table)
             throws SQLException {
 
+        final Map.Entry<Connection, Federation> conn = getConnection(table);
+
         boolean result = true;
 
-        final List<Federation> federations =
-                ((AzureConfiguration) _conf).getFederations(table.getFullIdentifier().getName());
-
-        final Map<Connection, Federation> connections = getWorkingConnections(federations);
-        for (Map.Entry<Connection, Federation> conn : connections.entrySet()) {
+        if (conn != null) {
             try {
-                if (!AzureUtils.tableExists(conn.getKey(), table)) {
-                    final String[] sql = _dict.getDropTableSQL(table);
-                    result &= executeSQL(sql, conn.getKey());
+                if (AzureUtils.tableExists(conn.getKey(), table)) {
+                    result &= executeSQL(_dict.getDropTableSQL(table), conn.getKey());
                 }
             } finally {
                 try {
@@ -129,13 +181,11 @@ public class AzureSchemaTool extends SchemaTool {
         for (Table table : tables) {
             final Table[] tableArray = new Table[]{table};
 
-            final List<Federation> federations =
-                    ((AzureConfiguration) _conf).getFederations(table.getFullIdentifier().getName());
+            final Map.Entry<Connection, Federation> conn = getConnection(table);
 
-            final Map<Connection, Federation> connections = getWorkingConnections(federations);
-            for (Map.Entry<Connection, Federation> conn : connections.entrySet()) {
+            if (conn != null) {
                 try {
-                    if (!AzureUtils.tableExists(conn.getKey(), table)) {
+                    if (AzureUtils.tableExists(conn.getKey(), table)) {
                         final String[] sql = _dict.getDeleteTableContentsSQL(tableArray, conn.getKey());
                         if (!executeSQL(sql, conn.getKey())) {
                             _log.warn(_loc.get("delete-table-contents"));
@@ -211,35 +261,34 @@ public class AzureSchemaTool extends SchemaTool {
         return !err;
     }
 
-    private Map<Connection, Federation> getWorkingConnections(final List<Federation> federations)
+    private Map.Entry<Connection, Federation> getConnection(final Table table)
             throws SQLException {
 
-        final Map<Connection, Federation> connections = new HashMap<Connection, Federation>();
+        final List<Federation> federations = new ArrayList<Federation>();
+        federations.addAll(globalConf.getFederations(table));
 
-        final Connection root = _ds.getConnection();
+        boolean federated = !globalConf.getFederations(table.getFullIdentifier().getName()).isEmpty();
 
-        if (federations.isEmpty()) {
-            connections.put(root, null);
-        } else {
-            try {
-                for (Federation federation : federations) {
-                    for (Object memberId : AzureUtils.getMemberDistribution(root, federation)) {
-                        final Connection conn = _ds.getConnection();
-                        AzureUtils.useFederation(conn, federation, memberId);
-                        connections.put(conn, federation);
-                    }
-                }
-            } finally {
-                if (root != null) {
-                    try {
-                        root.close();
-                    } catch (SQLException ignore) {
-                        // ignore
-                    }
-                }
-            }
+        for (ForeignKey fk : table.getForeignKeys()) {
+            federations.addAll(globalConf.getFederations(fk.getPrimaryKeyTable()));
         }
 
-        return connections;
+        final Federation fed = globalConf.getFederation(slice);
+
+        Map.Entry<Connection, Federation> conn =
+                ("ROOT".equals(slice.getName()) && federations.isEmpty()) || federations.contains(fed)
+                ? new AbstractMap.SimpleEntry<Connection, Federation>(_ds.getConnection(), federated ? fed : null)
+                : null;
+
+        if (conn != null && fed != null) {
+            AzureUtils.useFederation(conn.getKey(), fed);
+        }
+
+        return conn;
+    }
+
+    private Connection getConnection()
+            throws SQLException {
+        return AzureUtils.useFederation(_ds.getConnection(), globalConf.getFederation(slice));
     }
 }
