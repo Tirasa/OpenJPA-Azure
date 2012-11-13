@@ -78,14 +78,12 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
     }
 
     public void testFindAll() {
-        final EntityManager entityManager = emf.createEntityManager();
+        final EntityManager em = emf.createEntityManager();
 
-        entityManager.getTransaction().begin();
+        final TypedQuery<PObject> query = em.createQuery("SELECT e FROM PObject e", PObject.class);
+        assertEquals(10, query.getResultList().size());
 
-        entityManager.getTransaction().commit();
-
-        final TypedQuery<PObject> query = entityManager.createQuery("SELECT e FROM PObject e", PObject.class);
-        assertEquals(20, query.getResultList().size());
+        em.close();
     }
 
     public void testMultiFindAll() {
@@ -112,67 +110,73 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
     }
 
     public void testFindOne() {
-        final EntityManager entityManager = emf.createEntityManager();
+        final EntityManager em = emf.createEntityManager();
 
-        entityManager.getTransaction().begin();
+        em.getTransaction().begin();
 
         final PObject pobj = new PObject();
         pobj.setValue(100000);
 
-        entityManager.persist(pobj);
+        em.persist(pobj);
 
-        entityManager.getTransaction().commit();
+        em.getTransaction().commit();
 
         final TypedQuery<PObject> query =
-                entityManager.createQuery("SELECT e FROM PObject e WHERE e.id = :id", PObject.class);
+                em.createQuery("SELECT e FROM PObject e WHERE e.id = :id", PObject.class);
 
         query.setParameter("id", pobj.getId());
-        assertEquals(2, query.getResultList().size());
+        assertEquals(1, query.getResultList().size());
 
-        final PObject actual = entityManager.find(PObject.class, pobj.getId());
+        final PObject actual = em.find(PObject.class, pobj.getId());
         assertNotNull(actual);
         assertEquals(pobj.getId(), actual.getId());
+
+        em.close();
     }
 
     public void testDistributedRollBack() {
         PObject pobj = new PObject();
         pobj.setValue(10000);
 
-        final EntityManager entityManager = emf.createEntityManager();
+        final EntityManager em = emf.createEntityManager();
 
-        entityManager.getTransaction().begin();
+        em.getTransaction().begin();
 
-        entityManager.persist(pobj);
+        em.persist(pobj);
 
-        entityManager.getTransaction().rollback();
+        em.getTransaction().rollback();
 
-        Query query = entityManager.createNativeQuery("SELECT value FROM PObject WHERE id = " + pobj.getId());
+        Query query = em.createNativeQuery("SELECT value FROM PObject WHERE id = " + pobj.getId());
         assertTrue(query.getResultList().isEmpty());
+
+        em.close();
     }
 
     /**
      * Delete a single object by EntityManager.remove().
      */
     public void testDelete() {
-        final EntityManager entityManager = emf.createEntityManager();
+        final EntityManager em = emf.createEntityManager();
 
-        entityManager.getTransaction().begin();
+        em.getTransaction().begin();
+
         final int before = count(PObject.class);
 
-        final List<PObject> all = entityManager.createQuery("SELECT p FROM PObject p").getResultList();
+        final List<PObject> all = em.createQuery("SELECT p FROM PObject p").getResultList();
         assertFalse(all.isEmpty());
-        entityManager.remove(all.get(0));
-        entityManager.getTransaction().commit();
+        em.remove(all.get(0));
 
-        // Deteted two object: one per federation.
-        assertEquals(before - 2, count(PObject.class));
+        em.getTransaction().commit();
+        em.close();
+
+        assertEquals(before - 1, count(PObject.class));
     }
 
     public void testOrderBy() {
-        final EntityManager entityManager = emf.createEntityManager();
+        final EntityManager em = emf.createEntityManager();
 
         final List<MPObject> ordered =
-                entityManager.createQuery("SELECT p FROM MPObject p ORDER BY p.value").getResultList();
+                em.createQuery("SELECT p FROM MPObject p ORDER BY p.value").getResultList();
         assertEquals(count(MPObject.class), ordered.size());
 
         final List<Integer> values = new ArrayList<Integer>(ordered.size());
@@ -180,24 +184,26 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
             values.add(obj.getValue());
         }
         assertOrdering(values.toArray(new Integer[values.size()]), true);
+
+        em.close();
     }
 
     public void testRepOrderBy() {
-        final EntityManager entityManager = emf.createEntityManager();
-        entityManager.getTransaction().begin();
+        final EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
 
-        final List<PObject> all = entityManager.createQuery("SELECT p FROM PObject p").getResultList();
+        final List<PObject> all = em.createQuery("SELECT p FROM PObject p").getResultList();
         assertFalse(all.isEmpty());
         final Random randomGenerator = new Random();
         for (PObject obj : all) {
             obj.setValue(randomGenerator.nextInt(100));
-            entityManager.merge(obj);
+            em.merge(obj);
         }
 
-        entityManager.getTransaction().commit();
+        em.getTransaction().commit();
 
         final List<PObject> ordered =
-                entityManager.createQuery("SELECT p FROM PObject p ORDER BY p.value DESC").getResultList();
+                em.createQuery("SELECT p FROM PObject p ORDER BY p.value DESC").getResultList();
         assertEquals(all.size(), ordered.size());
 
         final List<Integer> values = new ArrayList<Integer>(ordered.size());
@@ -205,71 +211,82 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
             values.add(obj.getValue());
         }
         assertOrdering(values.toArray(new Integer[values.size()]), false);
+
+        em.close();
     }
 
     /**
      * Update in bulk by query.
      */
     public void testBulkUpdate() {
-        final EntityManager entityManager = emf.createEntityManager();
+        final EntityManager em = emf.createEntityManager();
 
-        entityManager.getTransaction().begin();
+        em.getTransaction().begin();
+
         final int count = count(PObject.class);
-        final int updated = entityManager.createQuery("UPDATE PObject p SET p.value = :value").
+        final int updated = em.createQuery("UPDATE PObject p SET p.value = :value").
                 setParameter("value", 5).executeUpdate();
         assertEquals(count, updated);
-        entityManager.getTransaction().commit();
+
+        em.getTransaction().commit();
 
         assertEquals(count, count(PObject.class));
 
-        final List<PObject> all = entityManager.createQuery("SELECT p FROM PObject p").getResultList();
+        final List<PObject> all = em.createQuery("SELECT p FROM PObject p").getResultList();
         assertFalse(all.isEmpty());
         for (PObject obj : all) {
             assertEquals(5, obj.getValue());
         }
+
+        em.close();
     }
 
     public void testGroupByHaving() {
-        final EntityManager entityManager = emf.createEntityManager();
-        entityManager.getTransaction().begin();
+        final EntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
 
         PersonBINT person = new PersonBINT();
         person.setUsername("username1");
         person.setPassword("password1");
         person.setGender(Gender.M);
-        entityManager.persist(person);
+        em.persist(person);
 
         person = new PersonBINT();
         person.setUsername("username2");
         person.setPassword("password2");
         person.setGender(Gender.M);
-        entityManager.persist(person);
+        em.persist(person);
 
         person = new PersonBINT();
         person.setUsername("username3");
         person.setPassword("password3");
         person.setGender(Gender.F);
-        entityManager.persist(person);
+        em.persist(person);
 
-        entityManager.getTransaction().commit();
+        em.getTransaction().commit();
 
-        List result = entityManager.createQuery("SELECT c.gender, COUNT(c) FROM PersonBINT c "
+        List result = em.createQuery("SELECT c.gender, COUNT(c) FROM PersonBINT c "
                 + "GROUP BY c.gender HAVING COUNT(c) > 1").getResultList();
         assertNotNull(result);
         assertEquals(1, result.size());
+
+        em.close();
     }
 
     /**
      * Delete in bulk by query.
      */
     public void testBulkDelete() {
-        final EntityManager entityManager = emf.createEntityManager();
+        final EntityManager em = emf.createEntityManager();
 
-        entityManager.getTransaction().begin();
+        em.getTransaction().begin();
+
         final int count = count(PObject.class);
-        final int deleted = entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
+        final int deleted = em.createQuery("DELETE FROM PObject p").executeUpdate();
         assertEquals(count, deleted);
-        entityManager.getTransaction().commit();
+
+        em.getTransaction().commit();
+        em.close();
 
         assertEquals(0, count(PObject.class));
     }

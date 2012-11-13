@@ -82,8 +82,7 @@ public class TestJPQLAggregate extends AbstractAzureTestCase {
             entityManager.clear();
             entityManager.close();
 
-            pobjSum *= 2;
-            pobjAvg = pobjSum / 20;
+            pobjAvg = pobjSum / 10;
 
             initialized = true;
         }
@@ -151,9 +150,9 @@ public class TestJPQLAggregate extends AbstractAzureTestCase {
 
         Query query = entityManager.createQuery("SELECT p FROM PObject p");
         List all = query.getResultList();
-        assertEquals(20, all.size());
+        assertEquals(10, all.size());
 
         Long count = (Long) entityManager.createQuery("SELECT COUNT(p) FROM PObject p").getSingleResult();
-        assertEquals(20L, count.longValue());
+        assertEquals(10L, count.longValue());
     }
 }

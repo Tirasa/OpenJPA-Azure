@@ -76,6 +76,7 @@
       <property name="openjpa.slice.Names"   value="ROOT, FED_1, FED_2, FED_3, FED_4, FED_5"/>
       <property name="openjpa.slice.Master"  value="ROOT"/>
       <property name="openjpa.slice.Lenient" value="true"/>
+      
       <property name="openjpa.slice.DistributionPolicy" value="org.apache.openjpa.azure.AzureDistributionPolicy"/>
       <property name="openjpa.slice.QueryTargetPolicy" value="org.apache.openjpa.azure.AzureQueryTargetPolicy"/>
       <property name="openjpa.slice.FinderTargetPolicy" value="org.apache.openjpa.azure.AzureFinderTargetPolicy"/>
@@ -85,11 +86,13 @@
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.slice.ROOT.ConnectionDriverName" 
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+      <property name="openjpa.slice.ROOT.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
       
       <property name="openjpa.slice.FED_1.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.slice.FED_1.ConnectionDriverName" 
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+      <property name="openjpa.slice.FED_1.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
                 
 <!--      <property name="openjpa.slice.FED_1.1.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
@@ -105,6 +108,7 @@
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.slice.FED_2.ConnectionDriverName" 
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+      <property name="openjpa.slice.FED_2.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
                 
 <!--      <property name="openjpa.slice.FED_2.1.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
@@ -120,6 +124,7 @@
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.slice.FED_3.ConnectionDriverName" 
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+      <property name="openjpa.slice.FED_3.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
                 
 <!--      <property name="openjpa.slice.FED_3.1.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
@@ -135,11 +140,14 @@
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.slice.FED_4.ConnectionDriverName" 
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+      <property name="openjpa.slice.FED_4.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
                 
       <property name="openjpa.slice.FED_5.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.slice.FED_5.ConnectionDriverName" 
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+      <property name="openjpa.slice.FED_5.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
+
     </properties>
   </persistence-unit>
 </persistence>

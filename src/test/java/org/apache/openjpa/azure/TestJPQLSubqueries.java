@@ -75,7 +75,7 @@ public class TestJPQLSubqueries extends AbstractAzureTestCase {
         List<MPObject> res = query.getResultList();
 
         // Expected 10 but was 5 (https://github.com/Tirasa/OpenJPA-Azure/issues/53)
-        assertEquals(5, res.size());
+        assertEquals(10, res.size());
     }
 
     public void testAll() {
@@ -94,7 +94,7 @@ public class TestJPQLSubqueries extends AbstractAzureTestCase {
                 "SELECT e FROM MPObject e WHERE e.id < ANY (SELECT a.id FROM PObject a)").getResultList();
 
         // Expected 10 but was 5 (https://github.com/Tirasa/OpenJPA-Azure/issues/53)
-        assertEquals(5, res.size());
+        assertEquals(10, res.size());
     }
 
     public void testIn() {

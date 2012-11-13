@@ -25,6 +25,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfigurationImpl;
 import org.apache.openjpa.azure.jdbc.meta.AzureMappingTool;
+import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.meta.MappingRepository;
 import org.apache.openjpa.jdbc.meta.MappingTool;
 import org.apache.openjpa.lib.conf.ConfigurationProvider;
@@ -58,20 +59,16 @@ public class AzureDistributedBrokerFactory extends DistributedJDBCBrokerFactory 
 
     @Override
     protected void synchronizeMappings(ClassLoader loader) {
-        final String action = getConfiguration().getSynchronizeMappings();
-        if (!StringUtils.isEmpty(action)) {
-
-            List<Slice> slices = getConfiguration().getSlices(Slice.Status.ACTIVE);
-            for (Slice slice : slices) {
-                synchronizeMappings(loader, slice);
-            }
+        List<Slice> slices = getConfiguration().getSlices(Slice.Status.ACTIVE);
+        for (Slice slice : slices) {
+            synchronizeMappings(loader, slice);
         }
     }
 
     protected void synchronizeMappings(final ClassLoader loader, final Slice slice) {
 
         final AzureConfiguration conf = (AzureConfiguration) getConfiguration();
-        String action = conf.getSynchronizeMappings();
+        String action = ((JDBCConfiguration) slice.getConfiguration()).getSynchronizeMappings();
         if (StringUtils.isEmpty(action)) {
             return;
         }
