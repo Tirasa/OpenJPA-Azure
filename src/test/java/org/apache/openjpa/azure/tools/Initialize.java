@@ -18,31 +18,35 @@
  */
 package org.apache.openjpa.azure.tools;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
+import javax.persistence.spi.PersistenceUnitInfo;
+import org.apache.openjpa.lib.conf.ConfigurationProvider;
+import org.apache.openjpa.persistence.PersistenceProductDerivation;
+import org.apache.openjpa.persistence.PersistenceUnitInfoImpl;
 
 public final class Initialize {
 
     private static String[] fedInitQueries = {
         "USE FEDERATION ROOT WITH RESET",
         "CREATE FEDERATION FED_1 (range_id BIGINT RANGE)",
-//        "ALTER FEDERATION FED_1 SPLIT AT (range_id=5)",
+        //        "ALTER FEDERATION FED_1 SPLIT AT (range_id=5)",
         "CREATE FEDERATION FED_2 (range_id UNIQUEIDENTIFIER RANGE)",
-//        "ALTER FEDERATION FED_2 SPLIT AT (range_id='00000000-0000-0000-0000-000000000005')",
+        //        "ALTER FEDERATION FED_2 SPLIT AT (range_id='00000000-0000-0000-0000-000000000005')",
         "CREATE FEDERATION FED_3 (range_id int RANGE)",
-//        "ALTER FEDERATION FED_3 SPLIT AT (range_id=5)",
+        //        "ALTER FEDERATION FED_3 SPLIT AT (range_id=5)",
         "CREATE FEDERATION FED_4 (range_id VARBINARY(100) RANGE)",
         "CREATE FEDERATION FED_5 (range_id BIGINT RANGE)"
     };
 
     private static String[] fedPurgeQueries = {
         "USE FEDERATION ROOT WITH RESET",
-        "DROP TABLE Membership",
         "DROP TABLE OPENJPA_SEQUENCE_TABLE",
         "DROP FEDERATION FED_1",
         "DROP FEDERATION FED_2",
@@ -56,14 +60,18 @@ public final class Initialize {
     private Initialize() {
     }
 
-    public static void main(final String args[]) {
+    public static void main(final String args[])
+            throws IOException {
         if (args.length != 1) {
             System.err.println("Usage java Initialization <purge|init>");
             return;
         }
 
-        final EntityManagerFactory emf = Persistence.createEntityManagerFactory("azure-test");
-        final Map<String, Object> properties = emf.getProperties();
+        final Map<String, Object> properties = new HashMap<String, Object>();
+
+        PersistenceProductDerivation pd = new PersistenceProductDerivation();
+        ConfigurationProvider cp = pd.load(null, "azure-test", Collections.EMPTY_MAP);
+        properties.putAll(cp.getProperties());
 
         final String url = properties.get("openjpa.ConnectionURL").toString();
         final String driver = properties.get("openjpa.ConnectionDriverName").toString();

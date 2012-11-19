@@ -18,13 +18,35 @@
  */
 package org.apache.openjpa.azure;
 
+import java.util.ArrayList;
 import java.util.List;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
+import org.apache.openjpa.azure.util.AzureUtils;
+import org.apache.openjpa.jdbc.schema.Table;
+import org.apache.openjpa.kernel.Broker;
 import org.apache.openjpa.slice.ReplicationPolicy;
 
 public class AzureReplicationPolicy implements ReplicationPolicy {
 
     @Override
-    public String[] replicate(Object pc, List<String> slices, Object context) {
-        return slices.toArray(new String[slices.size()]);
+    public String[] replicate(final Object pc, final List<String> slices, final Object context) {
+        final Broker broker = (Broker) context;
+        final AzureConfiguration conf = (AzureConfiguration) broker.getConfiguration();
+
+        final Table table = AzureUtils.getTable(conf, pc.getClass());
+
+        final List<Federation> federations = conf.getFederations(table);
+
+        if (federations.isEmpty()) {
+            return new String[]{"ROOT"};
+        } else {
+            final List<String> rep = new ArrayList<String>(federations.size());
+
+            for (Federation fed : federations) {
+                rep.add(fed.getName());
+            }
+
+            return rep.toArray(new String[federations.size()]);
+        }
     }
 }

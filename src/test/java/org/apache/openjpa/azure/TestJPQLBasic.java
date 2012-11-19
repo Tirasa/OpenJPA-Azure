@@ -153,7 +153,7 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
     }
 
     /**
-     * Delete a single object by EntityManager.remove().
+     * Delete a single replicated object by EntityManager.remove().
      */
     public void testDelete() {
         final EntityManager em = emf.createEntityManager();
@@ -167,9 +167,39 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         em.remove(all.get(0));
 
         em.getTransaction().commit();
-        em.close();
 
         assertEquals(before - 1, count(PObject.class));
+
+        assertNull(em.find(PObject.class, all.get(0).getId()));
+
+        em.close();
+    }
+
+    /**
+     * Update a single replicated object.
+     */
+    public void testUpdate() {
+        final EntityManager em = emf.createEntityManager();
+
+        em.getTransaction().begin();
+
+        final int before = count(PObject.class);
+
+        final List<PObject> all = em.createQuery("SELECT p FROM PObject p").getResultList();
+        assertFalse(all.isEmpty());
+
+        PObject obj = all.get(0);
+        obj.setValue(1);
+
+        em.merge(obj);
+
+        em.getTransaction().commit();
+
+        obj = em.find(PObject.class, obj.getId());
+
+        assertEquals(1, obj.getValue());
+
+        em.close();
     }
 
     public void testOrderBy() {
