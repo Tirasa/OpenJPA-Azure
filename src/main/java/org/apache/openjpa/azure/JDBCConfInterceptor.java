@@ -16,35 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.slice.jdbc;
+package org.apache.openjpa.azure;
 
-import java.sql.SQLException;
-import org.apache.openjpa.azure.Federation;
-import org.apache.openjpa.azure.util.AzureUtils;
-import org.apache.openjpa.slice.Slice;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
 
-public class AzureSliceStoreManager extends SliceStoreManager {
+public class JDBCConfInterceptor implements InvocationHandler {
 
-    private Federation federation = null;
+    private AzureSliceConfiguration obj;
 
-    public AzureSliceStoreManager(Slice slice) {
-        super(slice);
+    public JDBCConfInterceptor(final AzureSliceConfiguration obj) {
+        this.obj = obj;
     }
 
     @Override
-    protected RefCountConnection connectInternal()
-            throws SQLException {
-        final RefCountConnection conn = super.connectInternal();
-
-        // TODO: what about the members?
-        if (federation != null) {
-            AzureUtils.useFederation(conn, federation);
+    public Object invoke(final Object proxy, final Method method, final Object[] args)
+            throws Throwable {
+        if (method.getName().contains("Federation") || method.getName().equals("getGlobalConf")) {
+            return method.invoke(obj, args);
+        } else {
+            return method.invoke(obj.getSliceConf(), args);
         }
-
-        return conn;
-    }
-
-    void addFederation(final Federation federation) {
-        this.federation = federation;
     }
 }

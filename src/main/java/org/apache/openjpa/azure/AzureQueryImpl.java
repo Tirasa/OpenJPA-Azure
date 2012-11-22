@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.    
  */
-package org.apache.openjpa.slice;
+package org.apache.openjpa.azure;
 
 import java.util.Collections;
 import java.util.Map;
@@ -24,6 +24,9 @@ import java.util.Map;
 import org.apache.openjpa.kernel.Broker;
 import org.apache.openjpa.kernel.QueryImpl;
 import org.apache.openjpa.kernel.StoreQuery;
+import org.apache.openjpa.slice.DistributedConfiguration;
+import org.apache.openjpa.slice.QueryTargetPolicy;
+import org.apache.openjpa.slice.ReentrantSliceLock;
 import org.apache.openjpa.slice.jdbc.TargetFetchConfiguration;
 
 /**
@@ -33,13 +36,13 @@ import org.apache.openjpa.slice.jdbc.TargetFetchConfiguration;
  *
  */
 @SuppressWarnings("serial")
-public class DistributedQueryImpl extends QueryImpl {
+public class AzureQueryImpl extends QueryImpl {
 
     private final ReentrantSliceLock _lock;
 
     private DistributedConfiguration _conf;
 
-    public DistributedQueryImpl(Broker broker, String language, StoreQuery storeQuery) {
+    public AzureQueryImpl(Broker broker, String language, StoreQuery storeQuery) {
         super(broker, language, storeQuery);
         _lock = new ReentrantSliceLock();
         _conf = (DistributedConfiguration) broker.getConfiguration();

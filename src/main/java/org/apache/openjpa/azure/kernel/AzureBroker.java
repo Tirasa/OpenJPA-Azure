@@ -19,15 +19,17 @@
 package org.apache.openjpa.azure.kernel;
 
 import org.apache.openjpa.kernel.BrokerImpl;
+import org.apache.openjpa.kernel.QueryImpl;
+import org.apache.openjpa.kernel.StoreQuery;
+import org.apache.openjpa.slice.DistributedBrokerImpl;
+import org.apache.openjpa.azure.AzureQueryImpl;
 
-public class AzureBroker extends BrokerImpl {
-
-    @Override
-    public boolean endOperation() {
-        try {
-            return super.endOperation();
-        } catch (Exception e) {
-        }
-        return true;
+public class AzureBroker extends DistributedBrokerImpl {
+    
+    /**
+     * Create a new query.
+     */
+    protected QueryImpl newQueryImpl(String lang, StoreQuery sq) {
+        return new AzureQueryImpl(this, lang, sq);
     }
 }

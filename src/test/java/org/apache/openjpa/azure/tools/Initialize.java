@@ -26,21 +26,19 @@ import java.sql.Statement;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import javax.persistence.spi.PersistenceUnitInfo;
 import org.apache.openjpa.lib.conf.ConfigurationProvider;
 import org.apache.openjpa.persistence.PersistenceProductDerivation;
-import org.apache.openjpa.persistence.PersistenceUnitInfoImpl;
 
 public final class Initialize {
 
     private static String[] fedInitQueries = {
         "USE FEDERATION ROOT WITH RESET",
         "CREATE FEDERATION FED_1 (range_id BIGINT RANGE)",
-        //        "ALTER FEDERATION FED_1 SPLIT AT (range_id=5)",
+        "ALTER FEDERATION FED_1 SPLIT AT (range_id=5)",
         "CREATE FEDERATION FED_2 (range_id UNIQUEIDENTIFIER RANGE)",
-        //        "ALTER FEDERATION FED_2 SPLIT AT (range_id='00000000-0000-0000-0000-000000000005')",
+        "ALTER FEDERATION FED_2 SPLIT AT (range_id='00000000-0000-0000-0000-000000000005')",
         "CREATE FEDERATION FED_3 (range_id int RANGE)",
-        //        "ALTER FEDERATION FED_3 SPLIT AT (range_id=5)",
+        "ALTER FEDERATION FED_3 SPLIT AT (range_id=5)",
         "CREATE FEDERATION FED_4 (range_id VARBINARY(100) RANGE)",
         "CREATE FEDERATION FED_5 (range_id BIGINT RANGE)"
     };

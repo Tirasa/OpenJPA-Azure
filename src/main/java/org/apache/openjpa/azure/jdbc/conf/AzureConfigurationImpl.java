@@ -30,6 +30,8 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.azure.ProductDerivation;
+import org.apache.openjpa.azure.kernel.AzureBroker;
+import org.apache.openjpa.azure.util.AzureUtils;
 import org.apache.openjpa.jdbc.schema.ForeignKey;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.lib.conf.StringListValue;
@@ -47,13 +49,12 @@ public class AzureConfigurationImpl extends DistributedJDBCConfigurationImpl imp
 
     private Map<String, Federation> federations = new HashMap<String, Federation>();
 
-    private Map<Slice, Federation> sliceToFed = new HashMap<Slice, Federation>();
-
     private Map<String, List<Federation>> federatedTables = new HashMap<String, List<Federation>>();
 
     public AzureConfigurationImpl() {
         super();
         federationsPlugin = addStringList(ProductDerivation.PREFIX_AZURE + ".Federations");
+        brokerPlugin.setString(AzureBroker.class.getName());
     }
 
     @Override
@@ -169,8 +170,6 @@ public class AzureConfigurationImpl extends DistributedJDBCConfigurationImpl imp
                 }
 
                 federations.put(federationName, federation);
-
-                sliceToFed.put(getSlice(federationName), federation);
             }
         }
     }
@@ -185,7 +184,13 @@ public class AzureConfigurationImpl extends DistributedJDBCConfigurationImpl imp
         return HashCodeBuilder.reflectionHashCode(this);
     }
 
+    @Override
     public Federation getFederation(final Slice slice) {
-        return sliceToFed.get(slice);
+        return getFederation(slice.getName());
+    }
+
+    @Override
+    public Federation getFederation(final String sliceName) {
+        return federations.get(AzureUtils.getFederationName(sliceName));
     }
 }

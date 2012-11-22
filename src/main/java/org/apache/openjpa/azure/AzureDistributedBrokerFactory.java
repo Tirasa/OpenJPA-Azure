@@ -18,6 +18,7 @@
  */
 package org.apache.openjpa.azure;
 
+import java.lang.reflect.Proxy;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -25,15 +26,18 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfigurationImpl;
 import org.apache.openjpa.azure.jdbc.meta.AzureMappingTool;
+import org.apache.openjpa.azure.kernel.AzureBroker;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.meta.MappingRepository;
 import org.apache.openjpa.jdbc.meta.MappingTool;
 import org.apache.openjpa.lib.conf.ConfigurationProvider;
 import org.apache.openjpa.lib.conf.Configurations;
 import org.apache.openjpa.lib.util.Localizer;
+import org.apache.openjpa.slice.DistributedBroker;
 import org.apache.openjpa.slice.Slice;
 import org.apache.openjpa.slice.jdbc.DistributedJDBCBrokerFactory;
 import org.apache.openjpa.slice.jdbc.DistributedJDBCConfiguration;
+import org.apache.openjpa.slice.jdbc.DistributedJDBCStoreManager;
 import org.apache.openjpa.util.UserException;
 
 public class AzureDistributedBrokerFactory extends DistributedJDBCBrokerFactory {
@@ -44,6 +48,16 @@ public class AzureDistributedBrokerFactory extends DistributedJDBCBrokerFactory 
 
     public AzureDistributedBrokerFactory(AzureConfiguration conf) {
         super(conf);
+    }
+
+    @Override
+    public DistributedBroker newBroker() {
+        return new AzureBroker();
+    }
+
+    @Override
+    protected DistributedJDBCStoreManager newStoreManager() {
+        return new DistributedJDBCStoreManager(getConfiguration());
     }
 
     public static AzureDistributedBrokerFactory newInstance(ConfigurationProvider cp) {
@@ -67,7 +81,11 @@ public class AzureDistributedBrokerFactory extends DistributedJDBCBrokerFactory 
 
     protected void synchronizeMappings(final ClassLoader loader, final Slice slice) {
 
-        final AzureConfiguration conf = (AzureConfiguration) getConfiguration();
+        final JDBCConfiguration conf =
+                (JDBCConfiguration) Proxy.newProxyInstance(AzureSliceConfiguration.class.getClassLoader(),
+                new Class<?>[]{AzureSliceConfiguration.class},
+                new JDBCConfInterceptor(new AzureSliceConfigurationImpl(slice, (AzureConfiguration) getConfiguration())));
+
         String action = ((JDBCConfiguration) slice.getConfiguration()).getSynchronizeMappings();
         if (StringUtils.isEmpty(action)) {
             return;
@@ -83,7 +101,7 @@ public class AzureDistributedBrokerFactory extends DistributedJDBCBrokerFactory 
         String props = Configurations.getProperties(action);
         action = Configurations.getClassName(action);
 
-        final MappingTool tool = new AzureMappingTool(slice, conf, action, false);
+        final MappingTool tool = new AzureMappingTool(conf, action, false);
         Configurations.configureInstance(tool, conf, props, "SynchronizeMappings");
 
         // initialize the schema
@@ -91,8 +109,7 @@ public class AzureDistributedBrokerFactory extends DistributedJDBCBrokerFactory 
             try {
                 tool.run(cls);
             } catch (IllegalArgumentException iae) {
-                throw new UserException(
-                        _loc.get("bad-synch-mappings", action, Arrays.asList(MappingTool.ACTIONS)), iae);
+                throw new UserException(_loc.get("bad-synch-mappings", action, Arrays.asList(MappingTool.ACTIONS)), iae);
             }
         }
 

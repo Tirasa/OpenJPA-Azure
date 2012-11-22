@@ -18,14 +18,22 @@
  */
 package org.apache.openjpa.azure;
 
+import java.beans.PropertyDescriptor;
 import java.util.List;
+import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.util.AzureUtils;
+import org.apache.openjpa.conf.OpenJPAConfiguration;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.kernel.Broker;
+import org.apache.openjpa.lib.log.Log;
 import org.apache.openjpa.slice.DistributionPolicy;
+import org.apache.openjpa.slice.jdbc.DistributedJDBCStoreManager;
+import org.apache.openjpa.util.ObjectId;
 
 public class AzureDistributionPolicy implements DistributionPolicy {
+
+    private Log log;
 
     @Override
     public String distribute(
@@ -36,13 +44,49 @@ public class AzureDistributionPolicy implements DistributionPolicy {
         final Broker broker = (Broker) context;
         final AzureConfiguration conf = (AzureConfiguration) broker.getConfiguration();
 
+        log = conf.getLog(OpenJPAConfiguration.LOG_RUNTIME);
+
         final Table table = AzureUtils.getTable(conf, pc.getClass());
 
-        List<Federation> federations = conf.getFederations(table);
+        final List<Federation> federations = conf.getFederations(table);
+
         if (federations.isEmpty()) {
             return "ROOT";
         } else {
-            return federations.get(0).getName();
+            // !!! IMPORTANT !!!
+            // Every changes to this behavior must be verified against both bulk insert of objects with 
+            // non auto generated id and insert of objects with auto generated id.
+
+            final Federation fed = federations.get(0);
+
+            Object id = null;
+
+            try {
+                final String rangeMappingName = fed.getRangeMappingName(table.getFullIdentifier().getName());
+
+                if (StringUtils.isNotBlank(rangeMappingName)) {
+                    final Object objectId = broker.getObjectId(pc);
+
+                    if (objectId instanceof ObjectId) {
+                        final Object obj = ((ObjectId) objectId).getIdObject();
+                        id = new PropertyDescriptor(rangeMappingName, obj.getClass()).getReadMethod().invoke(obj);
+                    } else {
+                        id = new PropertyDescriptor(rangeMappingName, pc.getClass()).getReadMethod().invoke(pc);
+                    }
+
+                    if (id == null) {
+                        return null;
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Error retrieving objectId", e);
+                return null;
+            }
+            
+            final List<String> targets = AzureUtils.getTargetSlice(
+                    (DistributedJDBCStoreManager) broker.getStoreManager().getDelegate(), slices, fed, id);
+
+            return targets.get(0);
         }
     }
 }

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Set;
 import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.jdbc.schema.Table;
+import org.apache.openjpa.slice.Slice;
 import org.apache.openjpa.slice.jdbc.DistributedJDBCConfiguration;
 
 /**
@@ -116,4 +117,8 @@ public interface AzureConfiguration extends DistributedJDBCConfiguration {
      * @return set of tables.
      */
     Set<String> getFederatedTables(final String federationName);
+
+    Federation getFederation(final Slice slice);
+
+    Federation getFederation(final String sliceName);
 }

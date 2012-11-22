@@ -29,8 +29,9 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import org.apache.openjpa.azure.AzureSliceConfiguration;
 import org.apache.openjpa.azure.Federation;
-import org.apache.openjpa.azure.jdbc.conf.AzureConfigurationImpl;
+import org.apache.openjpa.azure.jdbc.AzureSliceStoreManager;
 import org.apache.openjpa.azure.util.AzureUtils;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.schema.ForeignKey;
@@ -41,26 +42,21 @@ import org.apache.openjpa.jdbc.schema.SchemaTool;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.jdbc.schema.Unique;
 import org.apache.openjpa.jdbc.sql.AzureDictionary;
-import org.apache.openjpa.slice.Slice;
 
 public class AzureSchemaTool extends SchemaTool {
 
-    private final Slice slice;
-
-    private final AzureConfigurationImpl globalConf;
-
     private final List<String> managedTables = new ArrayList<String>();
+
+    private final JDBCConfiguration conf;
 
     public AzureSchemaTool(final JDBCConfiguration conf) {
         super(conf);
-        this.slice = null;
-        this.globalConf = (AzureConfigurationImpl) conf;
+        this.conf = conf;
     }
 
-    public AzureSchemaTool(final Slice slice, final JDBCConfiguration conf, final String action) {
-        super((JDBCConfiguration) slice.getConfiguration(), action);
-        this.slice = slice;
-        this.globalConf = (AzureConfigurationImpl) conf;
+    public AzureSchemaTool(final JDBCConfiguration conf, final String action) {
+        super(conf, action);
+        this.conf = conf;
     }
 
     @Override
@@ -72,7 +68,6 @@ public class AzureSchemaTool extends SchemaTool {
         boolean res = true;
 
         if (conn != null) {
-
             try {
                 if (!AzureUtils.tableExists(conn.getKey(), table)) {
                     res &= executeSQL(
@@ -264,24 +259,32 @@ public class AzureSchemaTool extends SchemaTool {
     private Map.Entry<Connection, Federation> getConnection(final Table table)
             throws SQLException {
 
-        final List<Federation> federations = new ArrayList<Federation>();
-        federations.addAll(globalConf.getFederations(table));
+        final String sliceName = AzureUtils.getSliceName(conf.getValue("Id").get().toString());
 
-        boolean federated = !globalConf.getFederations(table.getFullIdentifier().getName()).isEmpty();
+        final List<Federation> federations = new ArrayList<Federation>();
+        federations.addAll(((AzureSliceConfiguration) conf).getFederations(table));
+
+        boolean federated = !federations.isEmpty();
 
         for (ForeignKey fk : table.getForeignKeys()) {
-            federations.addAll(globalConf.getFederations(fk.getPrimaryKeyTable()));
+            federations.addAll(((AzureSliceConfiguration) conf).getFederations(fk.getPrimaryKeyTable()));
         }
 
-        final Federation fed = globalConf.getFederation(slice);
+        final Federation fed = ((AzureSliceConfiguration) conf).getFederation(sliceName);
 
-        Map.Entry<Connection, Federation> conn =
-                ("ROOT".equals(slice.getName()) && federations.isEmpty()) || federations.contains(fed)
+        final Map.Entry<Connection, Federation> conn =
+                ("ROOT".equals(sliceName) && federations.isEmpty()) || federations.contains(fed)
                 ? new AbstractMap.SimpleEntry<Connection, Federation>(_ds.getConnection(), federated ? fed : null)
                 : null;
 
         if (conn != null && fed != null) {
-            AzureUtils.useFederation(conn.getKey(), fed);
+            int index = AzureUtils.getSliceMemberIndex(sliceName);
+
+            if (AzureSliceStoreManager.federations == null || AzureSliceStoreManager.federations.isEmpty()) {
+                AzureSliceStoreManager.initFederations(((AzureSliceConfiguration) conf).getGlobalConf(), conn.getKey());
+            }
+
+            AzureUtils.useFederation(conn.getKey(), fed, AzureSliceStoreManager.federations.get(fed).get(index));
         }
 
         return conn;
@@ -289,6 +292,7 @@ public class AzureSchemaTool extends SchemaTool {
 
     private Connection getConnection()
             throws SQLException {
-        return AzureUtils.useFederation(_ds.getConnection(), globalConf.getFederation(slice));
+        final String sliceName = AzureUtils.getSliceName(conf.getValue("Id").get().toString());
+        return AzureUtils.useFederation(_ds.getConnection(), ((AzureSliceConfiguration) conf).getFederation(sliceName));
     }
 }

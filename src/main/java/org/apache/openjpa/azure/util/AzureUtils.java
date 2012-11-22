@@ -18,21 +18,31 @@
  */
 package org.apache.openjpa.azure.util;
 
+import java.beans.PropertyDescriptor;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.persistence.Embeddable;
+import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration.RangeType;
 import org.apache.openjpa.jdbc.meta.MappingRepository;
 import org.apache.openjpa.jdbc.schema.ForeignKey;
 import org.apache.openjpa.jdbc.schema.Table;
+import org.apache.openjpa.kernel.OpenJPAStateManager;
 import org.apache.openjpa.meta.ClassMetaData;
+import org.apache.openjpa.azure.jdbc.AzureSliceStoreManager;
+import org.apache.openjpa.slice.jdbc.DistributedJDBCStoreManager;
+import org.apache.openjpa.slice.jdbc.SliceStoreManager;
+import org.apache.openjpa.util.ObjectId;
 
 public final class AzureUtils {
 
@@ -72,24 +82,36 @@ public final class AzureUtils {
         return conn;
     }
 
-    public static Connection useRootFederation(final Connection conn)
-            throws SQLException {
+    public static boolean checkForFederationMember(final Federation federation, final Object member, Object oid) {
 
-        Statement stm = null;
-        try {
-            stm = conn.createStatement();
-            stm.execute("USE FEDERATION ROOT WITH RESET");
-        } finally {
-            if (stm != null) {
-                try {
-                    stm.close();
-                } catch (SQLException ignore) {
-                    // ignore exception
-                }
-            }
+        if (federation == null || member == null) {
+            return false;
         }
 
-        return conn;
+        final RangeType type = federation.getRangeMappingType();
+
+        if (RangeType.UNIQUEIDENTIFIER == type) {
+            final String left, right;
+
+            if (oid instanceof byte[]) {
+                left = new String((byte[]) oid);
+                right = new String((byte[]) member);
+            } else {
+                left = oid.toString();
+                right = member.toString();
+                return left.compareTo(right) >= 0;
+            }
+
+            return left.compareTo(right) >= 0;
+        } else {
+            if (oid instanceof byte[]) {
+                final String left = "0x" + new String(HexEncoderDecoder.encode((byte[]) oid));
+                final String right = "0x" + new String(HexEncoderDecoder.encode((byte[]) member));
+                return left.compareTo(right) >= 0;
+            } else {
+                return Long.parseLong(oid.toString()) >= Long.parseLong(member.toString());
+            }
+        }
     }
 
     public static Object getMemberDistribution(final Connection conn, final Federation federation, final Object oid)
@@ -161,9 +183,9 @@ public final class AzureUtils {
 
             if (federation_id.next()) {
                 member_distribution = stm.executeQuery(
-                        "SELECT CAST(range_high as " + type.getValue() + ") AS high "
+                        "SELECT CAST(range_low as " + type.getValue() + ") AS low "
                         + "FROM sys.federation_member_distributions "
-                        + "WHERE federation_id=" + federation_id.getInt(1) + " ORDER BY high");
+                        + "WHERE federation_id=" + federation_id.getInt(1) + " ORDER BY low");
 
                 while (member_distribution.next()) {
                     memberDistribution.addValue(member_distribution.getObject(1));
@@ -297,5 +319,76 @@ public final class AzureUtils {
 
     private static String getUidAsString(final Object oid) {
         return oid instanceof byte[] ? new String((byte[]) oid) : "'" + oid.toString() + "'";
+    }
+
+    public static Object getObjectId(final Federation fed, final OpenJPAStateManager sm, final String dn) {
+        return StringUtils.isNotBlank(dn) ? getObjectIdValue(sm.getObjectId(), dn) : null;
+    }
+
+    public static Object getObjectIdValue(final Object oid, final String key) {
+        Object value = null;
+
+        try {
+            if (oid instanceof ObjectId) {
+                final Object idObject = ((ObjectId) oid).getIdObject();
+                value = new PropertyDescriptor(key, idObject.getClass()).getReadMethod().invoke(idObject);
+            } else {
+                final Embeddable embeddable = oid.getClass().getAnnotation(Embeddable.class);
+                if (embeddable == null) {
+                    value = oid;
+                } else {
+                    value = new PropertyDescriptor(key, oid.getClass()).getReadMethod().invoke(oid);
+                }
+            }
+        } catch (Exception ignore) {
+            // ignore
+        }
+
+        return value;
+    }
+
+    public static List<String> getTargetSlice(
+            final DistributedJDBCStoreManager store, final List<String> slices, final Federation fed, final Object id) {
+
+        final List<String> res = new ArrayList<String>();
+
+        for (int i = slices.size() - 1; i >= 0; i--) {
+
+            final SliceStoreManager sliceStore = store.getSlice(i);
+
+            final Object fedUpperBound = ((AzureSliceStoreManager) sliceStore).getFedUpperBound();
+            final boolean isSingleMember = !((AzureSliceStoreManager) sliceStore).isFedMultiMember();
+
+            if (fed.getName().equals(((AzureSliceStoreManager) sliceStore).getFedName())
+                    && (id == null
+                    || isSingleMember
+                    || AzureUtils.checkForFederationMember(fed, fedUpperBound, id))) {
+                res.add(sliceStore.getName());
+            }
+        }
+
+        if (res.isEmpty()) {
+            res.add("ROOT");
+        }
+
+        return res;
+    }
+
+    public static String getFederationName(final String sliceName) {
+        int index = sliceName.lastIndexOf(".");
+
+        return index < 0 ? sliceName : sliceName.substring(0, index);
+    }
+
+    public static int getSliceMemberIndex(final String sliceName) {
+        int index = sliceName.lastIndexOf(".");
+
+        return index < 0 ? 0 : Integer.parseInt(sliceName.substring(index + 1, sliceName.length()));
+    }
+
+    public static String getSliceName(final String openjpaId) {
+        int index = openjpaId.indexOf(".");
+
+        return index < 0 ? openjpaId : openjpaId.substring(index + 1, openjpaId.length());
     }
 }

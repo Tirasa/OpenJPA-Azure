@@ -256,7 +256,7 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         final int count = count(PObject.class);
         final int updated = em.createQuery("UPDATE PObject p SET p.value = :value").
                 setParameter("value", 5).executeUpdate();
-        assertEquals(count, updated);
+        assertEquals(count * 2, updated);
 
         em.getTransaction().commit();
 
@@ -313,7 +313,7 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
 
         final int count = count(PObject.class);
         final int deleted = em.createQuery("DELETE FROM PObject p").executeUpdate();
-        assertEquals(count, deleted);
+        assertEquals(count * 2, deleted);
 
         em.getTransaction().commit();
         em.close();

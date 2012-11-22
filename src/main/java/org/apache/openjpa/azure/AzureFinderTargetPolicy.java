@@ -25,6 +25,7 @@ import org.apache.openjpa.azure.util.AzureUtils;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.kernel.Broker;
 import org.apache.openjpa.slice.FinderTargetPolicy;
+import org.apache.openjpa.slice.jdbc.DistributedJDBCStoreManager;
 
 /**
  *
@@ -51,9 +52,15 @@ public class AzureFinderTargetPolicy implements FinderTargetPolicy {
         if (federations.isEmpty()) {
             result.add("ROOT");
         } else {
+
             for (Federation federation : federations) {
-                result.add(federation.getName());
+                final Object id = AzureUtils.getObjectIdValue(
+                        oid, federation.getRangeMappingName(table.getFullIdentifier().getName()));
+
+                result.addAll(AzureUtils.getTargetSlice(
+                        (DistributedJDBCStoreManager) broker.getStoreManager().getDelegate(), slices, federation, id));
             }
+
         }
 
         return result.toArray(new String[result.size()]);

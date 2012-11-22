@@ -18,6 +18,9 @@
  */
 package org.apache.openjpa.slice.jdbc;
 
+import org.apache.openjpa.azure.jdbc.DistributedStoreQuery;
+import org.apache.openjpa.azure.jdbc.DistributedSQLStoreQuery;
+import org.apache.openjpa.azure.jdbc.AzureSliceStoreManager;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -31,7 +34,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import org.apache.openjpa.azure.Federation;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfigurationImpl;
+import org.apache.openjpa.azure.util.AzureUtils;
+import org.apache.openjpa.conf.OpenJPAConfiguration;
 
 import org.apache.openjpa.enhance.PersistenceCapable;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
@@ -49,6 +56,7 @@ import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.kernel.StoreManager;
 import org.apache.openjpa.kernel.StoreQuery;
 import org.apache.openjpa.kernel.exps.ExpressionParser;
+import org.apache.openjpa.lib.log.Log;
 import org.apache.openjpa.lib.rop.MergedResultObjectProvider;
 import org.apache.openjpa.lib.rop.ResultObjectProvider;
 import org.apache.openjpa.lib.util.Localizer;
@@ -82,6 +90,8 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
 
     private final DistributedJDBCConfiguration _conf;
 
+    private final Log log;
+
     private static final Localizer _loc = Localizer.forPackage(DistributedJDBCStoreManager.class);
 
     /**
@@ -93,12 +103,17 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
     public DistributedJDBCStoreManager(DistributedJDBCConfiguration conf) {
         super();
         _conf = conf;
+
+        log = conf.getLog(JDBCConfiguration.LOG_DIAG);
+
         _slices = new ArrayList<SliceStoreManager>();
+
         List<Slice> slices = conf.getSlices(Slice.Status.ACTIVE);
         Slice masterSlice = conf.getMasterSlice();
+
         for (Slice slice : slices) {
             AzureSliceStoreManager store = new AzureSliceStoreManager(slice);
-            store.addFederation(((AzureConfigurationImpl) getConfiguration()).getFederation(slice));
+            store.setFederation(((AzureConfiguration) getConfiguration()).getFederation(slice));
 
             _slices.add(store);
 
@@ -118,7 +133,7 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
 
     public SliceStoreManager addSlice(Slice slice) {
         AzureSliceStoreManager result = new AzureSliceStoreManager(slice);
-        result.addFederation(((AzureConfigurationImpl) getConfiguration()).getFederation(slice));
+        result.setFederation(((AzureConfigurationImpl) getConfiguration()).getFederation(slice));
 
         result.setContext(getContext(), (JDBCConfiguration) slice.getConfiguration());
         _slices.add(result);
@@ -463,6 +478,7 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
      */
     public void setContext(StoreContext ctx) {
         super.setContext(ctx);
+
         for (SliceStoreManager store : _slices) {
             store.setContext(ctx, (JDBCConfiguration) store.getSlice().getConfiguration());
         }
@@ -506,7 +522,7 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
      * @return all active slices if a) the hint is not specified or b) a null value or c) a non-String or d) matches no
      * active slice.
      */
-    List<SliceStoreManager> getTargets(FetchConfiguration fetch) {
+    public List<SliceStoreManager> getTargets(FetchConfiguration fetch) {
         if (fetch == null) {
             return _slices;
         }

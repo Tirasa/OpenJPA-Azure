@@ -49,9 +49,10 @@ public class AzureUniqueResultObjectProvider implements ResultObjectProvider {
 
     private boolean _opened;
 
-    public AzureUniqueResultObjectProvider(ResultObjectProvider[] rops, StoreQuery q, QueryExpressions[] exps) {
+    public AzureUniqueResultObjectProvider(
+            final ResultObjectProvider[] rops, final StoreQuery query, final QueryExpressions[] exps) {
         _rops = rops;
-        _query = q;
+        _query = query;
         _exps = exps;
     }
 
@@ -169,8 +170,7 @@ public class AzureUniqueResultObjectProvider implements ResultObjectProvider {
             return current;
         }
         if (current instanceof Number) {
-            return Math.min(((Number) current).doubleValue(),
-                    ((Number) other).doubleValue());
+            return Math.min(((Number) current).doubleValue(), ((Number) other).doubleValue());
         }
         if (current instanceof String) {
             return ((String) current).compareTo((String) other) < 0 ? current : other;

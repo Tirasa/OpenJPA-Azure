@@ -41,6 +41,10 @@ public class MemberDistribution implements Iterable<Object> {
         return values.size();
     }
 
+    public List getValues() {
+        return values;
+    }
+
     @Override
     public Iterator<Object> iterator() {
         return new MemberIterator();
@@ -57,19 +61,7 @@ public class MemberDistribution implements Iterable<Object> {
 
         @Override
         public Object next() {
-            final Object value = iter.next();
-
-            switch (type) {
-                case BIGINT:
-                case INT:
-                    return value == null ? 0 : value;
-                case UNIQUEIDENTIFIER:
-                    return value == null ? "00000000-0000-0000-0000-000000000000" : value;
-                case VARBINARY:
-                    return value == null ? 0x0 : value;
-                default:
-                    return null;
-            }
+            return iter.next();
         }
 
         @Override

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.    
  */
-package org.apache.openjpa.slice.jdbc;
+package org.apache.openjpa.azure.jdbc;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +24,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import org.apache.openjpa.azure.Federation;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
+import org.apache.openjpa.azure.util.AzureUtils;
+import org.apache.openjpa.azure.util.NativeQueryInfo;
 
 import org.apache.openjpa.jdbc.kernel.JDBCStore;
 import org.apache.openjpa.jdbc.kernel.SQLStoreQuery;
@@ -32,12 +36,15 @@ import org.apache.openjpa.kernel.OrderingMergedResultObjectProvider;
 import org.apache.openjpa.kernel.QueryContext;
 import org.apache.openjpa.kernel.StoreManager;
 import org.apache.openjpa.kernel.StoreQuery;
+import org.apache.openjpa.lib.jdbc.ReportingSQLException;
 import org.apache.openjpa.lib.rop.MergedResultObjectProvider;
 import org.apache.openjpa.lib.rop.RangeResultObjectProvider;
 import org.apache.openjpa.lib.rop.ResultObjectProvider;
 import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.slice.DistributedConfiguration;
 import org.apache.openjpa.slice.SliceThread;
+import org.apache.openjpa.slice.jdbc.DistributedJDBCStoreManager;
+import org.apache.openjpa.slice.jdbc.SliceStoreManager;
 import org.apache.openjpa.util.StoreException;
 
 /**
@@ -47,7 +54,7 @@ import org.apache.openjpa.util.StoreException;
  *
  */
 @SuppressWarnings("serial")
-class DistributedSQLStoreQuery extends SQLStoreQuery {
+public class DistributedSQLStoreQuery extends SQLStoreQuery {
 
     private List<StoreQuery> _queries = new ArrayList<StoreQuery>();
 
@@ -55,7 +62,7 @@ class DistributedSQLStoreQuery extends SQLStoreQuery {
         super(store);
     }
 
-    void add(StoreQuery q) {
+    public void add(StoreQuery q) {
         _queries.add(q);
     }
 
@@ -106,24 +113,54 @@ class DistributedSQLStoreQuery extends SQLStoreQuery {
          */
         public ResultObjectProvider executeQuery(StoreQuery q,
                 final Object[] params, final StoreQuery.Range range) {
-            List<Future<ResultObjectProvider>> futures =
-                    new ArrayList<Future<ResultObjectProvider>>();
+
+            final List<Future<ResultObjectProvider>> futures = new ArrayList<Future<ResultObjectProvider>>();
             final List<StoreQuery.Executor> usedExecutors = new ArrayList<StoreQuery.Executor>();
-            final List<ResultObjectProvider> rops =
-                    new ArrayList<ResultObjectProvider>();
-            List<SliceStoreManager> targets = findTargets();
-            QueryContext ctx = q.getContext();
-            boolean isReplicated = containsReplicated(ctx);
-            ExecutorService threadPool = SliceThread.getPool();
+            final List<ResultObjectProvider> rops = new ArrayList<ResultObjectProvider>();
+
+            final List<SliceStoreManager> targets = findTargets();
+
+            final QueryContext ctx = q.getContext();
+            final boolean isReplicated = containsReplicated(ctx);
+
+            Federation previousFed = null;
+
+            final ExecutorService threadPool = SliceThread.getPool();
+
             for (int i = 0; i < owner._queries.size(); i++) {
-                // if replicated, then execute only on single slice
-                if (isReplicated && !usedExecutors.isEmpty()) {
-                    break;
-                }
                 StoreManager sm = owner.getDistributedStore().getSlice(i);
+
+                final Federation fed = ((AzureSliceStoreManager) sm).getFederation();
+
+                if (previousFed != null) {
+                    // ------------------------------------------
+                    // Check if replicated among different federations
+                    // ------------------------------------------
+                    // if replicated, then execute only on single slice
+                    if (previousFed != null && !previousFed.equals(fed) && isReplicated) {
+                        break;
+                    }
+                    // ------------------------------------------
+
+                    // ------------------------------------------
+                    // Check if object is "locally" replicated (among members of the same federation);
+                    // * get table name and federation;
+                    // * get rangeMappingName;
+                    // * if rangeMappingName is null then the object is "locally" replicated.
+                    // ------------------------------------------
+                    if (previousFed != null && previousFed.equals(fed)
+                            && DistributedSQLStoreQuery.ParallelExecutor.isLocallyReplicated(ctx, fed)) {
+                        break;
+                    }
+                    // ------------------------------------------
+                }
+
                 if (!targets.contains(sm)) {
                     continue;
                 }
+
+                previousFed = fed;
+
                 StoreQuery query = owner._queries.get(i);
                 StoreQuery.Executor executor = executors.get(i);
 
@@ -135,6 +172,7 @@ class DistributedSQLStoreQuery extends SQLStoreQuery {
                 call.range = range;
                 futures.add(threadPool.submit(call));
             }
+
             for (Future<ResultObjectProvider> future : futures) {
                 try {
                     rops.add(future.get());
@@ -145,47 +183,91 @@ class DistributedSQLStoreQuery extends SQLStoreQuery {
                 }
             }
 
-            ResultObjectProvider[] tmp = rops.toArray(new ResultObjectProvider[rops.size()]);
+            ResultObjectProvider[] arops = rops.toArray(new ResultObjectProvider[rops.size()]);
             ResultObjectProvider result = null;
             boolean[] ascending = getAscending(q);
             boolean isAscending = ascending.length > 0;
             boolean isAggregate = ctx.isAggregate();
             boolean hasRange = ctx.getEndRange() != Long.MAX_VALUE;
+
             if (isAggregate) {
-                result = new UniqueResultObjectProvider(tmp, q,
-                        getQueryExpressions());
+                result = new AzureUniqueResultObjectProvider(arops, q, getQueryExpressions());
             } else if (isAscending) {
-                result = new OrderingMergedResultObjectProvider(tmp, ascending,
-                        usedExecutors.toArray(new StoreQuery.Executor[usedExecutors.size()]),
-                        q, params);
+                result = new OrderingMergedResultObjectProvider(
+                        arops,
+                        ascending,
+                        usedExecutors.toArray(new StoreQuery.Executor[usedExecutors.size()]), q, params);
             } else {
-                result = new MergedResultObjectProvider(tmp);
+                result = new MergedResultObjectProvider(arops);
             }
             if (hasRange) {
-                result = new RangeResultObjectProvider(result,
-                        ctx.getStartRange(), ctx.getEndRange());
+                result = new RangeResultObjectProvider(result, ctx.getStartRange(), ctx.getEndRange());
             }
             return result;
+        }
+
+        static boolean isLocallyReplicated(final QueryContext query, final Federation fed) {
+            final AzureConfiguration conf = (AzureConfiguration) query.getStoreContext().getConfiguration();
+
+            final List<String> tables = new ArrayList<String>();
+
+            final Class<?> candidate = query.getCandidateType();
+            if (candidate == null) {
+                final ClassMetaData[] metas = query.getAccessPathMetaDatas();
+                if (metas == null || metas.length < 1) {
+                    tables.addAll(new NativeQueryInfo(query.getQueryString()).getTableNames());
+                } else {
+                    for (ClassMetaData meta : metas) {
+                        tables.add(AzureUtils.getTable(conf, meta).getFullIdentifier().getName());
+                    }
+                }
+            } else {
+                tables.add(AzureUtils.getTable(conf, candidate).getFullIdentifier().getName());
+            }
+
+            boolean res = true;
+            boolean auto = false;
+
+            for (String tableName : tables) {
+
+                // there is at least one explicitely federated object
+                if (fed.getTables().contains(tableName)) {
+                    auto = true;
+                }
+
+                // there is at least one explicitely federated object not locally federated
+                if (fed.getTables().contains(tableName) && fed.getRangeMappingName(tableName) != null) {
+                    res = false;
+                }
+            }
+
+
+            return auto && res;
         }
 
         /**
          * Scans metadata to find out if a replicated class is the candidate.
          */
         boolean containsReplicated(QueryContext query) {
-            Class<?> candidate = query.getCandidateType();
-            DistributedConfiguration conf = (DistributedConfiguration) query.getStoreContext().getConfiguration();
+            final Class<?> candidate = query.getCandidateType();
+            final DistributedConfiguration conf = (DistributedConfiguration) query.getStoreContext().getConfiguration();
+
             if (candidate != null) {
                 return conf.isReplicated(candidate);
             }
+
             ClassMetaData[] metas = query.getAccessPathMetaDatas();
+
             if (metas == null || metas.length < 1) {
                 return false;
             }
+
             for (ClassMetaData meta : metas) {
                 if (conf.isReplicated(meta.getDescribedType())) {
                     return true;
                 }
             }
+
             return false;
         }
 
@@ -239,9 +321,13 @@ class DistributedSQLStoreQuery extends SQLStoreQuery {
             ExecutorService threadPool = SliceThread.getPool();
             for (int i = 0; i < owner._queries.size(); i++) {
                 StoreManager sm = owner.getDistributedStore().getSlice(i);
+
                 if (!targets.contains(sm)) {
                     continue;
                 }
+
+                isLocallyReplicated(q.getContext(), ((AzureSliceStoreManager) sm).getFederation());
+
                 StoreQuery query = owner._queries.get(i);
                 StoreQuery.Executor executor = executors.get(i);
 
@@ -255,6 +341,7 @@ class DistributedSQLStoreQuery extends SQLStoreQuery {
                 call.params = params;
                 futures.add(threadPool.submit(call));
             }
+
             for (Future<Number> future : futures) {
                 try {
                     Number n = future.get();
@@ -262,9 +349,18 @@ class DistributedSQLStoreQuery extends SQLStoreQuery {
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 } catch (ExecutionException e) {
-                    throw new StoreException(e.getCause());
+                    final Throwable ex = e.getCause();
+                    int code = ex != null && ex.getCause() instanceof ReportingSQLException
+                            ? ((ReportingSQLException) ex.getCause()).getErrorCode()
+                            : 0;
+
+                    // In case of native inserts we cannot avoid SQLExceptions retrieved inserting rows in wrong members
+                    if (code != 45022) {
+                        throw new StoreException(e.getCause());
+                    }
                 }
             }
+
             return result;
         }
 

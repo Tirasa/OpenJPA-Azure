@@ -36,7 +36,6 @@ import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.kernel.Broker;
 import org.apache.openjpa.lib.conf.Configurations;
 import org.apache.openjpa.slice.QueryTargetPolicy;
-import org.apache.openjpa.slice.Slice;
 
 /**
  *
@@ -66,22 +65,22 @@ public class AzureQueryTargetPolicy implements QueryTargetPolicy {
         final List<String> result = new ArrayList<String>();
 
         for (String name : tableNames) {
-
             final Table table = group.findTable(QualifiedDBIdentifier.getPath(DBIdentifier.newTable(name)));
             final List<Federation> federations = conf.getFederations(table);
-
+            
             if (federations.isEmpty()) {
                 result.add("ROOT");
             } else {
                 for (Federation federation : federations) {
-                    Slice slice = conf.getSlice(federation.getName());
-                    if (slice != null) {
-                        result.add(slice.getName());
+                    for (String sliceName : slices) {
+                        if (sliceName.startsWith(federation.getName())) {
+                            result.add(sliceName);
+                        }
                     }
                 }
             }
         }
-
+        
         return result.toArray(new String[result.size()]);
     }
 
@@ -107,7 +106,7 @@ public class AzureQueryTargetPolicy implements QueryTargetPolicy {
             String props = Configurations.getProperties(action);
             action = Configurations.getClassName(action);
 
-            final MappingTool tool = new AzureMappingTool(null, (JDBCConfiguration) conf, action, false);
+            final MappingTool tool = new AzureMappingTool((JDBCConfiguration) conf, action, false);
             Configurations.configureInstance(tool, conf, props, "SynchronizeMappings");
 
             final Collection<Class<?>> classes = repo.loadPersistentTypes(false, this.getClass().getClassLoader());

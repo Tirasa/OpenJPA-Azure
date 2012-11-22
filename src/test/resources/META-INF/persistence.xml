@@ -43,7 +43,7 @@
       
       <property name="openjpa.jdbc.MappingDefaults" value="ForeignKeyDeleteAction=restrict, JoinForeignKeyDeleteAction=restrict"/>
                   
-      <property name="openjpa.Log" value="DefaultLevel=WARN, Runtime=TRACE, Tool=TRACE, SQL=TRACE"/>
+<!--      <property name="openjpa.Log" value="DefaultLevel=WARN, Runtime=TRACE, Tool=TRACE, SQL=TRACE"/>-->
 
       <!-- Federations -->
       <property name="openjpa.azure.Federations" value="FED_1, FED_2, FED_3, FED_4, FED_5" />
@@ -71,8 +71,8 @@
       <property name="openjpa.azure.FED_5.Tables" value="PObject" />
       <property name="openjpa.azure.FED_5.PObject.RangeMappingName" value="id" />
       
-<!--      <property name="openjpa.slice.Names"   value="ROOT,FED_1.1,FED_1.2,FED_2.1,FED_2.2,FED_3.1,FED_3.2,FED_4,FED_5"/>-->
-      <property name="openjpa.slice.Names"   value="ROOT, FED_1, FED_2, FED_3, FED_4, FED_5"/>
+      <property name="openjpa.slice.Names"   value="ROOT,FED_1.0,FED_1.1,FED_2.0,FED_2.1,FED_3.0,FED_3.1,FED_4,FED_5"/>
+
       <property name="openjpa.slice.Master"  value="ROOT"/>
       <property name="openjpa.slice.Lenient" value="true"/>
       <property name="openjpa.slice.ReplicatedTypes" value="org.apache.openjpa.azure.beans.PObject"/>
@@ -88,53 +88,41 @@
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
       <property name="openjpa.slice.ROOT.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
       
-      <property name="openjpa.slice.FED_1.ConnectionURL" 
+      <property name="openjpa.slice.FED_1.0.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
-      <property name="openjpa.slice.FED_1.ConnectionDriverName" 
+      <property name="openjpa.slice.FED_1.0.ConnectionDriverName" 
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
-      <property name="openjpa.slice.FED_1.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
+      <property name="openjpa.slice.FED_1.0.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
                 
-<!--      <property name="openjpa.slice.FED_1.1.ConnectionURL" 
+      <property name="openjpa.slice.FED_1.1.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.slice.FED_1.1.ConnectionDriverName" 
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
-                
-      <property name="openjpa.slice.FED_1.2.ConnectionURL" 
-                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
-      <property name="openjpa.slice.FED_1.2.ConnectionDriverName" 
-                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>-->
+      <property name="openjpa.slice.FED_1.1.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
       
-      <property name="openjpa.slice.FED_2.ConnectionURL" 
+      <property name="openjpa.slice.FED_2.0.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
-      <property name="openjpa.slice.FED_2.ConnectionDriverName" 
+      <property name="openjpa.slice.FED_2.0.ConnectionDriverName" 
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
-      <property name="openjpa.slice.FED_2.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
+      <property name="openjpa.slice.FED_2.0.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
                 
-<!--      <property name="openjpa.slice.FED_2.1.ConnectionURL" 
+      <property name="openjpa.slice.FED_2.1.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.slice.FED_2.1.ConnectionDriverName" 
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
-                
-      <property name="openjpa.slice.FED_2.2.ConnectionURL" 
-                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
-      <property name="openjpa.slice.FED_2.2.ConnectionDriverName" 
-                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>-->
+      <property name="openjpa.slice.FED_2.1.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
       
-      <property name="openjpa.slice.FED_3.ConnectionURL" 
+      <property name="openjpa.slice.FED_3.0.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
-      <property name="openjpa.slice.FED_3.ConnectionDriverName" 
+      <property name="openjpa.slice.FED_3.0.ConnectionDriverName" 
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
-      <property name="openjpa.slice.FED_3.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
+      <property name="openjpa.slice.FED_3.0.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
                 
-<!--      <property name="openjpa.slice.FED_3.1.ConnectionURL" 
+      <property name="openjpa.slice.FED_3.1.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
       <property name="openjpa.slice.FED_3.1.ConnectionDriverName" 
                 value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
-                
-      <property name="openjpa.slice.FED_3.2.ConnectionURL" 
-                value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>
-      <property name="openjpa.slice.FED_3.2.ConnectionDriverName" 
-                value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>-->
+      <property name="openjpa.slice.FED_3.1.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
                 
       <property name="openjpa.slice.FED_4.ConnectionURL" 
                 value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=test;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=30"/>

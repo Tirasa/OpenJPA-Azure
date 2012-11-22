@@ -20,11 +20,9 @@ package org.apache.openjpa.azure.jdbc.meta;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.openjpa.azure.jdbc.schema.AzureSchemaTool;
@@ -57,7 +55,6 @@ import org.apache.openjpa.meta.MetaDataFactory;
 import org.apache.openjpa.meta.QueryMetaData;
 import org.apache.openjpa.meta.SequenceMetaData;
 import org.apache.openjpa.meta.ValueStrategies;
-import org.apache.openjpa.slice.Slice;
 import org.apache.openjpa.util.GeneralException;
 import org.apache.openjpa.util.MetaDataException;
 
@@ -84,15 +81,11 @@ public class AzureMappingTool extends MappingTool {
 
     private boolean _flushSchema = false;
 
-    private final Slice slice;
-
     /**
      * Constructor. Supply configuration and action.
      */
-    public AzureMappingTool(final Slice slice, final JDBCConfiguration conf, final String action, final boolean meta) {
+    public AzureMappingTool(final JDBCConfiguration conf, final String action, final boolean meta) {
         super(conf, action, meta);
-
-        this.slice = slice;
 
         this._conf = conf;
         _log = conf.getLog(JDBCConfiguration.LOG_METADATA);
@@ -123,7 +116,7 @@ public class AzureMappingTool extends MappingTool {
         if (SCHEMA_ACTION_NONE.equals(action)) {
             action = null;
         }
-        final SchemaTool tool = new AzureSchemaTool(slice, _conf, action);
+        final SchemaTool tool = new AzureSchemaTool(_conf, action);
         tool.setIgnoreErrors(getIgnoreErrors());
         tool.setPrimaryKeys(getPrimaryKeys());
         tool.setForeignKeys(getForeignKeys());

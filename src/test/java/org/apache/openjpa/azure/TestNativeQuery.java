@@ -72,7 +72,7 @@ public class TestNativeQuery extends AbstractAzureTestCase {
 
         Query query = entityManager.createNativeQuery(
                 "INSERT INTO PObject VALUES(" + pobj.getId() + ", " + pobj.getValue() + ")");
-        assertEquals(1, query.executeUpdate());
+        assertEquals(2, query.executeUpdate());
 
         entityManager.getTransaction().commit();
         // --------------------
@@ -83,7 +83,7 @@ public class TestNativeQuery extends AbstractAzureTestCase {
         entityManager.getTransaction().begin();
 
         query = entityManager.createNativeQuery("UPDATE PObject SET value=10010 WHERE id=" + pobj.getId());
-        assertEquals(1, query.executeUpdate());
+        assertEquals(2, query.executeUpdate());
 
         final List all = entityManager.createNativeQuery(
                 "SELECT value FROM PObject WHERE id=" + pobj.getId()).getResultList();
@@ -102,7 +102,7 @@ public class TestNativeQuery extends AbstractAzureTestCase {
         entityManager.getTransaction().begin();
 
         query = entityManager.createNativeQuery("DELETE FROM PObject WHERE id=" + pobj.getId());
-        assertEquals(1, query.executeUpdate());
+        assertEquals(2, query.executeUpdate());
 
         entityManager.getTransaction().commit();
         // --------------------

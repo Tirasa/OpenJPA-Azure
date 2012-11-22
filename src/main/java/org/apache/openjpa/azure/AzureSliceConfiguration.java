@@ -16,43 +16,25 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.azure.beans;
+package org.apache.openjpa.azure;
 
-import java.io.Serializable;
-import java.util.concurrent.atomic.AtomicLong;
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import java.util.Collection;
+import java.util.List;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
+import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
+import org.apache.openjpa.jdbc.schema.Table;
 
-@Entity
-public class PObject implements Serializable {
+public interface AzureSliceConfiguration extends JDBCConfiguration {
 
-    private static final long serialVersionUID = -1733134082749978287L;
+    List<Federation> getFederations(final Table table);
 
-    @Id
-    private long id;
+    Collection<Federation> getFederations();
 
-    private int value;
+    List<Federation> getFederations(final String tableName);
 
-    private static AtomicLong idCounter = new AtomicLong(System.currentTimeMillis());
+    Federation getFederation(final String sliceName);
 
-    public PObject() {
-        id = idCounter.addAndGet(1);
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public int getValue() {
-        return value;
-    }
-
-    public void setValue(int i) {
-        value = i;
-    }
-
-    @Override
-    public String toString() {
-        return "PObject (" + id + ")";
-    }
+    JDBCConfiguration getSliceConf();
+    
+    AzureConfiguration getGlobalConf();
 }
