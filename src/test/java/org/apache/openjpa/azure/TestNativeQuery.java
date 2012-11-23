@@ -35,11 +35,27 @@ public class TestNativeQuery extends AbstractAzureTestCase {
             final EntityManager entityManager = emf.createEntityManager();
 
             entityManager.getTransaction().begin();
-
             entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
-
             entityManager.getTransaction().commit();
-            entityManager.clear();
+
+            try {
+                entityManager.getTransaction().begin();
+                entityManager.createNativeQuery("DROP INDEX PObject_Index ON PObject").executeUpdate();
+                entityManager.getTransaction().commit();
+            } catch (Exception ignore) {
+                // ignore
+                entityManager.getTransaction().rollback();
+            }
+
+            try {
+                entityManager.getTransaction().begin();
+                entityManager.createNativeQuery("DROP VIEW PObject_VIEW").executeUpdate();
+                entityManager.getTransaction().commit();
+            } catch (Exception ignore) {
+                // ignore
+                entityManager.getTransaction().rollback();
+            }
+
             entityManager.close();
 
             initialized = true;
@@ -51,6 +67,34 @@ public class TestNativeQuery extends AbstractAzureTestCase {
         return System.getProperty("unit", "azure-test");
     }
 
+    public void testCreateIndex() {
+
+        final EntityManager entityManager = emf.createEntityManager();
+
+        entityManager.getTransaction().begin();
+
+        Query query = entityManager.createNativeQuery("CREATE INDEX PObject_Index ON PObject(value)");
+        assertEquals(0, query.executeUpdate());
+
+        entityManager.getTransaction().commit();
+
+        entityManager.close();
+    }
+
+    public void testCreateView() {
+
+        final EntityManager entityManager = emf.createEntityManager();
+
+        entityManager.getTransaction().begin();
+
+        Query query = entityManager.createNativeQuery("CREATE VIEW PObject_VIEW AS SELECT * FROM PObject");
+        assertEquals(0, query.executeUpdate());
+
+        entityManager.getTransaction().commit();
+
+        entityManager.close();
+    }
+
     public void testSelect() {
         createIndependentObjects(10);
 
@@ -58,6 +102,8 @@ public class TestNativeQuery extends AbstractAzureTestCase {
 
         final List all = entityManager.createNativeQuery("SELECT * FROM PObject").getResultList();
         assertFalse(all.isEmpty());
+
+        entityManager.close();
     }
 
     public void testInsertUpdateDelete() {
@@ -106,5 +152,7 @@ public class TestNativeQuery extends AbstractAzureTestCase {
 
         entityManager.getTransaction().commit();
         // --------------------
+
+        entityManager.close();
     }
 }

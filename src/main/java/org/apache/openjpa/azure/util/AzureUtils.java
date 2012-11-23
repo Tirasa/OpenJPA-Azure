@@ -227,7 +227,7 @@ public final class AzureUtils {
             stm = conn.createStatement();
 
             rs = stm.executeQuery(
-                    "SELECT OBJECT_NAME (object_id) AS[ObjectName] "
+                    "SELECT DISTINCT OBJECT_NAME (object_id) AS[ObjectName] "
                     + "FROM sys.dm_db_partition_stats "
                     + "WHERE OBJECT_NAME(object_id) ='" + table + "'");
 

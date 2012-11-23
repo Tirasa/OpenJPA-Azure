@@ -326,8 +326,6 @@ public class DistributedSQLStoreQuery extends SQLStoreQuery {
                     continue;
                 }
 
-                isLocallyReplicated(q.getContext(), ((AzureSliceStoreManager) sm).getFederation());
-
                 StoreQuery query = owner._queries.get(i);
                 StoreQuery.Executor executor = executors.get(i);
 

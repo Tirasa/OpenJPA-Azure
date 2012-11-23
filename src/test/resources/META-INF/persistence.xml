@@ -49,7 +49,7 @@
       <property name="openjpa.azure.Federations" value="FED_1, FED_2, FED_3, FED_4, FED_5" />
         
       <property name="openjpa.azure.FED_1.RangeMappingType" value="BIGINT" />
-      <property name="openjpa.azure.FED_1.Tables" value="PersonBINT,BusinessRole,PObject,MPObject" />
+      <property name="openjpa.azure.FED_1.Tables" value="PersonBINT,BusinessRole,PObject,MPObject,PObject_VIEW" />
       <property name="openjpa.azure.FED_1.PersonBINT.RangeMappingName" value="id" />
       <property name="openjpa.azure.FED_1.BusinessRole.RangeMappingName" value="id" />
       <property name="openjpa.azure.FED_1.PObject.RangeMappingName" value="id" />
@@ -68,7 +68,7 @@
       <property name="openjpa.azure.FED_4.PersonBIN.RangeMappingName" value="code" />
       
       <property name="openjpa.azure.FED_5.RangeMappingType" value="BIGINT" />
-      <property name="openjpa.azure.FED_5.Tables" value="PObject" />
+      <property name="openjpa.azure.FED_5.Tables" value="PObject,,PObject_VIEW" />
       <property name="openjpa.azure.FED_5.PObject.RangeMappingName" value="id" />
       
       <property name="openjpa.slice.Names"   value="ROOT,FED_1.0,FED_1.1,FED_2.0,FED_2.1,FED_3.0,FED_3.1,FED_4,FED_5"/>

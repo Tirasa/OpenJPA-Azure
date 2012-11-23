@@ -30,7 +30,9 @@ public class NativeQueryInfo {
         INSERT,
         DELETE,
         UPDATE,
-        SELECT
+        SELECT,
+        CREATE,
+        DROP
     };
 
     private StatementType type;
@@ -43,11 +45,71 @@ public class NativeQueryInfo {
 
             final StringTokenizer tokenizer = new StringTokenizer(query);
 
-
             type = StatementType.valueOf(tokenizer.nextToken().toUpperCase());
 
+            List<String> objects = new ArrayList<String>();
+
             switch (type) {
+                case DROP:
+                    String objectType = tokenizer.nextToken();
+                    if ("VIEW".equalsIgnoreCase(objectType)) {
+                        // DROP VIEW <view name>
+                        objects.add(tokenizer.nextToken());
+                    } else if ("INDEX".equalsIgnoreCase(objectType)) {
+                        // DROP INDEX <index name> ON <tableName>
+
+                        // index name
+                        tokenizer.nextToken();
+
+                        // ON
+                        tokenizer.nextToken();
+
+                        // table name
+                        objects.add(tokenizer.nextToken());
+                    } else {
+                        throw new UnsupportedOperationException("Unsupported query " + query);
+                    }
+                    break;
+                case CREATE:
+                    objectType = tokenizer.nextToken();
+
+                    if ("VIEW".equalsIgnoreCase(objectType)) {
+                        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAA create view ");
+                        /**
+                         * CREATE VIEW [ schema_name . ] view_name [ (column [ ,...n ] ) ] [ WITH <view_attribute> [
+                         * ,...n ] ] AS select_statement [ WITH CHECK OPTION ]
+                         */
+                        objects.add(tokenizer.nextToken());
+                    } else {
+                        // suppose to have a create index query
+                        final String tmp = normalizeCreateIndex(query);
+
+                        /*
+                         * NORMALIZED:
+                         *
+                         * index_name ON <object> (column [ ASC | DESC ] [ ,...n ] ) [ INCLUDE (column_name [ ,...n ] )
+                         * ] [ WHERE <filter_predicate> ] [ WITH ( <relational_index_option> [ ,...n ] ) ]
+                         */
+
+                        final StringTokenizer indexTokenizer = new StringTokenizer(tmp);
+
+                        // index name
+                        indexTokenizer.nextToken();
+
+                        // ON
+                        indexTokenizer.nextToken();
+
+                        objects.add(indexTokenizer.nextToken());
+                    }
+
+                    break;
                 case INSERT:
+                    /**
+                     * [ WITH <common_table_expression> [ ,...n ] ] INSERT [ TOP ( expression ) [ PERCENT ] ] [ INTO ] {
+                     * <object> [ WITH ( <Table_Hint_Limited> [ ...n ] ) ] } { [ ( column_list ) ] [ <OUTPUT Clause> ] {
+                     * VALUES ( { DEFAULT | NULL | expression } [ ,...n ] ) [ ,...n ] | derived_table |
+                     * execute_statement | <dml_table_source> | DEFAULT VALUES } } [; ]
+                     */
                     String tableName = tokenizer.nextToken();
 
                     // INTO is optional
@@ -55,14 +117,7 @@ public class NativeQueryInfo {
                         tableName = tokenizer.nextToken();
                     }
 
-                    int lastPoint;
-
-                    if ((lastPoint = tableName.lastIndexOf(".")) > 0) {
-                        tableNames.add(tableName.substring(lastPoint, tableName.length()));
-                    } else {
-                        tableNames.add(tableName);
-                    }
-
+                    objects.add(tableName);
                     break;
                 case DELETE:
                     tableName = tokenizer.nextToken();
@@ -72,22 +127,10 @@ public class NativeQueryInfo {
                         tableName = tokenizer.nextToken();
                     }
 
-                    if ((lastPoint = tableName.lastIndexOf(".")) > 0) {
-                        tableNames.add(tableName.substring(lastPoint, tableName.length()));
-                    } else {
-                        tableNames.add(tableName);
-                    }
-
+                    objects.add(tableName);
                     break;
                 case UPDATE:
-                    tableName = tokenizer.nextToken();
-
-                    if ((lastPoint = tableName.lastIndexOf(".")) > 0) {
-                        tableNames.add(tableName.substring(lastPoint, tableName.length()));
-                    } else {
-                        tableNames.add(tableName);
-                    }
-
+                    objects.add(tokenizer.nextToken());
                     break;
                 case SELECT:
                     // table list start from "FROM" word
@@ -96,13 +139,34 @@ public class NativeQueryInfo {
                         int to = query.indexOf("WHERE");
 
                         if (from > 0) {
-                            tableNames = getTableNames(query.substring(from + 5, to < 0 ? query.length() : to));
+                            objects.addAll(getTableNames(query.substring(from + 5, to < 0 ? query.length() : to)));
                         }
                     }
+            }
+
+            for (String name : objects) {
+                final String tableName;
+                final int firstParenthesis;
+
+                if ((firstParenthesis = name.indexOf("(")) > 0) {
+                    tableName = name.substring(0, firstParenthesis);
+                } else {
+                    tableName = name;
+                }
+
+                final int lastPoint;
+
+                if ((lastPoint = name.lastIndexOf(".")) > 0) {
+                    tableNames.add(tableName.substring(lastPoint, tableName.length()));
+                } else {
+                    tableNames.add(tableName);
+                }
             }
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid query " + query);
         }
+
+        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAA tables .... " + tableNames);
     }
 
     public List<String> getTableNames() {
@@ -113,12 +177,53 @@ public class NativeQueryInfo {
         return type;
     }
 
+    private String normalizeCreateIndex(final String query) {
+        String input = query.trim();
+
+        if (input.startsWith("CREATE")) {
+            /*
+             * CREATE [ UNIQUE ] [ CLUSTERED | NONCLUSTERED ] INDEX index_name ON <object> (column [ ASC | DESC ] [
+             * ,...n ] ) [ INCLUDE (column_name [ ,...n ] ) ] [ WHERE <filter_predicate> ] [ WITH (
+             * <relational_index_option> [ ,...n ] ) ]
+             */
+            return normalizeCreateIndex(input.substring(6, input.length()));
+        } else if (input.startsWith("UNIQUE")) {
+            /*
+             * ... [ UNIQUE ] [ CLUSTERED | NONCLUSTERED ] INDEX index_name ON <object> (column [ ASC | DESC ] [ ,...n ]
+             * ) [ INCLUDE (column_name [ ,...n ] ) ] [ WHERE <filter_predicate> ] [ WITH ( <relational_index_option> [
+             * ,...n ] ) ]
+             */
+            return normalizeCreateIndex(input.substring(6, input.length()));
+        } else if (input.startsWith("CLUSTERED")) {
+            /*
+             * ... [ CLUSTERED] INDEX index_name ON <object> (column [ ASC | DESC ] [ ,...n ] ) [ INCLUDE (column_name [
+             * ,...n ] ) ] [ WHERE <filter_predicate> ] [ WITH ( <relational_index_option> [ ,...n ] ) ]
+             */
+            return normalizeCreateIndex(input.substring(9, input.length()));
+        } else if (input.startsWith("NONCLUSTERED")) {
+            /*
+             * ... [ NONCLUSTERED ] INDEX index_name ON <object> (column [ ASC | DESC ] [ ,...n ] ) [ INCLUDE
+             * (column_name [ ,...n ] ) ] [ WHERE <filter_predicate> ] [ WITH ( <relational_index_option> [ ,...n ] ) ]
+             */
+            return normalizeCreateIndex(input.substring(12, input.length()));
+        } else if (input.startsWith("INDEX")) {
+            /*
+             * ... INDEX index_name ON <object> (column [ ASC | DESC ] [ ,...n ] ) [ INCLUDE (column_name [ ,...n ] ) ]
+             * [ WHERE <filter_predicate> ] [ WITH ( <relational_index_option> [ ,...n ] ) ]
+             */
+            return input.substring(5, input.length()).trim();
+        } else {
+            throw new UnsupportedOperationException("Unsupported native query " + query);
+        }
+    }
+
     private List<String> getTableNames(final String fromClause) {
         final List<String> result = new ArrayList<String>();
 
         if (StringUtils.isNotBlank(fromClause)) {
             for (String from : fromClause.split(",")) {
                 String name = from.trim();
+
                 result.add(name.substring(0, name.contains(" ") ? name.indexOf(" ") : name.length()));
             }
         }
