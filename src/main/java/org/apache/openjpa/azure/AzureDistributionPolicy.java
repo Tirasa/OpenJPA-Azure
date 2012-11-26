@@ -82,7 +82,7 @@ public class AzureDistributionPolicy implements DistributionPolicy {
                 log.error("Error retrieving objectId", e);
                 return null;
             }
-            
+
             final List<String> targets = AzureUtils.getTargetSlice(
                     (DistributedJDBCStoreManager) broker.getStoreManager().getDelegate(), slices, fed, id);
 

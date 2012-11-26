@@ -16,19 +16,37 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.openjpa.azure.kernel;
+package org.apache.openjpa.azure.beans;
 
-import org.apache.openjpa.kernel.QueryImpl;
-import org.apache.openjpa.kernel.StoreQuery;
-import org.apache.openjpa.slice.DistributedBrokerImpl;
-import org.apache.openjpa.azure.AzureQueryImpl;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
 
-public class AzureBroker extends DistributedBrokerImpl {
+@Entity
+public class ConfBean {
 
-    /**
-     * Create a new query.
-     */
-    protected QueryImpl newQueryImpl(String lang, StoreQuery sq) {
-        return new AzureQueryImpl(this, lang, sq);
+    @Id
+    @Column(name = "confKey")
+    private String key;
+
+    @Column(name = "confValue")
+    private String value;
+
+    public String getKey() {
+        return key;
+    }
+
+    public void setKey(String key) {
+        this.key = key;
+    }
+
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
     }
 }

@@ -74,7 +74,6 @@ public class NativeQueryInfo {
                     objectType = tokenizer.nextToken();
 
                     if ("VIEW".equalsIgnoreCase(objectType)) {
-                        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAA create view ");
                         /**
                          * CREATE VIEW [ schema_name . ] view_name [ (column [ ,...n ] ) ] [ WITH <view_attribute> [
                          * ,...n ] ] AS select_statement [ WITH CHECK OPTION ]
@@ -165,8 +164,6 @@ public class NativeQueryInfo {
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid query " + query);
         }
-
-        System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAA tables .... " + tableNames);
     }
 
     public List<String> getTableNames() {

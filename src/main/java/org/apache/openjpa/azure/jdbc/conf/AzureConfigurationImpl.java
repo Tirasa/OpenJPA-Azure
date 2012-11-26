@@ -98,7 +98,7 @@ public class AzureConfigurationImpl extends DistributedJDBCConfigurationImpl imp
 
             federations.addAll(
                     federatedTables.get(tableName) == null ? Collections.EMPTY_LIST : federatedTables.get(tableName));
-
+            
             for (ForeignKey fk : table.getForeignKeys()) {
                 tableName = fk.getPrimaryKeyTable().getFullIdentifier().getName();
                 federations.addAll(federatedTables.get(tableName) == null

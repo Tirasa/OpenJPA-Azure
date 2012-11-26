@@ -32,6 +32,7 @@ public class AzureReplicationPolicy implements ReplicationPolicy {
 
     @Override
     public String[] replicate(final Object pc, final List<String> slices, final Object context) {
+
         final Broker broker = (Broker) context;
         final AzureConfiguration conf = (AzureConfiguration) broker.getConfiguration();
 
@@ -50,7 +51,7 @@ public class AzureReplicationPolicy implements ReplicationPolicy {
             for (Federation fed : federations) {
                 final String rangeMappingName = fed.getRangeMappingName(table.getFullIdentifier().getName());
                 final Object id = objectId == null ? null : AzureUtils.getObjectIdValue(objectId, rangeMappingName);
-                
+
                 final List<String> targets = AzureUtils.getTargetSlice(
                         (DistributedJDBCStoreManager) broker.getStoreManager().getDelegate(), slices, fed, id);
 
@@ -60,7 +61,7 @@ public class AzureReplicationPolicy implements ReplicationPolicy {
                     rep.add(targets.get(0));
                 }
             }
-            
+
             return rep.toArray(new String[federations.size()]);
         }
     }

@@ -31,6 +31,7 @@
     <class>org.apache.openjpa.azure.beans.PersonBIN</class>
     <class>org.apache.openjpa.azure.beans.PersonUID</class>
     <class>org.apache.openjpa.azure.beans.PersonUID_PK</class>
+    <class>org.apache.openjpa.azure.beans.ConfBean</class>
     
     <properties>
       <property name="openjpa.BrokerFactory" value="azure"/>
@@ -43,7 +44,7 @@
       
       <property name="openjpa.jdbc.MappingDefaults" value="ForeignKeyDeleteAction=restrict, JoinForeignKeyDeleteAction=restrict"/>
                   
-<!--      <property name="openjpa.Log" value="DefaultLevel=WARN, Runtime=TRACE, Tool=TRACE, SQL=TRACE"/>-->
+      <property name="openjpa.Log" value="DefaultLevel=WARN, Runtime=TRACE, Tool=TRACE, SQL=TRACE"/>
 
       <!-- Federations -->
       <property name="openjpa.azure.Federations" value="FED_1, FED_2, FED_3, FED_4, FED_5" />

@@ -35,6 +35,9 @@ import org.apache.openjpa.datacache.QueryCacheStoreQuery;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.kernel.PreparedSQLStoreQuery;
 import org.apache.openjpa.jdbc.kernel.SQLStoreQuery;
+import org.apache.openjpa.kernel.FetchConfiguration;
+import org.apache.openjpa.kernel.OpenJPAStateManager;
+import org.apache.openjpa.kernel.PCState;
 import org.apache.openjpa.kernel.QueryLanguages;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.kernel.StoreQuery;
@@ -66,7 +69,9 @@ public class AzureSliceStoreManager extends SliceStoreManager {
         super.setContext(ctx, conf);
         azureConf = (AzureConfiguration) ctx.getConfiguration();
 
-        log = conf.getLog(JDBCConfiguration.LOG_DIAG);
+        if (log == null) {
+            log = conf.getLog(JDBCConfiguration.LOG_DIAG);
+        }
 
         if (AzureSliceStoreManager.federations == null || AzureSliceStoreManager.federations.isEmpty()) {
             Connection conn = null;
@@ -163,6 +168,10 @@ public class AzureSliceStoreManager extends SliceStoreManager {
     // ---------------------------------
 
     public static void initFederations(final AzureConfiguration conf, final Connection conn) {
+        if (log == null) {
+            log = conf.getLog(JDBCConfiguration.LOG_DIAG);
+        }
+
         Collection<Federation> feds = conf.getFederations();
         AzureSliceStoreManager.federations = new HashMap<Federation, List<Object>>(feds.size());
 
@@ -177,6 +186,7 @@ public class AzureSliceStoreManager extends SliceStoreManager {
 
             try {
                 for (Object obj : AzureUtils.getMemberDistribution(conn, fed)) {
+                    log.info("Init member '" + obj + "' for " + fed);
                     members.add(obj);
                 }
             } catch (SQLException e) {

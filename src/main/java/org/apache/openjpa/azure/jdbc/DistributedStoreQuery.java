@@ -26,8 +26,10 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.azure.jdbc.kernel.AzureJDBCStoreQuery;
+import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 
 import org.apache.openjpa.jdbc.kernel.JDBCStore;
+import org.apache.openjpa.jdbc.kernel.SQLStoreQuery;
 import org.apache.openjpa.kernel.ExpressionStoreQuery;
 import org.apache.openjpa.kernel.FetchConfiguration;
 import org.apache.openjpa.kernel.OrderingMergedResultObjectProvider;
@@ -35,6 +37,7 @@ import org.apache.openjpa.kernel.QueryContext;
 import org.apache.openjpa.kernel.StoreManager;
 import org.apache.openjpa.kernel.StoreQuery;
 import org.apache.openjpa.kernel.exps.ExpressionParser;
+import org.apache.openjpa.lib.log.Log;
 import org.apache.openjpa.lib.rop.MergedResultObjectProvider;
 import org.apache.openjpa.lib.rop.RangeResultObjectProvider;
 import org.apache.openjpa.lib.rop.ResultObjectProvider;
@@ -58,9 +61,12 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
 
     private ExpressionParser _parser;
 
+    private final Log log;
+
     public DistributedStoreQuery(JDBCStore store, ExpressionParser parser) {
         super(store, parser);
         _parser = parser;
+        log = store.getConfiguration().getLog(JDBCConfiguration.LOG_DIAG);
     }
 
     public void add(StoreQuery q) {
@@ -169,6 +175,10 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 call.query = query;
                 call.params = params;
                 call.range = range;
+
+                owner.log.info("[" + ((AzureSliceStoreManager) sm).getSlice().getName() + "] Execute query: "
+                        + query.getContext().getQueryString());
+
                 futures.add(threadPool.submit(call));
             }
 
@@ -251,6 +261,10 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 call.executor = ex;
                 call.query = query;
                 call.params = params;
+
+                owner.log.info("[" + ((AzureSliceStoreManager) sm).getSlice().getName() + "] Execute delete query: "
+                        + query.getContext().getQueryString());
+
                 futures.add(threadPool.submit(call));
             }
             for (Future<Number> future : futures) {
@@ -292,6 +306,10 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 call.executor = ex;
                 call.query = query;
                 call.params = params;
+
+                owner.log.info("[" + ((AzureSliceStoreManager) sm).getSlice().getName() + "] Execute update query: "
+                        + query.getContext().getQueryString());
+
                 futures.add(threadPool.submit(call));
             }
             for (Future<Number> future : futures) {

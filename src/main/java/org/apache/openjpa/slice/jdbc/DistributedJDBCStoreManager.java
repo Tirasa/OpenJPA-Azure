@@ -18,9 +18,6 @@
  */
 package org.apache.openjpa.slice.jdbc;
 
-import org.apache.openjpa.azure.jdbc.DistributedStoreQuery;
-import org.apache.openjpa.azure.jdbc.DistributedSQLStoreQuery;
-import org.apache.openjpa.azure.jdbc.AzureSliceStoreManager;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -34,12 +31,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import org.apache.openjpa.azure.Federation;
+import org.apache.openjpa.azure.jdbc.AzureSliceStoreManager;
+import org.apache.openjpa.azure.jdbc.DistributedSQLStoreQuery;
+import org.apache.openjpa.azure.jdbc.DistributedStoreQuery;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfigurationImpl;
-import org.apache.openjpa.azure.util.AzureUtils;
-import org.apache.openjpa.conf.OpenJPAConfiguration;
-
 import org.apache.openjpa.enhance.PersistenceCapable;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.kernel.ConnectionInfo;
@@ -64,6 +60,7 @@ import org.apache.openjpa.meta.ClassMetaData;
 import org.apache.openjpa.meta.FieldMetaData;
 import org.apache.openjpa.slice.DistributedConfiguration;
 import org.apache.openjpa.slice.DistributedStoreManager;
+import org.apache.openjpa.slice.FinderTargetPolicy;
 import org.apache.openjpa.slice.Slice;
 import org.apache.openjpa.slice.SliceImplHelper;
 import org.apache.openjpa.slice.SliceInfo;
@@ -408,10 +405,31 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
                 }
             }
         }
+
+        final List<String> targets = new ArrayList<String>();
+
+        if (sm != null) {
+            Class candidate = sm.getMetaData() == null ? null : sm.getMetaData().getDescribedType();
+
+            if (candidate != null) {
+                final FinderTargetPolicy policy = _conf.getFinderTargetPolicyInstance();
+
+                final String[] targetNames =
+                        policy.getTargets(candidate, sm.getObjectId(), _conf.getActiveSliceNames(), getContext());
+
+                for (String slice : targetNames) {
+                    targets.add(slice);
+                }
+            }
+            log.trace("Retrieved targets to initialize: " + targets);
+        } else {
+            log.trace("No State Manager found to retrieve the policy to initialize targets");
+        }
+
         // not a part of Query result load. Look into the slices till found
-        List<SliceStoreManager> targets = getTargets(fetch);
-        for (SliceStoreManager slice : targets) {
-            if (slice.initialize(sm, state, fetch, edata)) {
+
+        for (SliceStoreManager slice : _slices) {
+            if (targets.contains(slice.getName()) && slice.initialize(sm, state, fetch, edata)) {
                 assignSlice(sm, slice.getName());
                 return true;
             }
@@ -530,9 +548,11 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
         if (hint == null || !(hint instanceof String || hint instanceof String[])) {
             return _slices;
         }
-        String[] targetNames = hint instanceof String
-                ? new String[]{hint.toString()} : (String[]) hint;
-        List<SliceStoreManager> targets = new ArrayList<SliceStoreManager>();
+
+        String[] targetNames = hint instanceof String ? new String[]{hint.toString()} : (String[]) hint;
+
+        final List<SliceStoreManager> targets = new ArrayList<SliceStoreManager>();
+
         for (SliceStoreManager slice : _slices) {
             for (String name : targetNames) {
                 if (slice.getName().equals(name)) {
@@ -540,9 +560,11 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
                 }
             }
         }
+
         if (targets.isEmpty()) {
             return _slices;
         }
+
         return targets;
     }
 

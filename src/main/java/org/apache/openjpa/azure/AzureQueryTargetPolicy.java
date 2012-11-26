@@ -26,6 +26,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.meta.AzureMappingTool;
 import org.apache.openjpa.azure.util.NativeQueryInfo;
+import org.apache.openjpa.conf.OpenJPAConfiguration;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.identifier.DBIdentifier;
 import org.apache.openjpa.jdbc.identifier.QualifiedDBIdentifier;
@@ -35,6 +36,7 @@ import org.apache.openjpa.jdbc.schema.SchemaGroup;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.kernel.Broker;
 import org.apache.openjpa.lib.conf.Configurations;
+import org.apache.openjpa.lib.log.Log;
 import org.apache.openjpa.slice.QueryTargetPolicy;
 
 /**
@@ -52,22 +54,30 @@ public class AzureQueryTargetPolicy implements QueryTargetPolicy {
             final String language,
             final List<String> slices,
             final Object context) {
-
+        
         final Broker broker = (Broker) context;
         final AzureConfiguration conf = (AzureConfiguration) broker.getConfiguration();
 
+        Log log = conf.getLog(JDBCConfiguration.LOG_DIAG);
+
+        log.info("Evaluate query target policy for '" + query + "'");
+
         init(conf);
 
-        NativeQueryInfo queryInfo = new NativeQueryInfo(query);
+        final NativeQueryInfo queryInfo = new NativeQueryInfo(query);
 
-        List<String> tableNames = queryInfo.getTableNames();
+        final List<String> tableNames = queryInfo.getTableNames();
+
+        log.info("Search location for tables " + tableNames);
 
         final List<String> result = new ArrayList<String>();
 
         for (String name : tableNames) {
             final Table table = group.findTable(QualifiedDBIdentifier.getPath(DBIdentifier.newTable(name)));
             final List<Federation> federations = conf.getFederations(table);
-            
+
+            log.info("Retrieved federations " + federations);
+
             if (federations.isEmpty()) {
                 result.add("ROOT");
             } else {
@@ -80,7 +90,7 @@ public class AzureQueryTargetPolicy implements QueryTargetPolicy {
                 }
             }
         }
-        
+
         return result.toArray(new String[result.size()]);
     }
 

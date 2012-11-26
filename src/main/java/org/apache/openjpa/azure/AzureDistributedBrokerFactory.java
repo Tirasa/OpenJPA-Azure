@@ -73,7 +73,7 @@ public class AzureDistributedBrokerFactory extends DistributedJDBCBrokerFactory 
 
     @Override
     protected void synchronizeMappings(ClassLoader loader) {
-        List<Slice> slices = getConfiguration().getSlices(Slice.Status.ACTIVE);
+        final List<Slice> slices = getConfiguration().getSlices(Slice.Status.ACTIVE);
         for (Slice slice : slices) {
             synchronizeMappings(loader, slice);
         }

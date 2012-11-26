@@ -63,12 +63,14 @@ public class AzureSchemaTool extends SchemaTool {
     public boolean createTable(final Table table)
             throws SQLException {
 
-        final Map.Entry<Connection, Federation> conn = getConnection(table);
+        Map.Entry<Connection, Federation> conn = null;
 
         boolean res = true;
 
-        if (conn != null) {
-            try {
+        try {
+            conn = getConnection(table);
+
+            if (conn != null) {
                 if (!AzureUtils.tableExists(conn.getKey(), table)) {
                     res &= executeSQL(
                             ((AzureDictionary) _dict).getCreateTableSQL(table, conn.getValue()), conn.getKey());
@@ -77,11 +79,15 @@ public class AzureSchemaTool extends SchemaTool {
                         managedTables.add(table.getFullIdentifier().getName());
                     }
                 }
-            } finally {
-                try {
+
+            }
+        } finally {
+            try {
+                if (conn != null && conn.getKey() != null) {
                     conn.getKey().close();
-                } catch (SQLException se) {
                 }
+            } catch (SQLException ignore) {
+                // ignore
             }
         }
 
@@ -123,14 +129,18 @@ public class AzureSchemaTool extends SchemaTool {
         boolean res = true;
 
         if (managedTables.contains(table.getFullIdentifier().getName())) {
-            final Connection conn = getConnection();
+            Connection conn = null;
 
             try {
+                conn = getConnection();
                 res &= executeSQL(_dict.getCreateIndexSQL(idx), conn);
             } finally {
                 try {
-                    conn.close();
-                } catch (SQLException se) {
+                    if (conn != null) {
+                        conn.close();
+                    }
+                } catch (SQLException ignore) {
+                    // ignore
                 }
             }
         }
@@ -142,20 +152,26 @@ public class AzureSchemaTool extends SchemaTool {
     public boolean dropTable(final Table table)
             throws SQLException {
 
-        final Map.Entry<Connection, Federation> conn = getConnection(table);
+        Map.Entry<Connection, Federation> conn = null;
 
         boolean result = true;
 
-        if (conn != null) {
-            try {
+        try {
+            conn = getConnection(table);
+
+            if (conn != null && conn.getKey() != null) {
                 if (AzureUtils.tableExists(conn.getKey(), table)) {
                     result &= executeSQL(_dict.getDropTableSQL(table), conn.getKey());
                 }
-            } finally {
-                try {
+            }
+
+        } finally {
+            try {
+                if (conn != null && conn.getKey() != null) {
                     conn.getKey().close();
-                } catch (SQLException se) {
                 }
+            } catch (SQLException ignore) {
+                // ignore
             }
         }
 
@@ -176,21 +192,28 @@ public class AzureSchemaTool extends SchemaTool {
         for (Table table : tables) {
             final Table[] tableArray = new Table[]{table};
 
-            final Map.Entry<Connection, Federation> conn = getConnection(table);
+            Map.Entry<Connection, Federation> conn = null;
 
-            if (conn != null) {
-                try {
+            try {
+                conn = getConnection(table);
+
+                if (conn != null && conn.getKey() != null) {
+
                     if (AzureUtils.tableExists(conn.getKey(), table)) {
                         final String[] sql = _dict.getDeleteTableContentsSQL(tableArray, conn.getKey());
                         if (!executeSQL(sql, conn.getKey())) {
                             _log.warn(_loc.get("delete-table-contents"));
                         }
                     }
-                } finally {
-                    try {
+                }
+
+            } finally {
+                try {
+                    if (conn != null && conn.getKey() != null) {
                         conn.getKey().close();
-                    } catch (SQLException se) {
                     }
+                } catch (SQLException ignore) {
+                    // ignore
                 }
             }
         }

@@ -22,9 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import org.apache.openjpa.azure.beans.BusinessRole;
+import org.apache.openjpa.azure.beans.ConfBean;
 import org.apache.openjpa.azure.beans.Gender;
 import org.apache.openjpa.azure.beans.MPObject;
 import org.apache.openjpa.azure.beans.PObject;
@@ -48,6 +50,7 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
             entityManager.createQuery("DELETE FROM BusinessRole p").executeUpdate();
             entityManager.createQuery("DELETE FROM MPObject p").executeUpdate();
             entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
+            entityManager.createQuery("DELETE FROM ConfBean p").executeUpdate();
 
             final Random randomGenerator = new Random();
 
@@ -75,6 +78,37 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
     @Override
     protected String getPersistenceUnitName() {
         return System.getProperty("unit", "azure-test");
+    }
+
+    public void testInRoot() {
+        final ConfBean bean = new ConfBean();
+        bean.setKey("key");
+        bean.setValue("value");
+
+        EntityManager em = emf.createEntityManager();
+
+        em.getTransaction().begin();
+        em.persist(bean);
+        em.getTransaction().commit();
+        
+        em.clear();
+        em.close();
+        
+        // start a new entity manager instance ....
+        em = emf.createEntityManager();
+
+        // chak read only contextually ...
+
+        EntityTransaction t = em.getTransaction();
+        t.begin();
+        t.setRollbackOnly();
+
+        ConfBean actual = em.find(ConfBean.class, "key");
+        assertNotNull(actual);
+
+        t.rollback();
+
+        em.close();
     }
 
     public void testFindAll() {
