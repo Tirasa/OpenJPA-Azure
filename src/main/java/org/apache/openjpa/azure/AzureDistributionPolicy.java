@@ -19,6 +19,7 @@
 package org.apache.openjpa.azure;
 
 import java.beans.PropertyDescriptor;
+import java.lang.reflect.Method;
 import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
@@ -67,12 +68,12 @@ public class AzureDistributionPolicy implements DistributionPolicy {
                 if (StringUtils.isNotBlank(rangeMappingName)) {
                     final Object objectId = broker.getObjectId(pc);
 
-                    if (objectId instanceof ObjectId) {
-                        final Object obj = ((ObjectId) objectId).getIdObject();
-                        id = new PropertyDescriptor(rangeMappingName, obj.getClass()).getReadMethod().invoke(obj);
-                    } else {
-                        id = new PropertyDescriptor(rangeMappingName, pc.getClass()).getReadMethod().invoke(pc);
-                    }
+                    final Object obj = objectId instanceof ObjectId ? ((ObjectId) objectId).getIdObject() : pc;
+
+                    final Method methodToInvoke =
+                            obj.getClass().getMethod("get" + StringUtils.capitalize(rangeMappingName), new Class[0]);
+
+                    id = methodToInvoke.invoke(obj, new Object[0]);
 
                     if (id == null) {
                         return null;
