@@ -42,8 +42,11 @@ public class AzureQueryImpl extends QueryImpl {
 
     private DistributedConfiguration _conf;
 
+    private final Broker broker;
+
     public AzureQueryImpl(Broker broker, String language, StoreQuery storeQuery) {
         super(broker, language, storeQuery);
+        this.broker = broker;
         _lock = new ReentrantSliceLock();
         _conf = (DistributedConfiguration) broker.getConfiguration();
     }
@@ -63,10 +66,26 @@ public class AzureQueryImpl extends QueryImpl {
                 fetch.setTargets(targets);
             }
         }
+
         return super.execute(params);
     }
 
     public long deleteAll(Object[] params) {
+        TargetFetchConfiguration fetch = (TargetFetchConfiguration) getFetchConfiguration();
+        if (!fetch.isExplicitTarget()) {
+            QueryTargetPolicy policy = _conf.getQueryTargetPolicyInstance();
+
+            if (policy != null) {
+                String[] targets = policy.getTargets(getQueryString(), null,
+                        getLanguage(), _conf.getActiveSliceNames(), this.getBroker());
+
+                fetch.setTargets(targets);
+            }
+        }
+        return super.deleteAll(params);
+    }
+    
+    public long deleteAll(Map params) {
         TargetFetchConfiguration fetch = (TargetFetchConfiguration) getFetchConfiguration();
         if (!fetch.isExplicitTarget()) {
             QueryTargetPolicy policy = _conf.getQueryTargetPolicyInstance();

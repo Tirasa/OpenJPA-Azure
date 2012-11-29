@@ -328,20 +328,22 @@ public final class AzureUtils {
     public static Object getObjectIdValue(final Object oid, final String key) {
         Object value = null;
 
-        try {
-            if (oid instanceof ObjectId) {
-                final Object idObject = ((ObjectId) oid).getIdObject();
-                value = new PropertyDescriptor(key, idObject.getClass()).getReadMethod().invoke(idObject);
-            } else {
-                final Embeddable embeddable = oid.getClass().getAnnotation(Embeddable.class);
-                if (embeddable == null) {
-                    value = oid;
+        if (StringUtils.isNotBlank(key)) {
+            try {
+                if (oid instanceof ObjectId) {
+                    final Object idObject = ((ObjectId) oid).getIdObject();
+                    value = new PropertyDescriptor(key, idObject.getClass()).getReadMethod().invoke(idObject);
                 } else {
-                    value = new PropertyDescriptor(key, oid.getClass()).getReadMethod().invoke(oid);
+                    final Embeddable embeddable = oid.getClass().getAnnotation(Embeddable.class);
+                    if (embeddable == null) {
+                        value = oid;
+                    } else {
+                        value = new PropertyDescriptor(key, oid.getClass()).getReadMethod().invoke(oid);
+                    }
                 }
+            } catch (Exception ignore) {
+                // ignore
             }
-        } catch (Exception ignore) {
-            // ignore
         }
 
         return value;

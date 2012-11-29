@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import javax.persistence.EntityManager;
-import javax.persistence.EntityTransaction;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import org.apache.openjpa.azure.beans.BusinessRole;
@@ -41,6 +40,7 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         super.setUp(new Class[]{PObject.class, MPObject.class, PersonBINT.class, BusinessRole.class}, CLEAR_TABLES);
 
         if (!initialized) {
+
             final EntityManager entityManager = emf.createEntityManager();
 
             entityManager.getTransaction().begin();
@@ -82,31 +82,41 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
 
     public void testInRoot() {
         final ConfBean bean = new ConfBean();
-        bean.setKey("key");
-        bean.setValue("value");
+        bean.setKey("testInRoot-key");
+        bean.setValue("testInRoot-value");
 
         EntityManager em = emf.createEntityManager();
 
         em.getTransaction().begin();
         em.persist(bean);
         em.getTransaction().commit();
-        
+
         em.clear();
         em.close();
-        
-        // start a new entity manager instance ....
+
+        // search for object on ROOT
         em = emf.createEntityManager();
 
-        // chak read only contextually ...
-
-        EntityTransaction t = em.getTransaction();
-        t.begin();
-        t.setRollbackOnly();
-
-        ConfBean actual = em.find(ConfBean.class, "key");
+        ConfBean actual = em.find(ConfBean.class, "testInRoot-key");
         assertNotNull(actual);
 
-        t.rollback();
+        // check cache as well ...
+        actual = em.find(ConfBean.class, "testInRoot-key");
+        assertNotNull(actual);
+
+        em.close();
+
+        // search for federated object
+        em = emf.createEntityManager();
+        
+        em.createQuery("SELECT e FROM PObject e", PObject.class).getResultList();
+
+        em.close();
+
+        // search for object on ROOT
+        em = emf.createEntityManager();
+        
+        em.find(ConfBean.class, "testInRoot-key");
 
         em.close();
     }

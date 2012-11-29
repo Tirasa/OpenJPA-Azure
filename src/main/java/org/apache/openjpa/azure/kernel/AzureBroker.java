@@ -18,10 +18,10 @@
  */
 package org.apache.openjpa.azure.kernel;
 
+import org.apache.openjpa.azure.AzureQueryImpl;
 import org.apache.openjpa.kernel.QueryImpl;
 import org.apache.openjpa.kernel.StoreQuery;
 import org.apache.openjpa.slice.DistributedBrokerImpl;
-import org.apache.openjpa.azure.AzureQueryImpl;
 
 public class AzureBroker extends DistributedBrokerImpl {
 

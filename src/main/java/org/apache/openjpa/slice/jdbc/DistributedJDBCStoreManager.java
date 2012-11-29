@@ -406,6 +406,9 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
             }
         }
 
+        // ----------------------
+        // TODO: SLICE-PATCH
+        // ----------------------
         final List<String> targets = new ArrayList<String>();
 
         if (sm != null) {
@@ -425,6 +428,7 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
         } else {
             log.trace("No State Manager found to retrieve the policy to initialize targets");
         }
+        // ----------------------
 
         // not a part of Query result load. Look into the slices till found
 

@@ -152,17 +152,18 @@ public class AzureSliceStoreManager extends SliceStoreManager {
 
     @Override
     public StoreQuery newQuery(String language) {
+        
         StoreQuery sq = newStoreQuery(language);
         if (sq == null || QueryLanguages.parserForLanguage(language) == null) {
             return sq;
         }
-
+        
         QueryCache queryCache = getContext().getConfiguration().getDataCacheManagerInstance().getSystemQueryCache();
-
+        
         if (queryCache == null) {
             return sq;
         }
-
+        
         return new QueryCacheStoreQuery(sq, queryCache);
     }
     // ---------------------------------

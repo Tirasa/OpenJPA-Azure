@@ -75,6 +75,7 @@ public class DistributedSQLStoreQuery extends SQLStoreQuery {
         return (DistributedJDBCStoreManager) getStore();
     }
 
+    @Override
     public StoreQuery.Executor newDataStoreExecutor(ClassMetaData meta, boolean subs) {
         boolean parallel = !getContext().getStoreContext().getBroker().getMultithreaded();
         DistributedSQLStoreQuery.ParallelExecutor ex = new DistributedSQLStoreQuery.ParallelExecutor(this, meta,
@@ -116,8 +117,7 @@ public class DistributedSQLStoreQuery extends SQLStoreQuery {
         /**
          * Each child query must be executed with slice context and not the given query context.
          */
-        public ResultObjectProvider executeQuery(StoreQuery q,
-                final Object[] params, final StoreQuery.Range range) {
+        public ResultObjectProvider executeQuery(StoreQuery q, final Object[] params, final StoreQuery.Range range) {
 
             final List<Future<ResultObjectProvider>> futures = new ArrayList<Future<ResultObjectProvider>>();
             final List<StoreQuery.Executor> usedExecutors = new ArrayList<StoreQuery.Executor>();
@@ -196,11 +196,17 @@ public class DistributedSQLStoreQuery extends SQLStoreQuery {
             ResultObjectProvider result = null;
             boolean[] ascending = getAscending(q);
             boolean isAscending = ascending.length > 0;
+
+            // TODO: remove temporary patch for aggregate function COUNT
             boolean isAggregate = ctx.isAggregate();
+            boolean isNativeAggregate = ctx.getQueryString().matches(".*COUNT(.*).*");
+            
             boolean hasRange = ctx.getEndRange() != Long.MAX_VALUE;
 
             if (isAggregate) {
                 result = new AzureUniqueResultObjectProvider(arops, q, getQueryExpressions());
+            }if (isNativeAggregate) {
+                result = new AzureNativeAggregatorROP(arops, q, getQueryExpressions());
             } else if (isAscending) {
                 result = new OrderingMergedResultObjectProvider(
                         arops,

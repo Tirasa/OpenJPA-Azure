@@ -40,7 +40,10 @@ public class NativeQueryInfo {
     private List<String> tableNames = new ArrayList<String>();
 
     public NativeQueryInfo(final String query) {
+        tableNames.addAll(parse(query));
+    }
 
+    public List<String> parse(final String query) {
         try {
 
             final StringTokenizer tokenizer = new StringTokenizer(query);
@@ -132,22 +135,105 @@ public class NativeQueryInfo {
                     objects.add(tokenizer.nextToken());
                     break;
                 case SELECT:
-                    // table list start from "FROM" word
+                    /**
+                     * <SELECT statement> ::= [WITH <common_table_expression> [,...n]] <query_expression> [ ORDER BY {
+                     * order_by_expression | column_position [ ASC | DESC ] } [ ,...n ] ] [ <FOR Clause>] [ OPTION (
+                     * <query_hint> [ ,...n ] ) ] <query_expression> ::= { <query_specification> | ( <query_expression>
+                     * ) } [ { UNION [ ALL ] | EXCEPT | INTERSECT } <query_specification> | ( <query_expression> ) [...n
+                     * ] ] <query_specification> ::= SELECT [ ALL | DISTINCT ] [TOP ( expression ) [PERCENT] [ WITH TIES
+                     * ] ] < select_list > [ INTO new_table ] [ FROM { <table_source> } [ ,...n ] ] [ WHERE
+                     * <search_condition> ] [ <GROUP BY> ] [ HAVING < search_condition > ]
+                     */
                     if (StringUtils.isNotBlank(query)) {
-                        int from = query.indexOf("FROM");
-                        int to = query.indexOf("WHERE");
+                        int from = query.toUpperCase().indexOf("FROM");
 
                         if (from > 0) {
-                            objects.addAll(getTableNames(query.substring(from + 5, to < 0 ? query.length() : to)));
+                            String fromClause = query.substring(from + 5).trim();
+
+                            if (fromClause.startsWith("(")) {
+                                return parse(fromClause.substring(1));
+                            } else {
+                                // Table list start from "FROM" word to 
+                                // 1. [INNER | CROSS] JOIN
+                                // 2. NATURAL [{LEFT|RIGHT} [OUTER]] JOIN
+                                // 3. {LEFT|RIGHT} [OUTER] JOIN
+                                // 4. WHERE
+                                // 5. WITH
+
+                                // Check for 1 ....
+                                int to = fromClause.toUpperCase().indexOf(" INNER JOIN");
+
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" CROSS JOIN");
+                                }
+
+                                // Check for 2 ....
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" NATURAL LEFT OUTER JOIN");
+                                }
+
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" NATURAL RIGHT OUTER JOIN");
+                                }
+
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" NATURAL LEFT JOIN");
+                                }
+
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" NATURAL RIGHT JOIN");
+                                }
+
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" NATURAL JOIN");
+                                }
+
+                                // Check for 3 ....
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" LEFT OUTER JOIN");
+                                }
+
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" RIGHT OUTER JOIN");
+                                }
+
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" LEFT JOIN");
+                                }
+
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" RIGHT JOIN");
+                                }
+
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" JOIN");
+                                }
+
+                                // Check for 4 ....
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" WHERE");
+                                }
+
+                                // Check for 5 ....
+                                if (to < 0) {
+                                    to = fromClause.toUpperCase().indexOf(" WITH");
+                                }
+
+                                fromClause = fromClause.substring(0, to < 0 ? fromClause.length() : to).trim();
+
+                                objects.addAll(getTableNames(fromClause));
+                            }
                         }
                     }
             }
 
+            final List<String> res = new ArrayList<String>();
+
             for (String name : objects) {
                 final String tableName;
-                final int firstParenthesis;
+                int firstParenthesis;
 
-                if ((firstParenthesis = name.indexOf("(")) > 0) {
+                if ((firstParenthesis = name.indexOf("(")) > 0 || (firstParenthesis = name.indexOf(")")) > 0) {
                     tableName = name.substring(0, firstParenthesis);
                 } else {
                     tableName = name;
@@ -156,13 +242,15 @@ public class NativeQueryInfo {
                 final int lastPoint;
 
                 if ((lastPoint = name.lastIndexOf(".")) > 0) {
-                    tableNames.add(tableName.substring(lastPoint, tableName.length()));
+                    res.add(tableName.substring(lastPoint, tableName.length()).trim());
                 } else {
-                    tableNames.add(tableName);
+                    res.add(tableName.trim());
                 }
             }
+
+            return res;
         } catch (Exception e) {
-            throw new IllegalArgumentException("Invalid query " + query);
+            throw new IllegalArgumentException("Invalid query " + query, e);
         }
     }
 

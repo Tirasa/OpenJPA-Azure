@@ -21,7 +21,9 @@ package org.apache.openjpa.azure;
 import java.util.List;
 import javax.persistence.EntityManager;
 import javax.persistence.Query;
+import org.apache.openjpa.azure.beans.ConfBean;
 import org.apache.openjpa.azure.beans.PObject;
+import org.apache.openjpa.persistence.OpenJPAEntityManager;
 
 public class TestNativeQuery extends AbstractAzureTestCase {
 
@@ -29,13 +31,14 @@ public class TestNativeQuery extends AbstractAzureTestCase {
 
     @Override
     public void setUp() {
-        super.setUp(new Class[]{PObject.class}, CLEAR_TABLES);
+        super.setUp(new Class[]{PObject.class, ConfBean.class}, CLEAR_TABLES);
 
         if (!initialized) {
             final EntityManager entityManager = emf.createEntityManager();
 
             entityManager.getTransaction().begin();
             entityManager.createQuery("DELETE FROM PObject p").executeUpdate();
+            entityManager.createQuery("DELETE FROM ConfBean p").executeUpdate();
             entityManager.getTransaction().commit();
 
             try {
@@ -67,8 +70,31 @@ public class TestNativeQuery extends AbstractAzureTestCase {
         return System.getProperty("unit", "azure-test");
     }
 
-    public void testCreateIndex() {
+    public void testUDPLOCK() {
 
+        final EntityManager entityManager = emf.createEntityManager();
+
+        // --------------------
+        // insert
+        // --------------------
+        entityManager.getTransaction().begin();
+
+        Query query = entityManager.createNativeQuery(
+                "INSERT INTO ConfBean VALUES('testUDPLOCK-key', 'testUDPLOCK-value')");
+        assertEquals(1, query.executeUpdate());
+
+        entityManager.getTransaction().commit();
+        // --------------------
+
+        final List all =
+                entityManager.createNativeQuery("SELECT * FROM ConfBean WITH (UPDLOCK) WHERE confKey='testUDPLOCK-key'").
+                getResultList();
+        assertEquals(1, all.size());
+
+        entityManager.close();
+    }
+
+    public void testCreateIndex() {
         final EntityManager entityManager = emf.createEntityManager();
 
         entityManager.getTransaction().begin();
@@ -123,6 +149,9 @@ public class TestNativeQuery extends AbstractAzureTestCase {
         entityManager.getTransaction().commit();
         // --------------------
 
+        query = entityManager.createNativeQuery("SELECT COUNT(id) FROM PObject");
+        assertTrue(((Long) query.getSingleResult()) > 0);
+
         // --------------------
         // update
         // --------------------
@@ -152,6 +181,49 @@ public class TestNativeQuery extends AbstractAzureTestCase {
 
         entityManager.getTransaction().commit();
         // --------------------
+
+        entityManager.close();
+    }
+
+    public void testCount() {
+        final OpenJPAEntityManager entityManager = emf.createEntityManager();
+
+        // --------------------
+        // insert
+        // --------------------
+        entityManager.getTransaction().begin();
+
+        Query query = entityManager.createNativeQuery(
+                "INSERT INTO ConfBean VALUES('testCount-key', 'testCount-value')");
+        assertEquals(1, query.executeUpdate());
+
+        entityManager.getTransaction().commit();
+        // --------------------
+
+        query = entityManager.createNativeQuery("SELECT COUNT(confKey) FROM ConfBean WHERE confKey='testCount-key'");
+        assertEquals(1, ((Integer) query.getSingleResult()).intValue());
+
+        entityManager.close();
+    }
+
+    public void testAnnidateCount() {
+        final OpenJPAEntityManager entityManager = emf.createEntityManager();
+
+        // --------------------
+        // insert
+        // --------------------
+        entityManager.getTransaction().begin();
+
+        Query query = entityManager.createNativeQuery(
+                "INSERT INTO ConfBean VALUES('testAnnidateCount-key', 'testAnnidateCount-value')");
+        assertEquals(1, query.executeUpdate());
+
+        entityManager.getTransaction().commit();
+        // --------------------
+
+        query = entityManager.createNativeQuery(
+                "SELECT COUNT(t.confKey) FROM (SELECT confKey FROM ConfBean WHERE confKey='testAnnidateCount-key') AS t");
+        assertEquals(1, ((Integer) query.getSingleResult()).intValue());
 
         entityManager.close();
     }

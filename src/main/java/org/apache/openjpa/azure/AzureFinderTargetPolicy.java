@@ -20,6 +20,7 @@ package org.apache.openjpa.azure;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.util.AzureUtils;
 import org.apache.openjpa.jdbc.schema.Table;

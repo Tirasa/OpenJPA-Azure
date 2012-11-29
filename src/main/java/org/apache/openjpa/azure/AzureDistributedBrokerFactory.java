@@ -52,7 +52,8 @@ public class AzureDistributedBrokerFactory extends DistributedJDBCBrokerFactory 
 
     @Override
     public DistributedBroker newBroker() {
-        return new AzureBroker();
+        AzureBroker broker = new AzureBroker();
+        return broker;
     }
 
     @Override

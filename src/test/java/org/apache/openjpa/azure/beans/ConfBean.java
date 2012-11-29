@@ -18,35 +18,32 @@
  */
 package org.apache.openjpa.azure.beans;
 
-import javax.persistence.Column;
+import javax.persistence.Cacheable;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
 @Entity
+@Cacheable
 public class ConfBean {
 
     @Id
-    @Column(name = "confKey")
-    private String key;
+    private String confKey;
 
-    @Column(name = "confValue")
-    private String value;
+    private String confValue;
 
     public String getKey() {
-        return key;
+        return confKey;
     }
 
     public void setKey(String key) {
-        this.key = key;
+        this.confKey = key;
     }
 
     public String getValue() {
-        return value;
+        return confValue;
     }
 
     public void setValue(String value) {
-        this.value = value;
+        this.confValue = value;
     }
 }

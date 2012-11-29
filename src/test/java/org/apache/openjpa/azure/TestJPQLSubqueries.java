@@ -76,6 +76,8 @@ public class TestJPQLSubqueries extends AbstractAzureTestCase {
 
         // Expected 10 but was 5 (https://github.com/Tirasa/OpenJPA-Azure/issues/53)
         assertEquals(5, res.size());
+
+        entityManager.close();
     }
 
     public void testAll() {
@@ -86,6 +88,8 @@ public class TestJPQLSubqueries extends AbstractAzureTestCase {
 
         // Expected 20 but was 10 (https://github.com/Tirasa/OpenJPA-Azure/issues/53)
         assertEquals(10, res.size());
+
+        entityManager.close();
     }
 
     public void testAny() {
@@ -95,6 +99,8 @@ public class TestJPQLSubqueries extends AbstractAzureTestCase {
 
         // Expected 10 but was 5 (https://github.com/Tirasa/OpenJPA-Azure/issues/53)
         assertEquals(5, res.size());
+
+        entityManager.close();
     }
 
     public void testIn() {
@@ -103,5 +109,7 @@ public class TestJPQLSubqueries extends AbstractAzureTestCase {
                 "SELECT e FROM MPObject e WHERE e.id IN (SELECT a.id FROM MPObject a WHERE a.id < 5)").getResultList();
 
         assertEquals(5, res.size());
+
+        entityManager.close();
     }
 }

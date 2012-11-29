@@ -77,10 +77,13 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
         return (DistributedJDBCStoreManager) getStore();
     }
 
+    @Override
     public StoreQuery.Executor newDataStoreExecutor(ClassMetaData meta, boolean subs) {
         boolean parallel = !getContext().getStoreContext().getBroker().getMultithreaded();
-        DistributedStoreQuery.ParallelExecutor ex = new DistributedStoreQuery.ParallelExecutor(this, meta, subs, _parser,
-                ctx.getCompilation(), parallel);
+
+        final DistributedStoreQuery.ParallelExecutor ex =
+                new DistributedStoreQuery.ParallelExecutor(this, meta, subs, _parser, ctx.getCompilation(), parallel);
+
         for (StoreQuery q : _queries) {
             ex.addExecutor(q.newDataStoreExecutor(meta, subs));
         }
@@ -178,7 +181,7 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
 
                 owner.log.info("[" + ((AzureSliceStoreManager) sm).getSlice().getName() + "] Execute query: "
                         + query.getContext().getQueryString());
-
+                
                 futures.add(threadPool.submit(call));
             }
 

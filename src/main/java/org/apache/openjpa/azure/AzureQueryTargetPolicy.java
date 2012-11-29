@@ -26,7 +26,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.meta.AzureMappingTool;
 import org.apache.openjpa.azure.util.NativeQueryInfo;
-import org.apache.openjpa.conf.OpenJPAConfiguration;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.identifier.DBIdentifier;
 import org.apache.openjpa.jdbc.identifier.QualifiedDBIdentifier;
@@ -54,7 +53,7 @@ public class AzureQueryTargetPolicy implements QueryTargetPolicy {
             final String language,
             final List<String> slices,
             final Object context) {
-        
+
         final Broker broker = (Broker) context;
         final AzureConfiguration conf = (AzureConfiguration) broker.getConfiguration();
 
