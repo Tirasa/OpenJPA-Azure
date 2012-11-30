@@ -21,7 +21,7 @@ package net.tirasa.jpasqlazure.web.pages;
 import java.util.Arrays;
 import net.tirasa.jpasqlazure.beans.Gender;
 import net.tirasa.jpasqlazure.beans.Person;
-import net.tirasa.jpasqlazure.repository.PersonRepository;
+import net.tirasa.jpasqlazure.persistence.PersonDAO;
 import org.apache.wicket.PageReference;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
@@ -42,7 +42,7 @@ public class EditModalPage extends WebPage {
     private FeedbackPanel feedbackPanel;
 
     public EditModalPage(final PageReference callPageRef, final ModalWindow window, final Person person,
-            final PersonRepository repository) {
+            final PersonDAO dao) {
 
         feedbackPanel = new FeedbackPanel("feedback");
         feedbackPanel.setOutputMarkupId(true);
@@ -72,7 +72,7 @@ public class EditModalPage extends WebPage {
             @Override
             protected void onSubmit(AjaxRequestTarget target, Form<?> form) {
                 try {
-                    repository.save(person);
+                    dao.save(person);
                     ((HomePage) callPageRef.getPage()).setModalResult(true);
                     window.close(target);
                 } catch (IllegalArgumentException e) {

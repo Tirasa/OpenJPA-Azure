@@ -20,9 +20,8 @@ package net.tirasa.jpasqlazure.web.pages;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.tirasa.jpasqlazure.beans.Gender;
 import net.tirasa.jpasqlazure.beans.Person;
-import net.tirasa.jpasqlazure.repository.PersonRepository;
+import net.tirasa.jpasqlazure.persistence.PersonDAO;
 import net.tirasa.jpasqlazure.web.pages.panel.ActionLinkPanel;
 import net.tirasa.jpasqlazure.web.pages.util.PersonProvider;
 import org.apache.wicket.Page;
@@ -65,12 +64,12 @@ public class HomePage extends WebPage implements IAjaxIndicatorAware {
 
     private FeedbackPanel feedbackPanel;
 
-    @SpringBean
-    private PersonRepository repository;
-
     private final WebMarkupContainer container;
 
     private final ModalWindow editModalWin;
+    
+    @SpringBean
+    private PersonDAO dao;
 
     /**
      * Response flag set by the Modal Window after the operation is completed.
@@ -126,7 +125,7 @@ public class HomePage extends WebPage implements IAjaxIndicatorAware {
                             @Override
                             public Page createPage() {
                                 return new EditModalPage(
-                                        HomePage.this.getPageReference(), editModalWin, imodel.getObject(), repository);
+                                        HomePage.this.getPageReference(), editModalWin, imodel.getObject(), dao);
                             }
                         });
                         editModalWin.setTitle("Person " + imodel.getObject().getId() + " - Edit");
@@ -150,7 +149,7 @@ public class HomePage extends WebPage implements IAjaxIndicatorAware {
                         target.add(feedbackPanel);
 
                         try {
-                            repository.delete(imodel.getObject());
+                            dao.delete(imodel.getObject());
                         } catch (Exception e) {
                             LOG.error("While deleting a person", e);
                             error(e.getMessage());
@@ -180,7 +179,7 @@ public class HomePage extends WebPage implements IAjaxIndicatorAware {
         });
 
         final AjaxFallbackDefaultDataTable table = new AjaxFallbackDefaultDataTable("table", columns,
-                new PersonProvider(repository), 10);
+                new PersonProvider(dao), 10);
 
         container = new WebMarkupContainer("container");
         container.add(table);
@@ -201,7 +200,7 @@ public class HomePage extends WebPage implements IAjaxIndicatorAware {
                     @Override
                     public Page createPage() {
                         return new EditModalPage(HomePage.this.getPageReference(), editModalWin,
-                                new Person(), repository);
+                                new Person(), dao);
                     }
                 });
                 editModalWin.setTitle("New Person");

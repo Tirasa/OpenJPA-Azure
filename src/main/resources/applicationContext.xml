@@ -63,19 +63,48 @@
         <entry key="openjpa.WriteLockLevel" value="write"/>
         <entry key="openjpa.LockTimeout" value="30000"/>
                                 
-        <entry key="openjpa.DataCache" value="true"/>
-        <entry key="openjpa.QueryCache" value="true"/>
+        <entry key="openjpa.jdbc.QuerySQLCache" value="false"/>
+        <entry key="openjpa.QueryCache" value="false"/>
+        <entry key="openjpa.DataCache" value="false" />
+        <entry key="openjpa.QueryCompilationCache" value="false" />
         
-        <entry key="openjpa.Log" value="DefaultLevel=WARN, Runtime=INFO, Tool=INFO"/>
+        <entry key="openjpa.Log" value="DefaultLevel=INFO, Runtime=TRACE, Tool=TRACE, SQL=TRACE"/>
 
         <!-- OpenJPA-Azure specific -->
         <entry key="openjpa.BrokerFactory" value="azure"/>
+        <entry key="openjpa.BrokerImpl" value="org.apache.openjpa.azure.kernel.AzureBroker"/>
         
-        <entry key="openjpa.sqlazure.Federations" value="FED_1" />
+        <entry key="openjpa.azure.Federations" value="FED_1" />
+        <entry key="openjpa.azure.FED_1.RangeMappingType" value="BIGINT" />
+        <entry key="openjpa.azure.FED_1.Tables" value="Person" />
+        <entry key="openjpa.azure.FED_1.Person.RangeMappingName" value="id" />
         
-        <entry key="openjpa.sqlazure.FED_1.RangeMappingType" value="BIGINT" />
-        <entry key="openjpa.sqlazure.FED_1.Tables" value="Person" />
-        <entry key="openjpa.sqlazure.FED_1.Person.RangeMappingName" value="id" />
+        <entry key="openjpa.slice.Names"   value="ROOT,FED_1.0,FED_1.1"/>
+        <entry key="openjpa.slice.Master"  value="ROOT"/>
+        <entry key="openjpa.slice.Lenient" value="false"/>
+        
+        <entry key="openjpa.slice.DistributionPolicy" value="org.apache.openjpa.azure.AzureDistributionPolicy"/>
+        <entry key="openjpa.slice.QueryTargetPolicy" value="org.apache.openjpa.azure.AzureQueryTargetPolicy"/>
+        <entry key="openjpa.slice.FinderTargetPolicy" value="org.apache.openjpa.azure.AzureFinderTargetPolicy"/>
+        <entry key="openjpa.slice.ReplicationPolicy" value="org.apache.openjpa.azure.AzureReplicationPolicy"/>
+        
+        <entry key="openjpa.slice.ROOT.ConnectionURL" 
+               value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=FEDDB;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=180"/>
+        <entry key="openjpa.slice.ROOT.ConnectionDriverName" 
+               value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+        <entry key="openjpa.slice.ROOT.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
+      
+        <entry key="openjpa.slice.FED_1.0.ConnectionURL" 
+               value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=FEDDB;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=180"/>
+        <entry key="openjpa.slice.FED_1.0.ConnectionDriverName" 
+               value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+        <entry key="openjpa.slice.FED_1.0.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
+        
+        <entry key="openjpa.slice.FED_1.1.ConnectionURL" 
+               value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=FEDDB;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=180"/>
+        <entry key="openjpa.slice.FED_1.1.ConnectionDriverName" 
+               value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+        <entry key="openjpa.slice.FED_1.1.jdbc.SynchronizeMappings" value="buildSchema(ForeignKeys=true,SchemaAction='add')"/>
       </map>
     </property>
   </bean>
@@ -89,8 +118,7 @@
   </bean>
     
   <tx:annotation-driven/>
+  <context:component-scan base-package="net.tirasa.jpasqlazure.persistence"/>
 
-  <jpa:repositories base-package="net.tirasa.jpasqlazure.repository"/>
-  
   <bean id="wicketApplication" class="net.tirasa.jpasqlazure.web.JPASQLAzureApplication"/>
 </beans>

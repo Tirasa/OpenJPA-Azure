@@ -22,7 +22,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import net.tirasa.jpasqlazure.beans.Person;
-import net.tirasa.jpasqlazure.repository.PersonRepository;
+import net.tirasa.jpasqlazure.persistence.PersonDAO;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.extensions.markup.html.repeater.util.SortableDataProvider;
 import org.apache.wicket.model.IModel;
@@ -30,17 +30,17 @@ import org.apache.wicket.model.LoadableDetachableModel;
 
 public class PersonProvider extends SortableDataProvider<Person> {
 
-    private final PersonRepository repository;
+    private final PersonDAO dao;
 
-    public PersonProvider(final PersonRepository repository) {
-        this.repository = repository;
+    public PersonProvider(final PersonDAO dao) {
+        this.dao = dao;
         setSort("id", SortOrder.ASCENDING);
     }
 
     @Override
     public Iterator<? extends Person> iterator(int first, int count) {
         final List<Person> persons = new ArrayList<Person>(size());
-        for (Person person : repository.findAll()) {
+        for (Person person : dao.findAll()) {
             persons.add(person);
         }
 
@@ -49,7 +49,7 @@ public class PersonProvider extends SortableDataProvider<Person> {
 
     @Override
     public int size() {
-        Iterable<Person> all = repository.findAll();
+        Iterable<Person> all = dao.findAll();
 
         int count = 0;
 
@@ -65,7 +65,7 @@ public class PersonProvider extends SortableDataProvider<Person> {
 
             @Override
             protected Person load() {
-                return repository.findOne(person.getId());
+                return dao.find(person.getId());
             }
         };
     }
