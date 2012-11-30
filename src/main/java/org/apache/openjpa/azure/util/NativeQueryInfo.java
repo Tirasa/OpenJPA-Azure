@@ -40,7 +40,9 @@ public class NativeQueryInfo {
     private List<String> tableNames = new ArrayList<String>();
 
     public NativeQueryInfo(final String query) {
-        tableNames.addAll(parse(query));
+        if (StringUtils.isNotBlank(query)) {
+            tableNames.addAll(parse(query));
+        }
     }
 
     public List<String> parse(final String query) {
