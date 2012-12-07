@@ -46,6 +46,7 @@ public final class Initialize {
     private static String[] fedPurgeQueries = {
         "USE FEDERATION ROOT WITH RESET",
         "DROP TABLE OPENJPA_SEQUENCE_TABLE",
+        "DROP TABLE ConfBean",
         "DROP FEDERATION FED_1",
         "DROP FEDERATION FED_2",
         "DROP FEDERATION FED_3",

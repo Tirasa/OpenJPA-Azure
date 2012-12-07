@@ -18,7 +18,6 @@
  */
 package org.apache.openjpa.azure.jdbc;
 
-import java.lang.Object;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -30,14 +29,9 @@ import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.kernel.AzureJDBCStoreQuery;
 import org.apache.openjpa.azure.util.AzureUtils;
-import org.apache.openjpa.datacache.QueryCache;
-import org.apache.openjpa.datacache.QueryCacheStoreQuery;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.kernel.PreparedSQLStoreQuery;
 import org.apache.openjpa.jdbc.kernel.SQLStoreQuery;
-import org.apache.openjpa.kernel.FetchConfiguration;
-import org.apache.openjpa.kernel.OpenJPAStateManager;
-import org.apache.openjpa.kernel.PCState;
 import org.apache.openjpa.kernel.QueryLanguages;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.kernel.StoreQuery;
@@ -152,19 +146,7 @@ public class AzureSliceStoreManager extends SliceStoreManager {
 
     @Override
     public StoreQuery newQuery(String language) {
-        
-        StoreQuery sq = newStoreQuery(language);
-        if (sq == null || QueryLanguages.parserForLanguage(language) == null) {
-            return sq;
-        }
-        
-        QueryCache queryCache = getContext().getConfiguration().getDataCacheManagerInstance().getSystemQueryCache();
-        
-        if (queryCache == null) {
-            return sq;
-        }
-        
-        return new QueryCacheStoreQuery(sq, queryCache);
+        return newStoreQuery(language);
     }
     // ---------------------------------
 

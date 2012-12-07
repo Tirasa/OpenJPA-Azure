@@ -68,7 +68,6 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
             }
 
             entityManager.getTransaction().commit();
-            entityManager.clear();
             entityManager.close();
 
             initialized = true;
@@ -91,7 +90,6 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         em.persist(bean);
         em.getTransaction().commit();
 
-        em.clear();
         em.close();
 
         // search for object on ROOT
@@ -108,14 +106,14 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
 
         // search for federated object
         em = emf.createEntityManager();
-        
+
         em.createQuery("SELECT e FROM PObject e", PObject.class).getResultList();
 
         em.close();
 
         // search for object on ROOT
         em = emf.createEntityManager();
-        
+
         em.find(ConfBean.class, "testInRoot-key");
 
         em.close();
@@ -202,9 +200,10 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
     public void testDelete() {
         final EntityManager em = emf.createEntityManager();
 
-        em.getTransaction().begin();
+        Number number = (Number) em.createQuery("SELECT COUNT(p) FROM PObject p").getSingleResult();
+        final int before = number.intValue();
 
-        final int before = count(PObject.class);
+        em.getTransaction().begin();
 
         final List<PObject> all = em.createQuery("SELECT p FROM PObject p").getResultList();
         assertFalse(all.isEmpty());
@@ -212,7 +211,10 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
 
         em.getTransaction().commit();
 
-        assertEquals(before - 1, count(PObject.class));
+        number = (Number) em.createQuery("SELECT COUNT(p) FROM PObject p").getSingleResult();
+        final int after = number.intValue();
+
+        assertEquals(before - 1, after);
 
         assertNull(em.find(PObject.class, all.get(0).getId()));
 
@@ -226,8 +228,6 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
         final EntityManager em = emf.createEntityManager();
 
         em.getTransaction().begin();
-
-        final int before = count(PObject.class);
 
         final List<PObject> all = em.createQuery("SELECT p FROM PObject p").getResultList();
         assertFalse(all.isEmpty());
@@ -251,7 +251,10 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
 
         final List<MPObject> ordered =
                 em.createQuery("SELECT p FROM MPObject p ORDER BY p.value").getResultList();
-        assertEquals(count(MPObject.class), ordered.size());
+
+        Number number = (Number) em.createQuery("SELECT COUNT(p) FROM MPObject p").getSingleResult();
+
+        assertEquals(number.intValue(), ordered.size());
 
         final List<Integer> values = new ArrayList<Integer>(ordered.size());
         for (MPObject obj : ordered) {
@@ -293,18 +296,24 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
      * Update in bulk by query.
      */
     public void testBulkUpdate() {
+
         final EntityManager em = emf.createEntityManager();
+
+        Number number = (Number) em.createQuery("SELECT COUNT(p) FROM PObject p").getSingleResult();
+        final int before = number.intValue();
 
         em.getTransaction().begin();
 
-        final int count = count(PObject.class);
         final int updated = em.createQuery("UPDATE PObject p SET p.value = :value").
                 setParameter("value", 5).executeUpdate();
-        assertEquals(count * 2, updated);
+        assertEquals(before * 2, updated);
 
         em.getTransaction().commit();
 
-        assertEquals(count, count(PObject.class));
+        number = (Number) em.createQuery("SELECT COUNT(p) FROM PObject p").getSingleResult();
+        final int after = number.intValue();
+
+        assertEquals(before, after);
 
         final List<PObject> all = em.createQuery("SELECT p FROM PObject p").getResultList();
         assertFalse(all.isEmpty());
@@ -339,8 +348,8 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
 
         em.getTransaction().commit();
 
-        List result = em.createQuery("SELECT c.gender, COUNT(c) FROM PersonBINT c "
-                + "GROUP BY c.gender HAVING COUNT(c) > 1").getResultList();
+        List result = em.createQuery(
+                "SELECT c.gender, COUNT(c) FROM PersonBINT c GROUP BY c.gender HAVING COUNT(c) > 1").getResultList();
         assertNotNull(result);
         assertEquals(1, result.size());
 
@@ -353,16 +362,22 @@ public class TestJPQLBasic extends AbstractAzureTestCase {
     public void testBulkDelete() {
         final EntityManager em = emf.createEntityManager();
 
+        Number number = (Number) em.createQuery("SELECT COUNT(p) FROM PObject p").getSingleResult();
+        int count = number.intValue();
+
         em.getTransaction().begin();
 
-        final int count = count(PObject.class);
         final int deleted = em.createQuery("DELETE FROM PObject p").executeUpdate();
         assertEquals(count * 2, deleted);
 
         em.getTransaction().commit();
-        em.close();
 
-        assertEquals(0, count(PObject.class));
+        number = (Number) em.createQuery("SELECT COUNT(p) FROM PObject p").getSingleResult();
+        count = number.intValue();
+
+        assertEquals(0, count);
+
+        em.close();
     }
 
     private void assertOrdering(Comparable[] items, boolean ascending) {

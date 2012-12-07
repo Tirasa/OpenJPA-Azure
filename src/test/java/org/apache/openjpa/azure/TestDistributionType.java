@@ -86,10 +86,10 @@ public class TestDistributionType extends AbstractAzureTestCase {
 
         entityManager.getTransaction().commit();
 
+        entityManager.getTransaction().begin();
+
         List<PersonBINT> res = entityManager.createQuery("SELECT p FROM PersonBINT p").getResultList();
         assertEquals(1, res.size());
-
-        entityManager.getTransaction().begin();
 
         entityManager.remove(res.get(0));
 

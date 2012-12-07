@@ -167,6 +167,8 @@ public class DistributedSQLStoreQuery extends SQLStoreQuery {
                 previousFed = fed;
 
                 StoreQuery query = owner._queries.get(i);
+                query.setContext(ctx);
+                
                 StoreQuery.Executor executor = executors.get(i);
 
                 usedExecutors.add(executor);
@@ -200,12 +202,15 @@ public class DistributedSQLStoreQuery extends SQLStoreQuery {
             // TODO: remove temporary patch for aggregate function COUNT
             boolean isAggregate = ctx.isAggregate();
             boolean isNativeAggregate = ctx.getQueryString().matches(".*COUNT(.*).*");
-            
+
             boolean hasRange = ctx.getEndRange() != Long.MAX_VALUE;
 
+            // ----------------------
+            // TODO: SLICE-PATCH
+            // ----------------------
             if (isAggregate) {
                 result = new AzureUniqueResultObjectProvider(arops, q, getQueryExpressions());
-            }if (isNativeAggregate) {
+            } else if (isNativeAggregate) {
                 result = new AzureNativeAggregatorROP(arops, q, getQueryExpressions());
             } else if (isAscending) {
                 result = new OrderingMergedResultObjectProvider(
@@ -215,9 +220,12 @@ public class DistributedSQLStoreQuery extends SQLStoreQuery {
             } else {
                 result = new MergedResultObjectProvider(arops);
             }
+
             if (hasRange) {
                 result = new RangeResultObjectProvider(result, ctx.getStartRange(), ctx.getEndRange());
             }
+            // ----------------------
+
             return result;
         }
 

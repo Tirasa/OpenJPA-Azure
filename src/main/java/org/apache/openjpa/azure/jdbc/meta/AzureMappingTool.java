@@ -112,11 +112,11 @@ public class AzureMappingTool extends MappingTool {
     /**
      * Return the schema tool to use for schema modification.
      */
-    private SchemaTool newSchemaTool(String action) {
+    private SchemaTool newSchemaTool(String action, JDBCConfiguration conf) {
         if (SCHEMA_ACTION_NONE.equals(action)) {
             action = null;
         }
-        final SchemaTool tool = new AzureSchemaTool(_conf, action);
+        final SchemaTool tool = new AzureSchemaTool(conf, action);
         tool.setIgnoreErrors(getIgnoreErrors());
         tool.setPrimaryKeys(getPrimaryKeys());
         tool.setForeignKeys(getForeignKeys());
@@ -138,6 +138,10 @@ public class AzureMappingTool extends MappingTool {
      */
     @Override
     public void record(final Flags flags) {
+        record(flags, _conf);
+    }
+
+    public void record(final Flags flags, JDBCConfiguration conf) {
         final MappingRepository repos = getRepository();
         final MetaDataFactory io = repos.getMetaDataFactory();
 
@@ -169,12 +173,13 @@ public class AzureMappingTool extends MappingTool {
                 // now run the schematool as long as we're doing some schema
                 // action and the user doesn't just want an xml output
                 final String[] schemaActions = getSchemaAction().split(",");
+
                 for (int i = 0; i < schemaActions.length; i++) {
                     if (!SCHEMA_ACTION_NONE.equals(schemaActions[i])
                             && (getSchemaWriter() == null || (_schemaTool != null
                             && _schemaTool.getWriter() != null))) {
 
-                        final SchemaTool tool = newSchemaTool(schemaActions[i]);
+                        final SchemaTool tool = newSchemaTool(schemaActions[i], conf);
 
                         // configure the tool with additional settings
                         if (flags != null) {
@@ -201,6 +206,7 @@ public class AzureMappingTool extends MappingTool {
                     getSchemaWriter().flush();
                 }
             }
+
             if (!_flush) {
                 return;
             }

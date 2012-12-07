@@ -36,6 +36,8 @@ import org.apache.openjpa.azure.jdbc.DistributedSQLStoreQuery;
 import org.apache.openjpa.azure.jdbc.DistributedStoreQuery;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfigurationImpl;
+import org.apache.openjpa.datacache.QueryCache;
+import org.apache.openjpa.datacache.QueryCacheStoreQuery;
 import org.apache.openjpa.enhance.PersistenceCapable;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.kernel.ConnectionInfo;
@@ -487,7 +489,15 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
         for (SliceStoreManager slice : _slices) {
             ret.add(slice.newQuery(language));
         }
-        return ret;
+        
+        final QueryCache queryCache = 
+                getContext().getConfiguration().getDataCacheManagerInstance().getSystemQueryCache();
+
+        if (queryCache == null) {
+            return ret;
+        }
+
+        return new QueryCacheStoreQuery(ret, queryCache);
     }
 
     @Override

@@ -86,6 +86,8 @@ public class TestRelationships extends AbstractAzureTestCase {
 
         entityManager.getTransaction().commit();
 
+        entityManager.getTransaction().begin();
+
         user = entityManager.find(PersonBINT.class, user.getId());
         assertNotNull(user);
         assertEquals(1, user.getRoles().size());
@@ -96,8 +98,6 @@ public class TestRelationships extends AbstractAzureTestCase {
         Query query = entityManager.createNativeQuery("SELECT * FROM Membership WHERE personId = " + user.getId());
         List res = query.getResultList();
         assertEquals(1, res.size());
-
-        entityManager.getTransaction().begin();
 
         entityManager.remove(user);
         entityManager.remove(br);

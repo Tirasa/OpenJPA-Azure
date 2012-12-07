@@ -29,7 +29,6 @@ import org.apache.openjpa.azure.jdbc.kernel.AzureJDBCStoreQuery;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 
 import org.apache.openjpa.jdbc.kernel.JDBCStore;
-import org.apache.openjpa.jdbc.kernel.SQLStoreQuery;
 import org.apache.openjpa.kernel.ExpressionStoreQuery;
 import org.apache.openjpa.kernel.FetchConfiguration;
 import org.apache.openjpa.kernel.OrderingMergedResultObjectProvider;
@@ -87,9 +86,11 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
         for (StoreQuery q : _queries) {
             ex.addExecutor(q.newDataStoreExecutor(meta, subs));
         }
+
         return ex;
     }
 
+    @Override
     public void setContext(QueryContext ctx) {
         super.setContext(ctx);
         for (StoreQuery q : _queries) {
@@ -97,12 +98,6 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
         }
     }
 
-    /**
-     * Executes queries on multiple databases.
-     *
-     * @author Pinaki Poddar
-     *
-     */
     public static class ParallelExecutor extends ExpressionStoreQuery.DataStoreExecutor {
 
         private List<StoreQuery.Executor> executors = new ArrayList<StoreQuery.Executor>();
@@ -170,9 +165,11 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 previousFed = fed;
 
                 StoreQuery query = owner._queries.get(i);
-                StoreQuery.Executor executor = executors.get(i);
+                query.setContext(ctx);
 
+                StoreQuery.Executor executor = executors.get(i);
                 usedExecutors.add(executor);
+                
                 DistributedStoreQuery.QueryExecutor call = new DistributedStoreQuery.QueryExecutor();
                 call.executor = executor;
                 call.query = query;
@@ -181,7 +178,7 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
 
                 owner.log.info("[" + ((AzureSliceStoreManager) sm).getSlice().getName() + "] Execute query: "
                         + query.getContext().getQueryString());
-                
+
                 futures.add(threadPool.submit(call));
             }
 
@@ -203,6 +200,9 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
             boolean isAggregate = ctx.isAggregate();
             boolean hasRange = ctx.getEndRange() != Long.MAX_VALUE;
 
+            // ----------------------
+            // TODO: SLICE-PATCH
+            // ----------------------
             if (isAggregate) {
                 result = new AzureUniqueResultObjectProvider(arops, q, getQueryExpressions());
             } else if (isAscending) {
@@ -213,9 +213,12 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
             } else {
                 result = new MergedResultObjectProvider(arops);
             }
+
             if (hasRange) {
                 result = new RangeResultObjectProvider(result, ctx.getStartRange(), ctx.getEndRange());
             }
+            // ----------------------
+
             return result;
         }
 
@@ -254,6 +257,8 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 }
 
                 StoreQuery query = owner._queries.get(i);
+                query.setContext(q.getContext());
+                
                 StoreQuery.Executor ex = executors.get(i);
 
                 if (futures == null) {
@@ -299,6 +304,8 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 }
 
                 StoreQuery query = owner._queries.get(i);
+                query.setContext(q.getContext());
+                
                 StoreQuery.Executor ex = executors.get(i);
 
                 if (futures == null) {

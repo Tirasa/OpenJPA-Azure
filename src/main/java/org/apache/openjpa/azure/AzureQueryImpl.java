@@ -84,7 +84,7 @@ public class AzureQueryImpl extends QueryImpl {
         }
         return super.deleteAll(params);
     }
-    
+
     public long deleteAll(Map params) {
         TargetFetchConfiguration fetch = (TargetFetchConfiguration) getFetchConfiguration();
         if (!fetch.isExplicitTarget()) {

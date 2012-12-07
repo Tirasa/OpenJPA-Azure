@@ -27,6 +27,7 @@ import java.util.List;
 import javax.sql.DataSource;
 import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.Federation;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.jdbc.identifier.DBIdentifier;
 import org.apache.openjpa.jdbc.schema.Column;
 import org.apache.openjpa.jdbc.schema.PrimaryKey;
