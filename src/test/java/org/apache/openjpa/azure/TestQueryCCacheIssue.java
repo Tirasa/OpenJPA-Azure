@@ -18,8 +18,6 @@
  */
 package org.apache.openjpa.azure;
 
-import java.util.Map;
-import java.util.Set;
 import org.apache.openjpa.persistence.OpenJPAEntityManager;
 import org.apache.openjpa.persistence.test.SQLListenerTestCase;
 
@@ -28,6 +26,12 @@ public class TestQueryCCacheIssue extends SQLListenerTestCase {
     @Override
     public void setUp() {
         super.setUp("openjpa.QueryCompilationCache", "true");
+
+        final OpenJPAEntityManager em = emf.createEntityManager();
+        em.getTransaction().begin();
+        em.createQuery("DELETE FROM ConfBean c").executeUpdate();
+        em.getTransaction().commit();
+        em.close();
     }
 
     @Override

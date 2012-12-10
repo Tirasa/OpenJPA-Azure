@@ -165,7 +165,6 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 previousFed = fed;
 
                 StoreQuery query = owner._queries.get(i);
-                query.setContext(ctx);
 
                 StoreQuery.Executor executor = executors.get(i);
                 usedExecutors.add(executor);
@@ -173,6 +172,7 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 DistributedStoreQuery.QueryExecutor call = new DistributedStoreQuery.QueryExecutor();
                 call.executor = executor;
                 call.query = query;
+                call.query.setContext(q.getContext());
                 call.params = params;
                 call.range = range;
 
@@ -257,7 +257,6 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 }
 
                 StoreQuery query = owner._queries.get(i);
-                query.setContext(q.getContext());
                 
                 StoreQuery.Executor ex = executors.get(i);
 
@@ -268,6 +267,7 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 DistributedStoreQuery.DeleteExecutor call = new DistributedStoreQuery.DeleteExecutor();
                 call.executor = ex;
                 call.query = query;
+                call.query.setContext(q.getContext());
                 call.params = params;
 
                 owner.log.info("[" + ((AzureSliceStoreManager) sm).getSlice().getName() + "] Execute delete query: "
@@ -304,7 +304,6 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 }
 
                 StoreQuery query = owner._queries.get(i);
-                query.setContext(q.getContext());
                 
                 StoreQuery.Executor ex = executors.get(i);
 
@@ -315,6 +314,7 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 DistributedStoreQuery.UpdateExecutor call = new DistributedStoreQuery.UpdateExecutor();
                 call.executor = ex;
                 call.query = query;
+                call.query.setContext(q.getContext());
                 call.params = params;
 
                 owner.log.info("[" + ((AzureSliceStoreManager) sm).getSlice().getName() + "] Execute update query: "

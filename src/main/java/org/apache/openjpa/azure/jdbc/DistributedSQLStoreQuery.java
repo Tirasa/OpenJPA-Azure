@@ -167,14 +167,13 @@ public class DistributedSQLStoreQuery extends SQLStoreQuery {
                 previousFed = fed;
 
                 StoreQuery query = owner._queries.get(i);
-                query.setContext(ctx);
-                
                 StoreQuery.Executor executor = executors.get(i);
 
                 usedExecutors.add(executor);
                 DistributedSQLStoreQuery.QueryExecutor call = new DistributedSQLStoreQuery.QueryExecutor();
                 call.executor = executor;
                 call.query = query;
+                call.query.setContext(q.getContext());
                 call.params = params;
                 call.range = range;
 
@@ -317,6 +316,7 @@ public class DistributedSQLStoreQuery extends SQLStoreQuery {
                 DistributedSQLStoreQuery.DeleteExecutor call = new DistributedSQLStoreQuery.DeleteExecutor();
                 call.executor = executor;
                 call.query = query;
+                call.query.setContext(q.getContext());
                 call.params = params;
 
                 owner.log.info("[" + ((AzureSliceStoreManager) sm).getSlice().getName() + "] Execute delete query: "
@@ -363,6 +363,7 @@ public class DistributedSQLStoreQuery extends SQLStoreQuery {
                 DistributedSQLStoreQuery.UpdateExecutor call = new DistributedSQLStoreQuery.UpdateExecutor();
                 call.executor = executor;
                 call.query = query;
+                call.query.setContext(q.getContext());
                 call.params = params;
 
                 owner.log.info("[" + ((AzureSliceStoreManager) sm).getSlice().getName() + "] Execute update query: "

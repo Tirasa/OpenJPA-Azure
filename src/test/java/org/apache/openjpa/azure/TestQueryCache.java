@@ -54,15 +54,16 @@ public class TestQueryCache extends SQLListenerTestCase {
         final OpenJPAEntityManager em = emf.createEntityManager();
 
         List<PObject> objs = em.createQuery("SELECT o FROM PObject o").getResultList();
-        assertEquals(1, objs.size());
+        int count = objs.size();
+        assertTrue(count > 0);
 
         resetSQL();
 
         objs = em.createQuery("SELECT o FROM PObject o").getResultList();
-        assertEquals(1, objs.size());
+        assertEquals(count, objs.size());
 
         objs = em.createQuery("SELECT o FROM PObject o").getResultList();
-        assertEquals(1, objs.size());
+        assertEquals(count, objs.size());
 
         assertEquals(0, getSQLCount());
 
