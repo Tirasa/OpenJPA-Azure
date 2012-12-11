@@ -20,7 +20,6 @@ package org.apache.openjpa.azure;
 
 import java.util.Collections;
 import java.util.Map;
-
 import org.apache.openjpa.kernel.Broker;
 import org.apache.openjpa.kernel.QueryImpl;
 import org.apache.openjpa.kernel.StoreQuery;

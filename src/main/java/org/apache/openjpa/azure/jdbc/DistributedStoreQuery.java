@@ -168,7 +168,7 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
 
                 StoreQuery.Executor executor = executors.get(i);
                 usedExecutors.add(executor);
-                
+
                 DistributedStoreQuery.QueryExecutor call = new DistributedStoreQuery.QueryExecutor();
                 call.executor = executor;
                 call.query = query;
@@ -257,7 +257,6 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 }
 
                 StoreQuery query = owner._queries.get(i);
-                
                 StoreQuery.Executor ex = executors.get(i);
 
                 if (futures == null) {
@@ -304,7 +303,7 @@ public class DistributedStoreQuery extends AzureJDBCStoreQuery {
                 }
 
                 StoreQuery query = owner._queries.get(i);
-                
+
                 StoreQuery.Executor ex = executors.get(i);
 
                 if (futures == null) {

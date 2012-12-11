@@ -19,9 +19,12 @@
 package org.apache.openjpa.azure.jdbc.kernel;
 
 import org.apache.openjpa.azure.jdbc.kernel.exps.AzureJDBCExpressionFactory;
+import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.kernel.JDBCStore;
+import org.apache.openjpa.jdbc.kernel.JDBCStoreManager;
 import org.apache.openjpa.jdbc.kernel.JDBCStoreQuery;
 import org.apache.openjpa.jdbc.meta.ClassMapping;
+import org.apache.openjpa.kernel.QueryContext;
 import org.apache.openjpa.kernel.exps.ExpressionFactory;
 import org.apache.openjpa.kernel.exps.ExpressionParser;
 import org.apache.openjpa.meta.ClassMetaData;
@@ -35,5 +38,17 @@ public class AzureJDBCStoreQuery extends JDBCStoreQuery {
     @Override
     protected ExpressionFactory getExpressionFactory(ClassMetaData meta) {
         return new AzureJDBCExpressionFactory((ClassMapping) meta);
+    }
+
+    @Override
+    public void setContext(QueryContext ctx) {
+        // Current JDBCStore could refer a closed context.
+        // Please, take a look at OPENJPA-2302.
+        if (getStore() instanceof JDBCStoreManager && getStore().getContext().getBroker().isClosed()) {
+            ((JDBCStoreManager) getStore()).setContext(
+                    ctx.getStoreContext(), (JDBCConfiguration) getStore().getConfiguration());
+        }
+
+        super.setContext(ctx);
     }
 }
