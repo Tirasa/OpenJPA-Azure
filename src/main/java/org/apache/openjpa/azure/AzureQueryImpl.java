@@ -18,7 +18,6 @@
  */
 package org.apache.openjpa.azure;
 
-import java.util.Collections;
 import java.util.Map;
 import org.apache.openjpa.kernel.Broker;
 import org.apache.openjpa.kernel.QueryImpl;
@@ -56,78 +55,44 @@ public class AzureQueryImpl extends QueryImpl {
      */
     @Override
     public Object execute(Map params) {
-        TargetFetchConfiguration fetch = (TargetFetchConfiguration) getFetchConfiguration();
-        if (!fetch.isExplicitTarget()) {
-            QueryTargetPolicy policy = _conf.getQueryTargetPolicyInstance();
-            if (policy != null) {
-                String[] targets = policy.getTargets(getQueryString(), Collections.unmodifiableMap(params),
-                        getLanguage(), _conf.getActiveSliceNames(), this.getBroker());
-                fetch.setTargets(targets);
-            }
-        }
-
+        setTargets();
         return super.execute(params);
     }
 
     public long deleteAll(Object[] params) {
-        TargetFetchConfiguration fetch = (TargetFetchConfiguration) getFetchConfiguration();
-        if (!fetch.isExplicitTarget()) {
-            QueryTargetPolicy policy = _conf.getQueryTargetPolicyInstance();
-
-            if (policy != null) {
-                String[] targets = policy.getTargets(getQueryString(), null,
-                        getLanguage(), _conf.getActiveSliceNames(), this.getBroker());
-
-                fetch.setTargets(targets);
-            }
-        }
+        setTargets();
         return super.deleteAll(params);
     }
 
     public long deleteAll(Map params) {
-        TargetFetchConfiguration fetch = (TargetFetchConfiguration) getFetchConfiguration();
-        if (!fetch.isExplicitTarget()) {
-            QueryTargetPolicy policy = _conf.getQueryTargetPolicyInstance();
-
-            if (policy != null) {
-                String[] targets = policy.getTargets(getQueryString(), null,
-                        getLanguage(), _conf.getActiveSliceNames(), this.getBroker());
-
-                fetch.setTargets(targets);
-            }
-        }
+        setTargets();
         return super.deleteAll(params);
     }
 
     public long updateAll(Object[] params) {
-        TargetFetchConfiguration fetch = (TargetFetchConfiguration) getFetchConfiguration();
-        if (!fetch.isExplicitTarget()) {
-            QueryTargetPolicy policy = _conf.getQueryTargetPolicyInstance();
-
-            if (policy != null) {
-                String[] targets = policy.getTargets(getQueryString(), null,
-                        getLanguage(), _conf.getActiveSliceNames(), this.getBroker());
-
-                fetch.setTargets(targets);
-            }
-        }
+        setTargets();
         return super.updateAll(params);
     }
 
     @Override
     public long updateAll(Map params) {
-        TargetFetchConfiguration fetch = (TargetFetchConfiguration) getFetchConfiguration();
+        setTargets();
+        return super.updateAll(params);
+    }
+
+    private void setTargets() {
+        final TargetFetchConfiguration fetch = (TargetFetchConfiguration) getFetchConfiguration();
         if (!fetch.isExplicitTarget()) {
-            QueryTargetPolicy policy = _conf.getQueryTargetPolicyInstance();
-
+            final QueryTargetPolicy policy = _conf.getQueryTargetPolicyInstance();
             if (policy != null) {
-                String[] targets = policy.getTargets(getQueryString(), null,
-                        getLanguage(), _conf.getActiveSliceNames(), this.getBroker());
-
-                fetch.setTargets(targets);
+                fetch.setTargets(policy.getTargets(
+                        getQueryString(),
+                        null,
+                        getLanguage(),
+                        _conf.getActiveSliceNames(),
+                        this.getBroker()));
             }
         }
-        return super.updateAll(params);
     }
 
     /**

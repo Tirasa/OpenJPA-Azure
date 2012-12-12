@@ -24,8 +24,18 @@ under the License.
                                       http://java.sun.com/xml/ns/persistence/orm_2_0.xsd"
                   version="2.0">
   
+  <!-- TABLE strategy UNSUPPORTED till 0.4
+  <table-generator name="SEQ_PersonBINT" pk-column-value="SEQ_PersonBINT" initial-value="1"/>
+  -->
+  
   <entity class="org.apache.openjpa.azure.beans.PersonBINT">
     <attributes>
+      <!-- TABLE strategy UNSUPPORTED till 0.4 
+      <id name="id">
+        <generated-value generator="SEQ_PersonBINT" strategy="TABLE"/>
+        <table-generator name="SEQ_PersonBINT" pk-column-value="SEQ_PersonBINT" initial-value="1"/>
+      </id>
+      -->
       <many-to-many name="roles">
         <join-table name="Membership">
           <join-column name="personId" referenced-column-name="id" nullable="false"/>

@@ -75,32 +75,37 @@ public class AzureDistributedBrokerFactory extends DistributedJDBCBrokerFactory 
     @Override
     protected void synchronizeMappings(ClassLoader loader) {
         final List<Slice> slices = getConfiguration().getSlices(Slice.Status.ACTIVE);
-        for (Slice slice : slices) {
-            synchronizeMappings(loader, slice);
-        }
-    }
 
-    protected void synchronizeMappings(final ClassLoader loader, final Slice slice) {
-
-        final JDBCConfiguration conf =
-                (JDBCConfiguration) Proxy.newProxyInstance(AzureSliceConfiguration.class.getClassLoader(),
-                new Class<?>[]{AzureSliceConfiguration.class},
-                new JDBCConfInterceptor(new AzureSliceConfigurationImpl(slice, (AzureConfiguration) getConfiguration())));
-
-        String action = ((JDBCConfiguration) slice.getConfiguration()).getSynchronizeMappings();
+        String action = ((JDBCConfiguration) getConfiguration()).getSynchronizeMappings();
         if (StringUtils.isEmpty(action)) {
             return;
         }
 
-        final MappingRepository repo = conf.getMappingRepositoryInstance();
+        final MappingRepository repo = getConfiguration().getMappingRepositoryInstance();
         final Collection<Class<?>> classes = repo.loadPersistentTypes(false, loader);
 
         if (classes.isEmpty()) {
             return;
         }
 
-        String props = Configurations.getProperties(action);
         action = Configurations.getClassName(action);
+
+        for (Slice slice : slices) {
+            synchronizeMappings(loader, slice, action, Configurations.getProperties(action), classes);
+        }
+    }
+
+    protected void synchronizeMappings(
+            final ClassLoader loader,
+            final Slice slice,
+            final String action,
+            final String props,
+            final Collection<Class<?>> classes) {
+
+        final JDBCConfiguration conf =
+                (JDBCConfiguration) Proxy.newProxyInstance(AzureSliceConfiguration.class.getClassLoader(),
+                new Class<?>[]{AzureSliceConfiguration.class},
+                new JDBCConfInterceptor(new AzureSliceConfigurationImpl(slice, (AzureConfiguration) getConfiguration())));
 
         final MappingTool tool = new AzureMappingTool(conf, action, false);
         Configurations.configureInstance(tool, conf, props, "SynchronizeMappings");

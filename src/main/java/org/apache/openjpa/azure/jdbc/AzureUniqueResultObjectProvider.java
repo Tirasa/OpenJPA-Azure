@@ -39,15 +39,15 @@ public class AzureUniqueResultObjectProvider implements ResultObjectProvider {
 
     private static final String SUM = "Sum";
 
-    private final ResultObjectProvider[] _rops;
+    protected final ResultObjectProvider[] _rops;
 
     private final StoreQuery _query;
 
     private final QueryExpressions[] _exps;
 
-    private Object _single;
+    protected Object _single;
 
-    private boolean _opened;
+    protected boolean _opened;
 
     public AzureUniqueResultObjectProvider(
             final ResultObjectProvider[] rops, final StoreQuery query, final QueryExpressions[] exps) {
@@ -128,7 +128,7 @@ public class AzureUniqueResultObjectProvider implements ResultObjectProvider {
         return true;
     }
 
-    Object count(Object current, Object other) {
+    protected Object count(Object current, Object other) {
         if (current == null) {
             return other;
         }
@@ -138,7 +138,7 @@ public class AzureUniqueResultObjectProvider implements ResultObjectProvider {
         return ((Number) current).longValue() + ((Number) other).longValue();
     }
 
-    Object max(Object current, Object other) {
+    protected Object max(Object current, Object other) {
         if (current == null) {
             return other;
         }
@@ -162,7 +162,7 @@ public class AzureUniqueResultObjectProvider implements ResultObjectProvider {
                 "MAX()", (current == null ? other : current).getClass().getName()).toString());
     }
 
-    Object min(Object current, Object other) {
+    protected Object min(Object current, Object other) {
         if (current == null) {
             return other;
         }
@@ -185,7 +185,7 @@ public class AzureUniqueResultObjectProvider implements ResultObjectProvider {
                 "MIN()", (current == null ? other : current).getClass().getName()).toString());
     }
 
-    Object sum(Object current, Object other) {
+    protected Object sum(Object current, Object other) {
         if (current == null) {
             return other;
         }

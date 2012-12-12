@@ -26,7 +26,7 @@ import org.apache.openjpa.kernel.exps.Value;
 
 public class AzureJDBCExpressionFactory extends JDBCExpressionFactory {
 
-    public AzureJDBCExpressionFactory(ClassMapping type) {
+    public AzureJDBCExpressionFactory(final ClassMapping type) {
         super(type);
     }
 
