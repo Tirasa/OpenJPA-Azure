@@ -23,8 +23,10 @@ import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.util.AzureUtils;
+import org.apache.openjpa.datacache.DataCacheStoreManager;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.kernel.Broker;
+import org.apache.openjpa.kernel.StoreManager;
 import org.apache.openjpa.slice.ReplicationPolicy;
 import org.apache.openjpa.slice.jdbc.DistributedJDBCStoreManager;
 
@@ -48,12 +50,16 @@ public class AzureReplicationPolicy implements ReplicationPolicy {
 
             final Object objectId = broker.getObjectId(pc);
 
+            final StoreManager store = broker.getStoreManager().getDelegate() instanceof DataCacheStoreManager
+                    ? ((DataCacheStoreManager) broker.getStoreManager().getDelegate()).getDelegate()
+                    : broker.getStoreManager().getDelegate();
+
             for (Federation fed : federations) {
                 final String rangeMappingName = fed.getRangeMappingName(table.getFullIdentifier().getName());
                 final Object id = objectId == null ? null : AzureUtils.getObjectIdValue(objectId, rangeMappingName);
 
-                final List<String> targets = AzureUtils.getTargetSlice(
-                        (DistributedJDBCStoreManager) broker.getStoreManager().getDelegate(), slices, fed, id);
+                final List<String> targets =
+                        AzureUtils.getTargetSlice((DistributedJDBCStoreManager) store, slices, fed, id);
 
                 if (targets.isEmpty() || StringUtils.isBlank(rangeMappingName)) {
                     rep.addAll(targets);

@@ -261,9 +261,13 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
     public boolean exists(OpenJPAStateManager sm, Object edata) {
         String origin = null;
         for (SliceStoreManager slice : _slices) {
-            if (slice.exists(sm, edata)) {
-                origin = slice.getName();
-                break;
+            try {
+                if (slice.exists(sm, edata)) {
+                    origin = slice.getName();
+                    break;
+                }
+            } catch (Exception ignore) {
+                // ignore exception because target could be wrong
             }
         }
         if (origin != null) {
@@ -489,8 +493,8 @@ public class DistributedJDBCStoreManager extends JDBCStoreManager
         for (SliceStoreManager slice : _slices) {
             ret.add(slice.newQuery(language));
         }
-        
-        final QueryCache queryCache = 
+
+        final QueryCache queryCache =
                 getContext().getConfiguration().getDataCacheManagerInstance().getSystemQueryCache();
 
         if (queryCache == null) {

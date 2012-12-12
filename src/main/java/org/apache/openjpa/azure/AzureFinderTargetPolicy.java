@@ -20,11 +20,12 @@ package org.apache.openjpa.azure;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.util.AzureUtils;
+import org.apache.openjpa.datacache.DataCacheStoreManager;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.kernel.Broker;
+import org.apache.openjpa.kernel.StoreManager;
 import org.apache.openjpa.slice.FinderTargetPolicy;
 import org.apache.openjpa.slice.jdbc.DistributedJDBCStoreManager;
 
@@ -53,13 +54,15 @@ public class AzureFinderTargetPolicy implements FinderTargetPolicy {
         if (federations.isEmpty()) {
             result.add("ROOT");
         } else {
+            final StoreManager store = broker.getStoreManager().getDelegate() instanceof DataCacheStoreManager
+                    ? ((DataCacheStoreManager) broker.getStoreManager().getDelegate()).getDelegate()
+                    : broker.getStoreManager().getDelegate();
 
             for (Federation federation : federations) {
                 final Object id = AzureUtils.getObjectIdValue(
                         oid, federation.getRangeMappingName(table.getFullIdentifier().getName()));
 
-                result.addAll(AzureUtils.getTargetSlice(
-                        (DistributedJDBCStoreManager) broker.getStoreManager().getDelegate(), slices, federation, id));
+                result.addAll(AzureUtils.getTargetSlice((DistributedJDBCStoreManager) store, slices, federation, id));
             }
 
         }

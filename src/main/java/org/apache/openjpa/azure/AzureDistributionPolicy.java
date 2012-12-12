@@ -18,15 +18,16 @@
  */
 package org.apache.openjpa.azure;
 
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.Method;
 import java.util.List;
 import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.util.AzureUtils;
 import org.apache.openjpa.conf.OpenJPAConfiguration;
+import org.apache.openjpa.datacache.DataCacheStoreManager;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.kernel.Broker;
+import org.apache.openjpa.kernel.StoreManager;
 import org.apache.openjpa.lib.log.Log;
 import org.apache.openjpa.slice.DistributionPolicy;
 import org.apache.openjpa.slice.jdbc.DistributedJDBCStoreManager;
@@ -84,10 +85,11 @@ public class AzureDistributionPolicy implements DistributionPolicy {
                 return null;
             }
 
-            final List<String> targets = AzureUtils.getTargetSlice(
-                    (DistributedJDBCStoreManager) broker.getStoreManager().getDelegate(), slices, fed, id);
+            final StoreManager store = broker.getStoreManager().getDelegate() instanceof DataCacheStoreManager
+                    ? ((DataCacheStoreManager) broker.getStoreManager().getDelegate()).getDelegate()
+                    : broker.getStoreManager().getDelegate();
 
-            return targets.get(0);
+            return AzureUtils.getTargetSlice((DistributedJDBCStoreManager) store, slices, fed, id).get(0);
         }
     }
 }

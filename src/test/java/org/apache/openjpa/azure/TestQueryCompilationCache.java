@@ -41,8 +41,8 @@ public class TestQueryCompilationCache extends SQLListenerTestCase {
             final OpenJPAEntityManager em = emf.createEntityManager();
 
             em.getTransaction().begin();
-            em.createQuery("DELETE FROM PObject e");
-            em.createQuery("DELETE FROM ConfBean e");
+            em.createQuery("DELETE FROM PObject e").executeUpdate();
+            em.createQuery("DELETE FROM ConfBean e").executeUpdate();
 
             ConfBean confBean = new ConfBean();
             confBean.setKey("chechForQueryResult-key");
