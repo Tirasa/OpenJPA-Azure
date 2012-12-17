@@ -32,6 +32,7 @@ import java.util.Map;
 import org.apache.openjpa.azure.AzureSliceConfiguration;
 import org.apache.openjpa.azure.Federation;
 import org.apache.openjpa.azure.jdbc.AzureSliceStoreManager;
+import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.util.AzureUtils;
 import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.schema.ForeignKey;
@@ -299,7 +300,8 @@ public class AzureSchemaTool extends SchemaTool {
                 ? new AbstractMap.SimpleEntry<Connection, Federation>(_ds.getConnection(), federated ? fed : null)
                 : null;
 
-        if (conn != null && fed != null) {
+        if (conn != null && fed != null 
+                && ((AzureConfiguration)((AzureSliceConfiguration) conf).getGlobalConf()).isPerformUseFederation()) {
             if (AzureSliceStoreManager.federations == null || AzureSliceStoreManager.federations.isEmpty()) {
                 AzureSliceStoreManager.initFederations(((AzureSliceConfiguration) conf).getGlobalConf(), conn.getKey());
             }
@@ -316,17 +318,19 @@ public class AzureSchemaTool extends SchemaTool {
             throws SQLException {
         final Connection conn = _ds.getConnection();
 
-        final String sliceName = AzureUtils.getSliceName(conf.getValue("Id").get().toString());
-        final Federation fed = ((AzureSliceConfiguration) conf).getFederation(sliceName);
+        if(((AzureConfiguration)((AzureSliceConfiguration) conf).getGlobalConf()).isPerformUseFederation()){
+            final String sliceName = AzureUtils.getSliceName(conf.getValue("Id").get().toString());
+            final Federation fed = ((AzureSliceConfiguration) conf).getFederation(sliceName);
 
-        if (conn != null && fed != null) {
-            if (AzureSliceStoreManager.federations == null || AzureSliceStoreManager.federations.isEmpty()) {
-                AzureSliceStoreManager.initFederations(((AzureSliceConfiguration) conf).getGlobalConf(), conn);
+            if (conn != null && fed != null) {
+                if (AzureSliceStoreManager.federations == null || AzureSliceStoreManager.federations.isEmpty()) {
+                    AzureSliceStoreManager.initFederations(((AzureSliceConfiguration) conf).getGlobalConf(), conn);
+                }
+
+                int index = AzureUtils.getSliceMemberIndex(sliceName);
+
+                AzureUtils.useFederation(conn, fed, AzureSliceStoreManager.federations.get(fed).get(index));
             }
-
-            int index = AzureUtils.getSliceMemberIndex(sliceName);
-
-            AzureUtils.useFederation(conn, fed, AzureSliceStoreManager.federations.get(fed).get(index));
         }
 
         return conn;

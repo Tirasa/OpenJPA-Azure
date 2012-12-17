@@ -36,6 +36,7 @@ import org.apache.openjpa.kernel.QueryLanguages;
 import org.apache.openjpa.kernel.StoreContext;
 import org.apache.openjpa.kernel.StoreQuery;
 import org.apache.openjpa.kernel.exps.ExpressionParser;
+import org.apache.openjpa.lib.jdbc.DecoratingDataSource;
 import org.apache.openjpa.lib.log.Log;
 import org.apache.openjpa.slice.Slice;
 import org.apache.openjpa.slice.jdbc.SliceStoreManager;
@@ -91,9 +92,10 @@ public class AzureSliceStoreManager extends SliceStoreManager {
     @Override
     protected RefCountConnection connectInternal()
             throws SQLException {
+
         final RefCountConnection conn = super.connectInternal();
 
-        if (federation != null) {
+        if (((AzureConfiguration) getContext().getConfiguration()).isPerformUseFederation() && federation != null) {
             AzureUtils.useFederation(conn, federation, fedUpperBound);
         }
 

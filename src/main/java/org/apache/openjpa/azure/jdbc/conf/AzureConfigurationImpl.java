@@ -34,6 +34,7 @@ import org.apache.openjpa.azure.kernel.AzureBroker;
 import org.apache.openjpa.azure.util.AzureUtils;
 import org.apache.openjpa.jdbc.schema.ForeignKey;
 import org.apache.openjpa.jdbc.schema.Table;
+import org.apache.openjpa.lib.conf.BooleanValue;
 import org.apache.openjpa.lib.conf.StringListValue;
 import org.apache.openjpa.lib.util.Localizer;
 import org.apache.openjpa.slice.Slice;
@@ -48,12 +49,15 @@ public class AzureConfigurationImpl extends DistributedJDBCConfigurationImpl imp
     private final StringListValue federationsPlugin;
 
     private Map<String, Federation> federations = new HashMap<String, Federation>();
+    
+    private BooleanValue performUseFederation;
 
     private Map<String, List<Federation>> federatedTables = new HashMap<String, List<Federation>>();
 
     public AzureConfigurationImpl() {
         super();
         federationsPlugin = addStringList(ProductDerivation.PREFIX_AZURE + ".Federations");
+        performUseFederation = addBoolean(ProductDerivation.PREFIX_AZURE + ".PerformUseFederation");
         brokerPlugin.setString(AzureBroker.class.getName());
     }
 
@@ -62,6 +66,11 @@ public class AzureConfigurationImpl extends DistributedJDBCConfigurationImpl imp
         return federations.values();
     }
 
+    @Override
+    public boolean isPerformUseFederation(){
+        return performUseFederation.get();
+    }
+    
     @Override
     public String getDistributionName(final String federationName) {
         final Federation fed = federations.get(federationName);

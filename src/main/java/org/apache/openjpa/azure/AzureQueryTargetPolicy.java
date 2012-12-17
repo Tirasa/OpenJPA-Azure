@@ -20,8 +20,10 @@ package org.apache.openjpa.azure;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.lang.StringUtils;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.jdbc.meta.AzureMappingTool;
@@ -73,7 +75,7 @@ public class AzureQueryTargetPolicy implements QueryTargetPolicy {
 
         for (String name : tableNames) {
             final Table table = group.findTable(QualifiedDBIdentifier.getPath(DBIdentifier.newTable(name)));
-            final List<Federation> federations = conf.getFederations(table);
+            final Set<Federation> federations = new HashSet<Federation>(conf.getFederations(table));
 
             log.info("Retrieved federations " + federations);
 

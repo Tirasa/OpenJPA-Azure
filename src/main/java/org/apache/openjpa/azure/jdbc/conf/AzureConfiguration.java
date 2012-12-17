@@ -68,6 +68,11 @@ public interface AzureConfiguration extends DistributedJDBCConfiguration {
      * @return list of federations.
      */
     Collection<Federation> getFederations();
+    
+    /**
+     * Have 'USE FEDERATION' statement to be performed?
+     */
+    boolean isPerformUseFederation();
 
     /**
      * Get all the federations for provided table.
