@@ -77,8 +77,6 @@ public class AzureQueryTargetPolicy implements QueryTargetPolicy {
             final Table table = group.findTable(QualifiedDBIdentifier.getPath(DBIdentifier.newTable(name)));
             final Set<Federation> federations = new HashSet<Federation>(conf.getFederations(table));
 
-            log.info("Retrieved federations " + federations);
-
             if (federations.isEmpty()) {
                 result.add("ROOT");
             } else {
@@ -92,6 +90,8 @@ public class AzureQueryTargetPolicy implements QueryTargetPolicy {
             }
         }
 
+        log.info("Retrieved targets " + result);
+        
         return result.toArray(new String[result.size()]);
     }
 

@@ -45,7 +45,7 @@ public class AzureSliceStoreManager extends SliceStoreManager {
 
     public static Map<Federation, List<Object>> federations = null;
 
-    private Object fedUpperBound = null;
+    private Object fedLowerBound = null;
 
     private boolean fedMultiMember = false;
 
@@ -96,7 +96,7 @@ public class AzureSliceStoreManager extends SliceStoreManager {
         final RefCountConnection conn = super.connectInternal();
 
         if (((AzureConfiguration) getContext().getConfiguration()).isPerformUseFederation() && federation != null) {
-            AzureUtils.useFederation(conn, federation, fedUpperBound);
+            AzureUtils.useFederation(conn, federation, fedLowerBound);
         }
 
         return conn;
@@ -110,11 +110,11 @@ public class AzureSliceStoreManager extends SliceStoreManager {
         final List<Object> members = federations.get(federation);
         final int memberIndexPos = AzureUtils.getSliceMemberIndex(getName());
         fedMultiMember = members.size() > 1;
-        fedUpperBound = members.get(memberIndexPos);
+        fedLowerBound = members.get(memberIndexPos);
     }
 
-    public Object getFedUpperBound() {
-        return fedUpperBound;
+    public Object getFedLowerBound() {
+        return fedLowerBound;
     }
 
     public boolean isFedMultiMember() {

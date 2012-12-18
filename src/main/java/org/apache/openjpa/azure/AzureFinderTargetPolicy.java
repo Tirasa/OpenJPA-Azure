@@ -19,13 +19,17 @@
 package org.apache.openjpa.azure;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.apache.openjpa.azure.jdbc.conf.AzureConfiguration;
 import org.apache.openjpa.azure.util.AzureUtils;
 import org.apache.openjpa.datacache.DataCacheStoreManager;
+import org.apache.openjpa.jdbc.conf.JDBCConfiguration;
 import org.apache.openjpa.jdbc.schema.Table;
 import org.apache.openjpa.kernel.Broker;
 import org.apache.openjpa.kernel.StoreManager;
+import org.apache.openjpa.lib.log.Log;
 import org.apache.openjpa.slice.FinderTargetPolicy;
 import org.apache.openjpa.slice.jdbc.DistributedJDBCStoreManager;
 
@@ -45,9 +49,15 @@ public class AzureFinderTargetPolicy implements FinderTargetPolicy {
         final Broker broker = (Broker) context;
         final AzureConfiguration conf = (AzureConfiguration) broker.getConfiguration();
 
+        Log log = conf.getLog(JDBCConfiguration.LOG_DIAG);
+
+        log.info("Evaluate target policy for '" + cls.getSimpleName() + ":" + oid + "'");
+
         final Table table = AzureUtils.getTable(conf, cls);
 
-        List<Federation> federations = conf.getFederations(table);
+        log.info("Search location for table " + table);
+
+        final Set<Federation> federations = new HashSet<Federation>(conf.getFederations(table));
 
         final List<String> result = new ArrayList<String>();
 
@@ -66,6 +76,8 @@ public class AzureFinderTargetPolicy implements FinderTargetPolicy {
             }
 
         }
+
+        log.info("Retrieved targets " + result);
 
         return result.toArray(new String[result.size()]);
     }

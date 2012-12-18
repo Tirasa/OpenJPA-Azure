@@ -354,18 +354,22 @@ public final class AzureUtils {
 
         final List<String> res = new ArrayList<String>();
 
-        for (int i = slices.size() - 1; i >= 0; i--) {
+        boolean firstMatchOnly = id != null;
+
+        for (int i = slices.size() - 1; i >= 0 || firstMatchOnly; i--) {
 
             final SliceStoreManager sliceStore = store.getSlice(i);
 
-            final Object fedUpperBound = ((AzureSliceStoreManager) sliceStore).getFedUpperBound();
+            final Object fedLowerBound = ((AzureSliceStoreManager) sliceStore).getFedLowerBound();
             final boolean isSingleMember = !((AzureSliceStoreManager) sliceStore).isFedMultiMember();
 
-            if (fed.getName().equals(((AzureSliceStoreManager) sliceStore).getFedName())
-                    && (id == null
-                    || isSingleMember
-                    || AzureUtils.checkForFederationMember(fed, fedUpperBound, id))) {
-                res.add(sliceStore.getName());
+            if (fed.getName().equals(((AzureSliceStoreManager) sliceStore).getFedName())) {
+                if (isSingleMember || !firstMatchOnly) {
+                    res.add(sliceStore.getName());
+                } else if (AzureUtils.checkForFederationMember(fed, fedLowerBound, id)) {
+                    res.add(sliceStore.getName());
+                    return res;
+                }
             }
         }
 
