@@ -15,10 +15,10 @@
 <configuration>
 
   <appender name="main" class="ch.qos.logback.core.rolling.RollingFileAppender">
-    <file>${log.directory}/jpaSqlAzure.log</file>
+    <file>${log.directory}/openjpa-azure-sample.log</file>
     <append>true</append>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-      <fileNamePattern>${log.directory}/jpaSqlAzure.log.%d{yyyy-MM-dd}</fileNamePattern>
+      <fileNamePattern>${log.directory}/openjpa-azure-sample.log.%d{yyyy-MM-dd}</fileNamePattern>
       <maxHistory>30</maxHistory>
     </rollingPolicy>
     <encoder>

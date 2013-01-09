@@ -17,27 +17,27 @@
 
   <groupId>net.tirasa.openjpasqlazure</groupId>
   <artifactId>openjpasqlazure-sample</artifactId>
-  <name>OpenJPA support for MS SQL Azure: sample webapp</name>
+  <name>OpenJPA-Azure: sample webapp</name>
   <version>0.4-SNAPSHOT</version>
   <packaging>war</packaging>
 
   <properties>
-    <spring.version>3.1.2.RELEASE</spring.version>    
-    <spring-data.version>1.1.1.RELEASE</spring-data.version>
+    <spring.version>3.2.0.RELEASE</spring.version>    
+    <spring-data.version>1.2.0.RELEASE</spring-data.version>
     
-    <wicket.version>1.5.8</wicket.version>
+    <wicket.version>1.5.9</wicket.version>
     
     <slf4j.version>1.7.2</slf4j.version>
-    <logback.version>1.0.7</logback.version>
+    <logback.version>1.0.9</logback.version>
     
     <openjpa.version>2.3.0-SNAPSHOT</openjpa.version>
     
-    <openjpa-azure.version>0.4-SNAPSHOT</openjpa-azure.version>
+    <openjpa-azure.version>0.4</openjpa-azure.version>
     
-    <h2.version>1.3.168</h2.version>
+    <h2.version>1.3.170</h2.version>
     
     <log.directory>${project.build.directory}/log</log.directory>        
-    <tomcat.version>7.0.32</tomcat.version>
+    <tomcat.version>7.0.34</tomcat.version>
     <cargo.servlet.port>8080</cargo.servlet.port>
     <cargo.log>${project.build.directory}/log/cargo.log</cargo.log>
     <cargo.output>${project.build.directory}/log/cargo-output.log</cargo.output>
@@ -175,7 +175,7 @@
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.10</version>
+      <version>4.11</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -223,7 +223,7 @@
         </dependencies>
         
         <configuration>
-          <includes>net/tirasa/jpasqlazure/beans/**/*.class</includes>
+          <includes>org/apache/openjpa/azure/sample/beans/**/*.class</includes>
           <connectionDriverName>org.springframework.jdbc.datasource.DriverManagerDataSource</connectionDriverName>
           <connectionProperties>
             driverClassName=${jpa.driverClassName},
@@ -253,7 +253,7 @@
       <plugin>
         <groupId>org.codehaus.cargo</groupId>
         <artifactId>cargo-maven2-plugin</artifactId>
-        <version>1.2.4</version>
+        <version>1.3.1</version>
         <configuration>
           <container>
             <containerId>tomcat7x</containerId>

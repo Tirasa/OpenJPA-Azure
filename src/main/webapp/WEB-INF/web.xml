@@ -25,10 +25,10 @@ under the License.
 
   <display-name>Syncope</display-name>
 
-  <context-param>
+  <!--<context-param>
     <param-name>configuration</param-name>
     <param-value>development</param-value>
-  </context-param>
+  </context-param>-->
 
   <context-param>
     <param-name>contextConfigLocation</param-name>

@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.tirasa.jpasqlazure.web.pages.panel;
+package org.apache.openjpa.azure.sample.web.pages.panel;
 
 import org.apache.wicket.ajax.markup.html.AjaxLink;
 import org.apache.wicket.markup.html.basic.Label;
@@ -24,6 +24,8 @@ import org.apache.wicket.markup.html.panel.Panel;
 import org.apache.wicket.model.IModel;
 
 public class ActionLinkPanel extends Panel {
+
+    private static final long serialVersionUID = 2912958976183498096L;
 
     public ActionLinkPanel(String id, IModel<?> model, AjaxLink link, String label) {
         super(id, model);

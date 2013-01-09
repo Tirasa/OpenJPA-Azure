@@ -16,19 +16,21 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.tirasa.jpasqlazure.web.pages.util;
+package org.apache.openjpa.azure.sample.web.pages.util;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import net.tirasa.jpasqlazure.beans.Person;
-import net.tirasa.jpasqlazure.persistence.PersonDAO;
+import org.apache.openjpa.azure.sample.beans.Person;
+import org.apache.openjpa.azure.sample.persistence.PersonDAO;
 import org.apache.wicket.extensions.markup.html.repeater.data.sort.SortOrder;
 import org.apache.wicket.extensions.markup.html.repeater.util.SortableDataProvider;
 import org.apache.wicket.model.IModel;
 import org.apache.wicket.model.LoadableDetachableModel;
 
 public class PersonProvider extends SortableDataProvider<Person> {
+
+    private static final long serialVersionUID = -3495175304545765681L;
 
     private final PersonDAO dao;
 

@@ -16,14 +16,14 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.tirasa.jpasqlazure.web.pages;
+package org.apache.openjpa.azure.sample.web.pages;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.tirasa.jpasqlazure.beans.Person;
-import net.tirasa.jpasqlazure.persistence.PersonDAO;
-import net.tirasa.jpasqlazure.web.pages.panel.ActionLinkPanel;
-import net.tirasa.jpasqlazure.web.pages.util.PersonProvider;
+import org.apache.openjpa.azure.sample.beans.Person;
+import org.apache.openjpa.azure.sample.persistence.PersonDAO;
+import org.apache.openjpa.azure.sample.web.pages.panel.ActionLinkPanel;
+import org.apache.openjpa.azure.sample.web.pages.util.PersonProvider;
 import org.apache.wicket.Page;
 import org.apache.wicket.Session;
 import org.apache.wicket.ajax.AjaxRequestTarget;
@@ -62,12 +62,14 @@ public class HomePage extends WebPage implements IAjaxIndicatorAware {
 
     private static final int MODAL_WIN_WIDTH = 600;
 
+    private static final long serialVersionUID = 833365409442941328L;
+
     private FeedbackPanel feedbackPanel;
 
     private final WebMarkupContainer container;
 
     private final ModalWindow editModalWin;
-    
+
     @SpringBean
     private PersonDAO dao;
 

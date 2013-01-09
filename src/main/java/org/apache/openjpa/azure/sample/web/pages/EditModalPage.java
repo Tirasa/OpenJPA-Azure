@@ -16,12 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.tirasa.jpasqlazure.web.pages;
+package org.apache.openjpa.azure.sample.web.pages;
 
 import java.util.Arrays;
-import net.tirasa.jpasqlazure.beans.Gender;
-import net.tirasa.jpasqlazure.beans.Person;
-import net.tirasa.jpasqlazure.persistence.PersonDAO;
+import org.apache.openjpa.azure.sample.beans.Gender;
+import org.apache.openjpa.azure.sample.beans.Person;
+import org.apache.openjpa.azure.sample.persistence.PersonDAO;
 import org.apache.wicket.PageReference;
 import org.apache.wicket.ajax.AjaxRequestTarget;
 import org.apache.wicket.authroles.authorization.strategies.role.annotations.AuthorizeInstantiation;
@@ -38,6 +38,8 @@ import org.apache.wicket.model.CompoundPropertyModel;
 
 @AuthorizeInstantiation("USER")
 public class EditModalPage extends WebPage {
+
+    private static final long serialVersionUID = -526326824798381668L;
 
     private FeedbackPanel feedbackPanel;
 

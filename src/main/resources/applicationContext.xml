@@ -45,7 +45,7 @@
   
   <bean id="entityManagerFactory"
         class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
-    <property name="persistenceUnitName" value="jpasqlazurePersistenceUnit"/>
+    <property name="persistenceUnitName" value="openjpaAzureSamplePersistenceUnit"/>
     <property name="dataSource" ref="dataSource"/>
     <property name="jpaVendorAdapter">
       <bean class="org.springframework.orm.jpa.vendor.OpenJpaVendorAdapter">
@@ -66,7 +66,7 @@
         <entry key="openjpa.QueryCache" value="true"/>
         <entry key="openjpa.DataCache" value="true" />
         <entry key="openjpa.QueryCompilationCache" value="true" />
-	<entry key="openjpa.RemoteCommitProvider" value="sjvm"/>
+        <entry key="openjpa.RemoteCommitProvider" value="sjvm"/>
         
         <entry key="openjpa.Log" value="DefaultLevel=INFO, Runtime=TRACE, Tool=TRACE, SQL=TRACE"/>
 
@@ -92,17 +92,14 @@
         <entry key="openjpa.slice.FinderTargetPolicy" value="org.apache.openjpa.azure.AzureFinderTargetPolicy"/>
         <entry key="openjpa.slice.ReplicationPolicy" value="org.apache.openjpa.azure.AzureReplicationPolicy"/>
         
-        <entry key="openjpa.slice.ROOT.ConnectionURL" 
-               value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=FEDDB;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=180"/>
-        <entry key="openjpa.slice.ROOT.ConnectionDriverName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+        <entry key="openjpa.slice.ROOT.ConnectionURL" value="${jpa.url}"/>
+        <entry key="openjpa.slice.ROOT.ConnectionDriverName" value="${jpa.driverClassName}"/>
       
-        <entry key="openjpa.slice.FED_1.0.ConnectionURL" 
-               value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=FEDDB;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=180"/>
-        <entry key="openjpa.slice.FED_1.0.ConnectionDriverName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+        <entry key="openjpa.slice.FED_1.0.ConnectionURL" value="${jpa.url}"/>
+        <entry key="openjpa.slice.FED_1.0.ConnectionDriverName" value="${jpa.driverClassName}"/>
         
-        <entry key="openjpa.slice.FED_1.1.ConnectionURL" 
-               value="jdbc:sqlserver://tp1qraooo4.database.windows.net:1433;database=FEDDB;encrypt=true;hostNameInCertificate=*.database.windows.net;loginTimeout=180"/>
-        <entry key="openjpa.slice.FED_1.1.ConnectionDriverName" value="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
+        <entry key="openjpa.slice.FED_1.1.ConnectionURL" value="${jpa.url}"/>
+        <entry key="openjpa.slice.FED_1.1.ConnectionDriverName" value="${jpa.driverClassName}"/>
       </map>
     </property>
   </bean>
@@ -116,7 +113,7 @@
   </bean>
     
   <tx:annotation-driven/>
-  <context:component-scan base-package="net.tirasa.jpasqlazure.persistence"/>
+  <context:component-scan base-package="org.apache.openjpa.azure.sample.persistence"/>
 
-  <bean id="wicketApplication" class="net.tirasa.jpasqlazure.web.JPASQLAzureApplication"/>
+  <bean id="wicketApplication" class="org.apache.openjpa.azure.sample.web.OpenJPAAzureSampleWebApplication"/>
 </beans>

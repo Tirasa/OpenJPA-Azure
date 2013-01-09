@@ -16,9 +16,26 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package net.tirasa.jpasqlazure.beans;
+package org.apache.openjpa.azure.sample.web;
 
-public enum Gender {
+import org.apache.openjpa.azure.sample.web.pages.HomePage;
+import org.apache.wicket.Page;
+import org.apache.wicket.protocol.http.WebApplication;
+import org.apache.wicket.spring.injection.annot.SpringComponentInjector;
 
-    F, M
+public class OpenJPAAzureSampleWebApplication extends WebApplication {
+
+    @Override
+    protected void init() {
+        super.init();
+
+        getComponentInstantiationListeners().add(new SpringComponentInjector(this));
+        getResourceSettings().setThrowExceptionOnMissingResource(true);
+        getMarkupSettings().setStripWicketTags(true);
+    }
+
+    @Override
+    public Class<? extends Page> getHomePage() {
+        return HomePage.class;
+    }
 }
