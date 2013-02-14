@@ -1,0 +1,13 @@
+language: java
+ 
+env:
+  global:
+    - SONATYPE_USERNAME=chicchiricco
+    - secure: "Cs7SLAdH0c2g28LSvARlOSGlXjjMMbR0y3q/zHUCsUlYFCzLG+L46QmUWvg9\numeSIeuF5VIFun3hJst+/hsfk69TtAgrcsuVVQGmCEEeleGDMIHm6zjDTSXz\nWg7OFo/ARKAEgTdALSZqf/LWEdF7QlKfxjrTZDbVBsXDGKeePVU="
+
+after_success:
+  - "[[ $TRAVIS_BRANCH == \"master\" ]] && { python .travis.addServer.py; mvn clean deploy --settings ~/.m2/mySettings.xml; };"
+
+notifications:
+  email:
+    - openjpa-azure@googlegroups.com
